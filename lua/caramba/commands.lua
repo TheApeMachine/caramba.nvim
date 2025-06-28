@@ -85,7 +85,7 @@ function M._do_simple_completion(instruction)
 end
 
 -- Setup core commands only
-function M.setup()
+function M.setup_commands()
   local commands = require('caramba.core.commands')
   local context = require("caramba.context")
   local llm = require("caramba.llm")
