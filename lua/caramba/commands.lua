@@ -394,6 +394,27 @@ function M.setup()
         end
       end
     end
+    
+    -- Show current index statistics
+    vim.notify("\n=== AI Index Statistics ===", vim.log.levels.INFO)
+    local stats = search.get_stats()
+    vim.notify(string.format("Files indexed: %d", stats.files), vim.log.levels.INFO)
+    vim.notify(string.format("Symbols found: %d", stats.symbols), vim.log.levels.INFO)
+    
+    if stats.last_indexed then
+      local age = os.time() - stats.last_indexed
+      local age_str = string.format("%d seconds ago", age)
+      if age > 3600 then
+        age_str = string.format("%.1f hours ago", age / 3600)
+      elseif age > 60 then
+        age_str = string.format("%.1f minutes ago", age / 60)
+      end
+      vim.notify(string.format("Last indexed: %s", age_str), vim.log.levels.INFO)
+    else
+      vim.notify("Last indexed: Never", vim.log.levels.INFO)
+    end
+    
+    vim.notify(string.format("Current directory: %s", vim.fn.getcwd()), vim.log.levels.INFO)
   end, {
     desc = "AI: Diagnose indexing issues",
   })
@@ -1193,7 +1214,10 @@ Provide specific, actionable feedback with examples where applicable.
   
   -- Intelligence commands
   vim.api.nvim_create_user_command('AIIndexProject', function()
-    caramba.intelligence.index_project()
+    local search = require("caramba.search")
+    search.index_workspace(function()
+      vim.notify("AI: Project indexing complete", vim.log.levels.INFO)
+    end)
   end, { desc = 'Index project for intelligent navigation' })
   
   vim.api.nvim_create_user_command('AIFindDefinition', function()

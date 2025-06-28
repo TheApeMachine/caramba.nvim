@@ -15,6 +15,7 @@ M._index = {}
 M._embeddings = {}
 M._file_hashes = {}
 M._indexing = false
+M._last_indexed = nil
 
 -- Configuration
 M.config = {
@@ -302,7 +303,10 @@ function M.process_batch(files, start_idx, callback)
   for i = start_idx, end_idx do
     local file = files[i]
     if file and M._should_index_file(file) then
-      M.index_file(file)
+      local file_data = M.index_file(file)
+      if file_data then
+        M._index[file] = file_data
+      end
     end
   end
   
@@ -315,7 +319,10 @@ end
 -- Update file in index
 function M.update_file(filepath)
   filepath = vim.fn.fnamemodify(filepath, ":p")
-  M.index_file(filepath)
+  local file_data = M.index_file(filepath)
+  if file_data then
+    M._index[filepath] = file_data
+  end
 end
 
 -- Find definition of a symbol
@@ -543,6 +550,7 @@ M.load_index = function()
   local ok, data = pcall(vim.json.decode, content)
   if ok and data and data.workspace == vim.fn.getcwd() then
     M._index = data.index or {}
+    M._last_indexed = data.indexed_at
     return true
   end
   
@@ -725,7 +733,6 @@ end
 M.index_workspace_keyword = function(callback)
   vim.notify("AI: Indexing workspace with keyword search...", vim.log.levels.INFO)
   M._index = {}
-  M._file_cache = {}
   
   local workspace_root = vim.fn.getcwd()
   local files_indexed = 0

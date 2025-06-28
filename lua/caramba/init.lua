@@ -67,6 +67,9 @@ function M.setup(opts)
   -- Setup planner
   M.planner.setup()
   
+  -- Setup search module
+  M.search.setup()
+  
   -- Setup commands
   M.commands.setup()
   
