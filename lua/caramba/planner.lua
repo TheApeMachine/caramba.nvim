@@ -828,9 +828,9 @@ function M.setup_commands()
     desc = 'Analyze project structure and architecture',
   })
   
-  -- Learn patterns from codebase
-  commands.register('LearnPatterns', M.learn_from_codebase, {
-    desc = 'Learn coding patterns from the codebase',
+  -- Learn from codebase
+  commands.register('LearnFromCodebase', M.learn_from_codebase, {
+    desc = 'Learn patterns from successful implementations in codebase',
   })
   
   -- Execute current plan

@@ -806,6 +806,142 @@ M.show_report = function()
   vim.api.nvim_set_current_buf(buf)
 end
 
+-- Show project map visualization
+M.show_project_map = function()
+  -- Generate a visual representation of the project structure
+  if not M.db.dependency_graph then
+    vim.notify("Please run :AIIndexProject first", vim.log.levels.WARN)
+    return
+  end
+  
+  local lines = {"# Project Structure Map", ""}
+  
+  -- Show file dependencies
+  table.insert(lines, "## File Dependencies")
+  table.insert(lines, "")
+  
+  for file, deps in pairs(M.db.dependency_graph) do
+    table.insert(lines, "- " .. file)
+    for _, dep in ipairs(deps) do
+      table.insert(lines, "  → " .. dep)
+    end
+  end
+  
+  -- Show symbol statistics
+  table.insert(lines, "")
+  table.insert(lines, "## Symbol Statistics")
+  table.insert(lines, "")
+  
+  local symbol_count = 0
+  for _, _ in pairs(M.db.symbols) do
+    symbol_count = symbol_count + 1
+  end
+  
+  table.insert(lines, "Total symbols indexed: " .. symbol_count)
+  
+  -- Create buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+  
+  vim.cmd('tabnew')
+  vim.api.nvim_set_current_buf(buf)
+end
+
+-- Analyze project dependencies
+M.analyze_dependencies = function()
+  if not M.db.dependency_graph then
+    vim.notify("Please run :AIIndexProject first", vim.log.levels.WARN)
+    return
+  end
+  
+  local analysis = {
+    circular = {},
+    unused = {},
+    most_depended = {},
+  }
+  
+  -- Find circular dependencies
+  for file, deps in pairs(M.db.dependency_graph) do
+    for _, dep in ipairs(deps) do
+      if M.db.dependency_graph[dep] then
+        for _, subdep in ipairs(M.db.dependency_graph[dep]) do
+          if subdep == file then
+            table.insert(analysis.circular, {file, dep})
+          end
+        end
+      end
+    end
+  end
+  
+  -- Count dependencies
+  local dep_counts = {}
+  for file, deps in pairs(M.db.dependency_graph) do
+    for _, dep in ipairs(deps) do
+      dep_counts[dep] = (dep_counts[dep] or 0) + 1
+    end
+  end
+  
+  -- Sort by most depended on
+  local sorted_deps = {}
+  for file, count in pairs(dep_counts) do
+    table.insert(sorted_deps, {file = file, count = count})
+  end
+  table.sort(sorted_deps, function(a, b) return a.count > b.count end)
+  
+  -- Show analysis
+  local lines = {"# Dependency Analysis", ""}
+  
+  if #analysis.circular > 0 then
+    table.insert(lines, "## Circular Dependencies Found!")
+    table.insert(lines, "")
+    for _, pair in ipairs(analysis.circular) do
+      table.insert(lines, "- " .. pair[1] .. " ↔ " .. pair[2])
+    end
+    table.insert(lines, "")
+  end
+  
+  table.insert(lines, "## Most Depended Upon Files")
+  table.insert(lines, "")
+  for i = 1, math.min(10, #sorted_deps) do
+    local item = sorted_deps[i]
+    table.insert(lines, string.format("%d. %s (%d dependencies)", i, item.file, item.count))
+  end
+  
+  -- Create buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+  
+  vim.cmd('tabnew')
+  vim.api.nvim_set_current_buf(buf)
+end
+
+-- Find symbol definition and usages
+M.find_symbol = function(symbol_name)
+  if not M.db.symbols[symbol_name] then
+    vim.notify("Symbol '" .. symbol_name .. "' not found", vim.log.levels.WARN)
+    return
+  end
+  
+  local locations = M.db.symbols[symbol_name]
+  
+  -- Create quickfix list
+  local qf_items = {}
+  for _, loc in ipairs(locations) do
+    table.insert(qf_items, {
+      filename = loc.file,
+      lnum = loc.line,
+      col = loc.col or 1,
+      text = loc.type .. ": " .. symbol_name,
+    })
+  end
+  
+  vim.fn.setqflist(qf_items)
+  vim.cmd('copen')
+  vim.notify("Found " .. #locations .. " occurrences of '" .. symbol_name .. "'", vim.log.levels.INFO)
+end
+
 -- Setup commands for this module
 M.setup_commands = function()
   local commands = require('caramba.core.commands')
@@ -842,6 +978,52 @@ M.setup_commands = function()
   -- Analyze dependencies
   commands.register('AnalyzeDeps', M.analyze_dependencies, {
     desc = 'Analyze project dependencies',
+  })
+  
+  -- Analyze type flow
+  commands.register('AnalyzeTypeFlow', function(args)
+    local symbol = args.args
+    if symbol == "" then
+      vim.ui.input({
+        prompt = "Symbol name: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.analyze_type_flow(input)
+        end
+      end)
+    else
+      M.analyze_type_flow(symbol)
+    end
+  end, {
+    desc = 'Analyze type flow for a symbol',
+    nargs = '?',
+  })
+  
+  -- Find dead code
+  commands.register('FindDeadCode', M.find_dead_code, {
+    desc = 'Find potentially dead code',
+  })
+  
+  -- Generate API docs
+  commands.register('GenerateAPIDocs', function(args)
+    local symbol = args.args
+    if symbol == "" then
+      vim.ui.input({
+        prompt = "Symbol name (or leave empty for all): ",
+      }, function(input)
+        M.generate_api_docs(input)
+      end)
+    else
+      M.generate_api_docs(symbol)
+    end
+  end, {
+    desc = 'Generate API documentation',
+    nargs = '?',
+  })
+  
+  -- Show intelligence report
+  commands.register('IntelligenceReport', M.show_report, {
+    desc = 'Show code intelligence report',
   })
 end
 

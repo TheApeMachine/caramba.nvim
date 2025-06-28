@@ -19,6 +19,11 @@ M.state = {
   current_context = nil,
   suggestion_window = nil,
   inline_virtual_text = {},
+  active = false,
+  session_start = 0,
+  suggestions_shown = 0,
+  suggestions_accepted = 0,
+  learned_patterns = {},
 }
 
 -- Pattern learning
@@ -814,10 +819,74 @@ M._refactor_from_voice = function(target)
   vim.notify("Voice refactoring not yet implemented", vim.log.levels.INFO)
 end
 
--- Navigate from voice
+-- Voice navigation
 M._navigate_from_voice = function(target)
   -- Would integrate with voice recognition
   vim.notify("Voice navigation not yet implemented", vim.log.levels.INFO)
+end
+
+-- Start pair programming session
+M.start_session = function()
+  M.state.active = true
+  M.state.session_start = os.time()
+  M.enable()
+  vim.notify("AI Pair Programming session started", vim.log.levels.INFO)
+end
+
+-- End pair programming session  
+M.end_session = function()
+  if M.state.active then
+    local duration = os.time() - M.state.session_start
+    local minutes = math.floor(duration / 60)
+    vim.notify(string.format("AI Pair Programming session ended. Duration: %d minutes", minutes), vim.log.levels.INFO)
+  end
+  M.state.active = false
+  M.disable()
+end
+
+-- Show pair programming statistics
+M.show_stats = function()
+  local stats = {
+    suggestions_shown = M.state.suggestions_shown,
+    suggestions_accepted = M.state.suggestions_accepted,
+    patterns_learned = vim.tbl_count(M.state.learned_patterns),
+  }
+  
+  local lines = {
+    "# AI Pair Programming Statistics",
+    "",
+    string.format("Suggestions shown: %d", stats.suggestions_shown),
+    string.format("Suggestions accepted: %d", stats.suggestions_accepted),
+    string.format("Acceptance rate: %.1f%%", 
+      stats.suggestions_shown > 0 and (stats.suggestions_accepted / stats.suggestions_shown * 100) or 0),
+    string.format("Patterns learned: %d", stats.patterns_learned),
+    "",
+    "## Learned Patterns",
+    "",
+  }
+  
+  -- Show some learned patterns
+  local pattern_count = 0
+  for pattern_type, patterns in pairs(M.state.learned_patterns) do
+    if pattern_count < 10 then
+      table.insert(lines, "### " .. pattern_type)
+      for pattern, count in pairs(patterns) do
+        if pattern_count < 10 then
+          table.insert(lines, string.format("- %s (used %d times)", pattern, count))
+          pattern_count = pattern_count + 1
+        end
+      end
+      table.insert(lines, "")
+    end
+  end
+  
+  -- Create buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+  
+  vim.cmd('split')
+  vim.api.nvim_set_current_buf(buf)
 end
 
 -- Setup commands for this module
@@ -842,6 +911,46 @@ M.setup_commands = function()
   -- Show pair stats
   commands.register('PairStats', M.show_stats, {
     desc = 'Show pair programming statistics',
+  })
+  
+  -- Enable pair mode
+  commands.register('PairEnable', M.enable, {
+    desc = 'Enable AI pair programming mode',
+  })
+  
+  -- Disable pair mode
+  commands.register('PairDisable', M.disable, {
+    desc = 'Disable AI pair programming mode',
+  })
+  
+  -- Set pair mode
+  commands.register('PairMode', function(args)
+    local mode = args.args
+    if mode == "" then
+      vim.ui.select({"proactive", "reactive", "silent"}, {
+        prompt = "Select pair programming mode:",
+      }, function(choice)
+        if choice then
+          M.set_mode(choice)
+        end
+      end)
+    else
+      M.set_mode(mode)
+    end
+  end, {
+    desc = 'Set pair programming mode',
+    nargs = '?',
+    complete = function()
+      return {"proactive", "reactive", "silent"}
+    end,
+  })
+  
+  -- Voice command
+  commands.register('PairVoice', function(args)
+    M.voice_command(args.args)
+  end, {
+    desc = 'Execute voice command',
+    nargs = '+',
   })
 end
 
