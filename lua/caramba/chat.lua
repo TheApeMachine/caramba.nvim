@@ -3,10 +3,11 @@
 
 local M = {}
 
-local config = require('caramba.config')
-local context = require('caramba.context')
+-- Dependencies
 local llm = require('caramba.llm')
 local edit = require('caramba.edit')
+local config = require('caramba.config')
+local context = require('caramba.context')
 
 -- Chat state
 M._chat_state = {
@@ -15,7 +16,7 @@ M._chat_state = {
   winid = nil,
   input_bufnr = nil,
   input_winid = nil,
-  context_files = {},
+  code_blocks = {},
 }
 
 -- Parse special context commands from message
@@ -304,6 +305,11 @@ end
 
 -- Helper to send message after web searches complete
 M._send_message_with_context = function(cleaned_message, contexts, search_results, original_message)
+  -- Debug logging
+  if config.get().debug then
+    vim.notify("AI: Sending message: " .. string.sub(cleaned_message, 1, 50) .. "...", vim.log.levels.INFO)
+  end
+  
   -- Build full prompt with contexts
   local full_content = cleaned_message
   if #contexts > 0 then
@@ -346,18 +352,35 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     })
   end
   
+  -- Debug logging
+  if config.get().debug then
+    vim.notify("AI: Conversation has " .. #conversation .. " messages", vim.log.levels.INFO)
+    vim.notify("AI: Requesting response with streaming...", vim.log.levels.INFO)
+  end
+  
   -- Request response
   llm.request_conversation(conversation, {
     temperature = 0.7,
     stream = true,
   }, function(chunk, is_complete)
     vim.schedule(function()
+      -- Debug logging
+      if config.get().debug then
+        if is_complete then
+          vim.notify("AI: Response complete", vim.log.levels.INFO)
+        elseif chunk then
+          vim.notify("AI: Received chunk: " .. string.sub(chunk, 1, 50) .. "...", vim.log.levels.INFO)
+        else
+          vim.notify("AI: Received nil chunk", vim.log.levels.WARN)
+        end
+      end
+      
       if is_complete then
         -- Final message is complete
         M._render_chat()
       else
-        -- Check for errors
-        if chunk == nil then
+        -- Check for errors - if chunk is nil and not complete, it's an error
+        if chunk == nil and not is_complete then
           -- Error occurred
           table.insert(M._chat_state.history, {
             role = "assistant",
@@ -367,20 +390,22 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
           return
         end
         
-        -- Streaming update
-        if #M._chat_state.history == 0 or 
-           M._chat_state.history[#M._chat_state.history].role ~= "assistant" then
-          -- Start new assistant message
-          table.insert(M._chat_state.history, {
-            role = "assistant",
-            content = chunk,
-          })
-        else
-          -- Append to existing assistant message
-          M._chat_state.history[#M._chat_state.history].content = 
-            M._chat_state.history[#M._chat_state.history].content .. chunk
+        -- Streaming update - only process if we have a chunk
+        if chunk then
+          if #M._chat_state.history == 0 or 
+             M._chat_state.history[#M._chat_state.history].role ~= "assistant" then
+            -- Start new assistant message
+            table.insert(M._chat_state.history, {
+              role = "assistant",
+              content = chunk,
+            })
+          else
+            -- Append to existing assistant message
+            M._chat_state.history[#M._chat_state.history].content = 
+              M._chat_state.history[#M._chat_state.history].content .. chunk
+          end
+          M._render_chat()
         end
-        M._render_chat()
       end
     end)
   end)
@@ -537,6 +562,27 @@ M.setup_commands = function()
   -- Clear chat history
   commands.register('ChatClear', M.clear_history, {
     desc = 'Clear chat history',
+  })
+  
+  -- Test LLM connection
+  commands.register('TestLLM', function()
+    local messages = {
+      { role = "user", content = "Say 'Hello, I am working!' if you can see this." }
+    }
+    
+    vim.notify("Testing LLM connection...", vim.log.levels.INFO)
+    
+    llm.request(messages, {}, function(result, err)
+      if err then
+        vim.notify("LLM Error: " .. err, vim.log.levels.ERROR)
+      elseif result then
+        vim.notify("LLM Response: " .. result, vim.log.levels.INFO)
+      else
+        vim.notify("LLM returned no result", vim.log.levels.WARN)
+      end
+    end)
+  end, {
+    desc = 'Test LLM connection',
   })
 end
 

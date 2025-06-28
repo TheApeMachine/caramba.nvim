@@ -308,6 +308,14 @@ M.request = function(messages, opts, callback)
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
   
+  -- Debug logging
+  if config.get().debug then
+    vim.schedule(function()
+      vim.notify("AI: Curl command: curl " .. table.concat(curl_args, " "), vim.log.levels.INFO)
+      vim.notify("AI: Request URL: " .. request_data.url, vim.log.levels.INFO)
+    end)
+  end
+  
   local buffer = ""
   
   -- Create job
@@ -545,6 +553,14 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
+  
+  -- Debug logging
+  if config.get().debug then
+    vim.schedule(function()
+      vim.notify("AI: Curl command: curl " .. table.concat(curl_args, " "), vim.log.levels.INFO)
+      vim.notify("AI: Request body: " .. string.sub(request_data.body, 1, 200) .. "...", vim.log.levels.INFO)
+    end)
+  end
   
   -- Generate unique request ID
   local request_id = tostring(os.time()) .. "_" .. math.random(10000)
