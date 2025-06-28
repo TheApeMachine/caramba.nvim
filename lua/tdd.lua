@@ -3,10 +3,10 @@
 
 local M = {}
 
-local llm = require('ai.llm')
-local testing = require('ai.testing')
-local context = require('ai.context')
-local edit = require('ai.edit')
+local llm = require('caramba.llm')
+local testing = require('caramba.testing')
+local context = require('caramba.context')
+local edit = require('caramba.edit')
 
 -- TDD workflow states
 M.state = {

@@ -1,10 +1,10 @@
 -- AI Planning Module - Multi-stage reasoning for better code generation
 local M = {}
 
-local config = require("ai.config")
-local llm = require("ai.llm")
-local context = require("ai.context")
-local search = require("ai.search")
+local config = require("caramba.config")
+local llm = require("caramba.llm")
+local context = require("caramba.context")
+local search = require("caramba.search")
 
 -- Project plan storage (in-memory for now, could persist to file)
 M._project_plan = {
@@ -707,9 +707,9 @@ M.execute_plan = function(plan)
     
     -- Add delay between steps to avoid rate limiting
     vim.defer_fn(function()
-      local context = require('ai.context')
-      local llm = require('ai.llm')
-      local edit = require('ai.edit')
+      local context = require('caramba.context')
+      local llm = require('caramba.llm')
+      local edit = require('caramba.edit')
       
       -- Build context for this step
       local ctx = context.collect()

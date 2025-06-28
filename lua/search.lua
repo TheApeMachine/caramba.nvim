@@ -4,11 +4,11 @@
 local M = {}
 local Job = require("plenary.job")
 local Path = require("plenary.path")
-local context = require("ai.context")
-local config = require("ai.config")
+local context = require("caramba.context")
+local config = require("caramba.config")
 local parsers = require("nvim-treesitter.parsers")
 local scan = require('plenary.scandir')
-local embeddings = require('ai.embeddings')
+local embeddings = require('caramba.embeddings')
 
 -- Search index storage
 M._index = {}
@@ -51,7 +51,7 @@ function M._should_index_file(filepath)
   end
   
   -- Skip files based on patterns
-  local config = require("ai.config").get()
+  local config = require("caramba.config").get()
   for _, pattern in ipairs(config.search.exclude_patterns) do
     if filepath:match(pattern) then
       return false

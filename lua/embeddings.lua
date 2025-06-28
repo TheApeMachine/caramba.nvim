@@ -1,6 +1,6 @@
 -- Embeddings module for semantic search
 local M = {}
-local config = require('ai.config')
+local config = require('caramba.config')
 
 -- Vector operations
 M.cosine_similarity = function(vec1, vec2)
@@ -67,7 +67,7 @@ M.generate_embedding_openai = function(text, callback)
     command = "curl",
     args = {
       "-sS",
-      "https://api.openai.com/v1/embeddings",
+      "https://api.opencaramba.com/v1/embeddings",
       "-X", "POST",
       "-H", "Content-Type: application/json",
       "-H", "Authorization: Bearer " .. api_config.api_key,

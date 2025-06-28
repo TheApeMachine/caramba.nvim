@@ -3,9 +3,9 @@
 
 local M = {}
 
-local llm = require('ai.llm')
-local websearch = require('ai.websearch')
-local config = require('ai.config')
+local llm = require('caramba.llm')
+local websearch = require('caramba.websearch')
+local config = require('caramba.config')
 
 -- Available tools registry
 M.tools = {

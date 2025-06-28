@@ -5,12 +5,12 @@ local M = {}
 
 -- Setup all commands
 function M.setup()
-  local context = require("ai.context")
-  local llm = require("ai.llm")
-  local edit = require("ai.edit")
-  local refactor = require("ai.refactor")
-  local search = require("ai.search")
-  local config = require("ai.config")
+  local context = require("caramba.context")
+  local llm = require("caramba.llm")
+  local edit = require("caramba.edit")
+  local refactor = require("caramba.refactor")
+  local search = require("caramba.search")
+  local config = require("caramba.config")
   local ai = require('ai')
   
   -- Completion command
@@ -57,7 +57,7 @@ function M.setup()
         prompt = "This task might benefit from planning first:",
       }, function(choice)
         if choice == "Use Planner" then
-          local planner = require("ai.planner")
+          local planner = require("caramba.planner")
           planner.interactive_planning_session(instruction)
           return
         else
@@ -207,7 +207,7 @@ function M.setup()
   
   -- Search commands
   vim.api.nvim_create_user_command("AISearch", function(args)
-    local search = require("ai.search")
+    local search = require("caramba.search")
     local query = args.args
     
     if query == "" then
@@ -227,7 +227,7 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AIEnableEmbeddings", function()
-    local config = require("ai.config")
+    local config = require("caramba.config")
     local current = config.get()
     current.search.use_embeddings = true
     vim.notify("AI: Embeddings-based search enabled. Re-index to generate embeddings.", vim.log.levels.INFO)
@@ -236,7 +236,7 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AIDisableEmbeddings", function()
-    local config = require("ai.config")
+    local config = require("caramba.config")
     local current = config.get()
     current.search.use_embeddings = false
     vim.notify("AI: Embeddings-based search disabled. Using keyword search.", vim.log.levels.INFO)
@@ -245,7 +245,7 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AISetEmbeddingDimensions", function(args)
-    local config = require("ai.config")
+    local config = require("caramba.config")
     local dimensions = tonumber(args.args)
     
     if not dimensions then
@@ -270,7 +270,7 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AISetEmbeddingModel", function(args)
-    local config = require("ai.config")
+    local config = require("caramba.config")
     local model = args.args
     
     if model ~= "text-embedding-3-small" and model ~= "text-embedding-3-large" then
@@ -298,7 +298,7 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AIIndexWorkspace", function()
-    local search = require("ai.search")
+    local search = require("caramba.search")
     search.index_workspace(function()
       vim.notify("AI: Workspace indexing complete", vim.log.levels.INFO)
     end)
@@ -441,7 +441,7 @@ function M.setup()
     vim.notify("AI: Running system test...", vim.log.levels.INFO)
     
     -- Test 1: Check configuration
-    local config_ok = pcall(require, "ai.config")
+    local config_ok = pcall(require, "caramba.config")
     if not config_ok then
       vim.notify("❌ Configuration module failed", vim.log.levels.ERROR)
       return
@@ -452,7 +452,7 @@ function M.setup()
     local provider = config.get().provider
     local api_key = nil
     if provider == "openai" then
-      api_key = config.get().api.openai.api_key
+      api_key = config.get().api.opencaramba.api_key
     elseif provider == "anthropic" then
       api_key = config.get().api.anthropic.api_key
     end
@@ -601,7 +601,7 @@ function M.setup()
   
   -- Planning commands
   vim.api.nvim_create_user_command('AIPlan', function(opts)
-    local planner = require('ai.planner')
+    local planner = require('caramba.planner')
     if opts.args == "" then
       vim.ui.input({
         prompt = "What would you like to implement? ",
@@ -624,7 +624,7 @@ function M.setup()
   end, { desc = 'Show current plan' })
   
   vim.api.nvim_create_user_command("AIAnalyzeProject", function()
-    local planner = require("ai.planner")
+    local planner = require("caramba.planner")
     vim.notify("AI: Analyzing project structure...", vim.log.levels.INFO)
     
     planner.analyze_project_structure(function(result, err)
@@ -670,7 +670,7 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AILearnPatterns", function()
-    local planner = require("ai.planner")
+    local planner = require("caramba.planner")
     planner.learn_from_codebase()
   end, {
     desc = "AI: Learn from codebase patterns",
@@ -678,7 +678,7 @@ function M.setup()
   
   -- Chat commands
   vim.api.nvim_create_user_command('AIChat', function()
-    require('ai.chat').toggle()
+    require('caramba.chat').toggle()
   end, {
     desc = "Toggle AI chat window"
   })
@@ -695,7 +695,7 @@ function M.setup()
       end
     end
     
-    require('ai.multifile').rename_symbol(old_name, new_name)
+    require('caramba.multifile').rename_symbol(old_name, new_name)
   end, {
     nargs = '?',
     desc = "AI: Rename symbol across all files"
@@ -710,7 +710,7 @@ function M.setup()
       end
     end
     
-    require('ai.multifile').extract_module(module_name)
+    require('caramba.multifile').extract_module(module_name)
   end, {
     nargs = '?',
     desc = "AI: Extract functionality into a new module"
@@ -718,7 +718,7 @@ function M.setup()
   
   -- Testing commands
   vim.api.nvim_create_user_command('AIGenerateTests', function(opts)
-    require('ai.testing').generate_tests({
+    require('caramba.testing').generate_tests({
       framework = opts.args ~= "" and opts.args or nil
     })
   end, {
@@ -727,13 +727,13 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command('AIUpdateTests', function()
-    require('ai.testing').update_tests()
+    require('caramba.testing').update_tests()
   end, {
     desc = "AI: Update tests to match implementation changes"
   })
   
   vim.api.nvim_create_user_command('AIAnalyzeTestFailures', function(opts)
-    require('ai.testing').analyze_test_failures({
+    require('caramba.testing').analyze_test_failures({
       output = opts.args ~= "" and opts.args or nil
     })
   end, {
@@ -743,7 +743,7 @@ function M.setup()
   
   -- Debugging commands
   vim.api.nvim_create_user_command('AIDebugError', function(opts)
-    require('ai.debug').analyze_error({
+    require('caramba.debug').analyze_error({
       error = opts.args ~= "" and opts.args or nil
     })
   end, {
@@ -752,13 +752,13 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command('AIApplyFix', function()
-    require('ai.debug').apply_fixes()
+    require('caramba.debug').apply_fixes()
   end, {
     desc = "AI: Apply pending debug fixes"
   })
   
   vim.api.nvim_create_user_command('AIDebugSession', function()
-    require('ai.debug').start_debug_session()
+    require('caramba.debug').start_debug_session()
   end, {
     desc = "AI: Start interactive debug session"
   })
@@ -771,7 +771,7 @@ function M.setup()
       profile_data = table.concat(lines, "\n")
     end
     
-    require('ai.debug').analyze_performance({
+    require('caramba.debug').analyze_performance({
       profile = profile_data
     })
   end, {
@@ -805,7 +805,7 @@ Types: feat, fix, docs, style, refactor, perf, test, chore
 Keep the description under 50 characters.
 ]]
 
-    require('ai.llm').request(prompt, { temperature = 0.3 }, function(response)
+    require('caramba.llm').request(prompt, { temperature = 0.3 }, function(response)
       if response then
         vim.schedule(function()
           -- If in a git commit buffer, insert the message
@@ -848,7 +848,7 @@ Keep the description under 50 characters.
   
   -- Code review command
   vim.api.nvim_create_user_command('AIReviewCode', function(opts)
-    local ctx = require('ai.context').collect()
+    local ctx = require('caramba.context').collect()
     if not ctx then
       vim.notify("Could not extract context", vim.log.levels.ERROR)
       return
@@ -869,7 +869,7 @@ Code:
 Provide specific, actionable feedback with examples where applicable.
 ]]
 
-    require('ai.llm').request(prompt, { temperature = 0.3 }, function(response)
+    require('caramba.llm').request(prompt, { temperature = 0.3 }, function(response)
       if response then
         vim.schedule(function()
           local buf = vim.api.nvim_create_buf(false, true)
@@ -887,7 +887,7 @@ Provide specific, actionable feedback with examples where applicable.
   
   -- System commands
   vim.api.nvim_create_user_command('AICancel', function()
-    require('ai.llm').cancel_all()
+    require('caramba.llm').cancel_all()
     vim.notify("All AI requests cancelled", vim.log.levels.INFO)
   end, {
     desc = "AI: Cancel all active requests"
@@ -901,7 +901,7 @@ Provide specific, actionable feedback with examples where applicable.
       opts.args = query
     end
     
-    require('ai.websearch').search(opts.args)
+    require('caramba.websearch').search(opts.args)
   end, {
     nargs = '?',
     desc = "AI: Search the web"
@@ -914,7 +914,7 @@ Provide specific, actionable feedback with examples where applicable.
       opts.args = query
     end
     
-    require('ai.websearch').search_and_summarize(opts.args)
+    require('caramba.websearch').search_and_summarize(opts.args)
   end, {
     nargs = '?',
     desc = "AI: Search web and summarize results"
@@ -927,7 +927,7 @@ Provide specific, actionable feedback with examples where applicable.
       opts.args = topic
     end
     
-    require('ai.websearch').research_topic(opts.args)
+    require('caramba.websearch').research_topic(opts.args)
   end, {
     nargs = '?',
     desc = "AI: Deep research on a topic"
@@ -940,7 +940,7 @@ Provide specific, actionable feedback with examples where applicable.
       opts.args = query
     end
     
-    require('ai.tools').query_with_tools(opts.args)
+    require('caramba.tools').query_with_tools(opts.args)
   end, {
     nargs = '?',
     desc = "AI: Query with access to web search and tools"
@@ -962,11 +962,11 @@ Provide specific, actionable feedback with examples where applicable.
       }, function(choice)
         if choice then
           local name = choice:match("^(%w+)")
-          require('ai.ast_transform').apply_transformation(name)
+          require('caramba.ast_transform').apply_transformation(name)
         end
       end)
     else
-      require('ai.ast_transform').apply_transformation(transform_name)
+      require('caramba.ast_transform').apply_transformation(transform_name)
     end
   end, {
     nargs = '?',
@@ -982,7 +982,7 @@ Provide specific, actionable feedback with examples where applicable.
       vim.notify("Usage: :AICrossRename <old_name> <new_name>", vim.log.levels.ERROR)
       return
     end
-    require('ai.ast_transform').cross_language_rename(args[1], args[2])
+    require('caramba.ast_transform').cross_language_rename(args[1], args[2])
   end, {
     nargs = '+',
     desc = "AI: Cross-language symbol rename"
@@ -1003,132 +1003,132 @@ Provide specific, actionable feedback with examples where applicable.
   
   -- TDD commands
   vim.api.nvim_create_user_command('AIImplementFromTest', function()
-    ai.tdd.implement_from_test()
+    caramba.tdd.implement_from_test()
   end, { desc = 'Implement code from test specification' })
   
   vim.api.nvim_create_user_command('AIGeneratePropertyTests', function()
-    ai.tdd.generate_property_tests()
+    caramba.tdd.generate_property_tests()
   end, { desc = 'Generate property-based tests for function' })
   
   vim.api.nvim_create_user_command('AIWatchTests', function()
-    ai.tdd.watch_tests()
+    caramba.tdd.watch_tests()
   end, { desc = 'Watch tests and suggest fixes on failure' })
   
   vim.api.nvim_create_user_command('AIImplementUncovered', function()
-    ai.tdd.implement_uncovered_code()
+    caramba.tdd.implement_uncovered_code()
   end, { desc = 'Implement code for uncovered test cases' })
   
   -- Consistency commands
   vim.api.nvim_create_user_command('AILearnPatterns', function()
-    ai.consistency.learn_patterns()
+    caramba.consistency.learn_patterns()
   end, { desc = 'Learn coding patterns from codebase' })
   
   vim.api.nvim_create_user_command('AICheckConsistency', function()
-    ai.consistency.check_file()
+    caramba.consistency.check_file()
   end, { desc = 'Check current file for consistency issues' })
   
   vim.api.nvim_create_user_command('AIEnableConsistencyCheck', function()
-    ai.consistency.enable_auto_check()
+    caramba.consistency.enable_auto_check()
   end, { desc = 'Enable automatic consistency checking on save' })
   
   -- Git commands
   vim.api.nvim_create_user_command('AICommitMessage', function()
-    ai.git.generate_commit_message()
+    caramba.git.generate_commit_message()
   end, { desc = 'Generate commit message from staged changes' })
   
   vim.api.nvim_create_user_command('AIReviewPR', function()
-    ai.git.review_pr()
+    caramba.git.review_pr()
   end, { desc = 'Review pull request changes' })
   
   vim.api.nvim_create_user_command('AIExplainDiff', function()
-    ai.git.explain_diff()
+    caramba.git.explain_diff()
   end, { desc = 'Explain current diff' })
   
   vim.api.nvim_create_user_command('AIResolveConflict', function()
-    ai.git.resolve_conflict()
+    caramba.git.resolve_conflict()
   end, { desc = 'Help resolve merge conflict' })
   
   vim.api.nvim_create_user_command('AIImproveCommit', function()
-    ai.git.improve_commit_message()
+    caramba.git.improve_commit_message()
   end, { desc = 'Improve commit message' })
   
   vim.api.nvim_create_user_command('AIGitBlame', function()
-    ai.git.explain_blame()
+    caramba.git.explain_blame()
   end, { desc = 'Explain git blame for current line' })
   
   -- Pair programming commands
   vim.api.nvim_create_user_command('AIPairStart', function()
-    ai.pair.start_session()
+    caramba.pair.start_session()
   end, { desc = 'Start AI pair programming session' })
   
   vim.api.nvim_create_user_command('AIPairStop', function()
-    ai.pair.stop_session()
+    caramba.pair.stop_session()
   end, { desc = 'Stop AI pair programming session' })
   
   vim.api.nvim_create_user_command('AIPairToggle', function()
-    ai.pair.toggle_session()
+    caramba.pair.toggle_session()
   end, { desc = 'Toggle AI pair programming session' })
   
   vim.api.nvim_create_user_command('AIPairStatus', function()
-    ai.pair.show_status()
+    caramba.pair.show_status()
   end, { desc = 'Show AI pair programming status' })
   
   -- Intelligence commands
   vim.api.nvim_create_user_command('AIIndexProject', function()
-    ai.intelligence.index_project()
+    caramba.intelligence.index_project()
   end, { desc = 'Index project for intelligent navigation' })
   
   vim.api.nvim_create_user_command('AIFindDefinition', function()
-    ai.intelligence.find_definition()
+    caramba.intelligence.find_definition()
   end, { desc = 'Find symbol definition' })
   
   vim.api.nvim_create_user_command('AIFindReferences', function()
-    ai.intelligence.find_references()
+    caramba.intelligence.find_references()
   end, { desc = 'Find symbol references' })
   
   vim.api.nvim_create_user_command('AIFindRelated', function()
-    ai.intelligence.find_related()
+    caramba.intelligence.find_related()
   end, { desc = 'Find related code' })
   
   vim.api.nvim_create_user_command('AICallHierarchy', function()
-    ai.intelligence.show_call_hierarchy()
+    caramba.intelligence.show_call_hierarchy()
   end, { desc = 'Show call hierarchy' })
   
   vim.api.nvim_create_user_command('AIFindSimilar', function()
-    ai.intelligence.find_similar_functions()
+    caramba.intelligence.find_similar_functions()
   end, { desc = 'Find similar functions' })
   
   vim.api.nvim_create_user_command('AIAnalyzeDependencies', function()
-    ai.intelligence.analyze_dependencies()
+    caramba.intelligence.analyze_dependencies()
   end, { desc = 'Analyze module dependencies' })
   
   -- AST transformation commands
   vim.api.nvim_create_user_command('AITransform', function()
-    ai.ast_transform.transform_code()
+    caramba.ast_transform.transform_code()
   end, { desc = 'Transform code using AST' })
   
   vim.api.nvim_create_user_command('AITransformCallback', function()
-    ai.ast_transform.transform_callbacks_to_async()
+    caramba.ast_transform.transform_callbacks_to_async()
   end, { desc = 'Transform callbacks to async/await' })
   
   vim.api.nvim_create_user_command('AITransformClass', function()
-    ai.ast_transform.transform_class_to_hooks()
+    caramba.ast_transform.transform_class_to_hooks()
   end, { desc = 'Transform class components to hooks' })
   
   vim.api.nvim_create_user_command('AITransformImports', function()
-    ai.ast_transform.transform_commonjs_to_esm()
+    caramba.ast_transform.transform_commonjs_to_esm()
   end, { desc = 'Transform CommonJS to ESM' })
   
   vim.api.nvim_create_user_command('AITransformPython', function()
-    ai.ast_transform.transform_python2_to_3()
+    caramba.ast_transform.transform_python2_to_3()
   end, { desc = 'Transform Python 2 to Python 3' })
   
   vim.api.nvim_create_user_command('AIMergeConflict', function()
-    ai.ast_transform.semantic_merge()
+    caramba.ast_transform.semantic_merge()
   end, { desc = 'Semantic merge conflict resolution' })
   
   vim.api.nvim_create_user_command('AIRenameAcrossLanguages', function()
-    ai.ast_transform.rename_across_languages()
+    caramba.ast_transform.rename_across_languages()
   end, { desc = 'Rename symbol across different languages' })
 end
 
@@ -1201,8 +1201,8 @@ end
 
 -- Helper function for search
 function M._do_search(query)
-  local search = require("ai.search")
-  local config = require("ai.config")
+  local search = require("caramba.search")
+  local config = require("caramba.config")
   
   vim.notify("AI: Searching for: " .. query, vim.log.levels.INFO)
   

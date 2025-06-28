@@ -3,10 +3,10 @@
 
 local M = {}
 
-local config = require('ai.config')
-local edit = require('ai.edit')
-local llm = require('ai.llm')
-local context = require('ai.context')
+local config = require('caramba.config')
+local edit = require('caramba.edit')
+local llm = require('caramba.llm')
+local context = require('caramba.context')
 
 -- Transaction state
 M._transaction = {

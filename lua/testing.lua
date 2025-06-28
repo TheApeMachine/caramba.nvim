@@ -3,10 +3,10 @@
 
 local M = {}
 
-local config = require('ai.config')
-local context = require('ai.context')
-local llm = require('ai.llm')
-local multifile = require('ai.multifile')
+local config = require('caramba.config')
+local context = require('caramba.context')
+local llm = require('caramba.llm')
+local multifile = require('caramba.multifile')
 
 -- Test framework detection patterns
 local test_frameworks = {

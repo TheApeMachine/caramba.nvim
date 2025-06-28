@@ -41,7 +41,7 @@ Features include intelligent code completion, refactoring, test generation, and 
 
 ```lua
 {
-  'your-username/ai.nvim',
+  'your-username/caramba.nvim',
   dependencies = {
     'nvim-lua/plenary.nvim',
     'nvim-treesitter/nvim-treesitter',
@@ -58,7 +58,7 @@ Features include intelligent code completion, refactoring, test generation, and 
 
 ```lua
 use {
-  'your-username/ai.nvim',
+  'your-username/caramba.nvim',
   requires = {
     'nvim-lua/plenary.nvim',
     'nvim-treesitter/nvim-treesitter',
@@ -76,7 +76,7 @@ use {
 ```vim
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-treesitter/nvim-treesitter'
-Plug 'your-username/ai.nvim'
+Plug 'your-username/caramba.nvim'
 
 " Then in your init.lua or after plug#end()
 lua require('ai').setup({})

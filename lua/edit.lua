@@ -4,7 +4,7 @@
 local M = {}
 local ts = vim.treesitter
 local parsers = require("nvim-treesitter.parsers")
-local config = require("ai.config")
+local config = require("caramba.config")
 
 -- Edit history for rollback
 M._history = {}

@@ -3,9 +3,9 @@
 
 local M = {}
 
-local intelligence = require('ai.intelligence')
-local llm = require('ai.llm')
-local pair = require('ai.pair')
+local intelligence = require('caramba.intelligence')
+local llm = require('caramba.llm')
+local pair = require('caramba.pair')
 
 -- Pattern database
 M.patterns = {

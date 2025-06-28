@@ -3,10 +3,10 @@
 
 local M = {}
 
-local context = require('ai.context')
-local llm = require('ai.llm')
-local intelligence = require('ai.intelligence')
-local config = require('ai.config')
+local context = require('caramba.context')
+local llm = require('caramba.llm')
+local intelligence = require('caramba.intelligence')
+local config = require('caramba.config')
 
 -- State management
 M.state = {

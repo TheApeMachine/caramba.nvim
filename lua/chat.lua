@@ -3,10 +3,10 @@
 
 local M = {}
 
-local config = require('ai.config')
-local context = require('ai.context')
-local llm = require('ai.llm')
-local edit = require('ai.edit')
+local config = require('caramba.config')
+local context = require('caramba.context')
+local llm = require('caramba.llm')
+local edit = require('caramba.edit')
 
 -- Chat state
 M._chat_state = {
@@ -275,7 +275,7 @@ M._send_message = function()
     if ctx.type == "web_search" and ctx.pending then
       pending_searches = pending_searches + 1
       
-      require('ai.websearch').search(ctx.query, {
+      require('caramba.websearch').search(ctx.query, {
         limit = 3,
         callback = function(results, err)
           pending_searches = pending_searches - 1

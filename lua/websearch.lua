@@ -4,8 +4,8 @@
 local M = {}
 
 local Job = require('plenary.job')
-local config = require('ai.config')
-local llm = require('ai.llm')
+local config = require('caramba.config')
+local llm = require('caramba.llm')
 
 -- Search providers configuration
 M.providers = {

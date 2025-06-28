@@ -31,7 +31,7 @@ Add to your Neovim configuration:
 ```lua
 -- In your plugin manager (e.g., lazy.nvim)
 {
-  'your-username/ai.nvim',
+  'your-username/caramba.nvim',
   dependencies = {
     'nvim-lua/plenary.nvim',
     'nvim-treesitter/nvim-treesitter',

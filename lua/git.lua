@@ -3,8 +3,8 @@
 
 local M = {}
 
-local llm = require('ai.llm')
-local ast_transform = require('ai.ast_transform')
+local llm = require('caramba.llm')
+local ast_transform = require('caramba.ast_transform')
 
 -- Git operations
 M.operations = {}

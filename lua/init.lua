@@ -2,31 +2,31 @@
 local M = {}
 
 -- Health check support
-M.health = require('ai.health')
+M.health = require('caramba.health')
 
 -- Load all modules
 local modules = {
-  'ai.config',
-  'ai.context', 
-  'ai.llm',
-  'ai.edit',
-  'ai.refactor',
-  'ai.search',
-  'ai.embeddings',
-  'ai.planner',
-  'ai.commands',
-  'ai.chat',
-  'ai.multifile',
-  'ai.testing',
-  'ai.debug',
-  'ai.websearch',
-  'ai.tools',
-  'ai.ast_transform',
-  'ai.intelligence',
-  'ai.pair',
-  'ai.git',
-  'ai.tdd',
-  'ai.consistency',
+  'caramba.config',
+  'caramba.context', 
+  'caramba.llm',
+  'caramba.edit',
+  'caramba.refactor',
+  'caramba.search',
+  'caramba.embeddings',
+  'caramba.planner',
+  'caramba.commands',
+  'caramba.chat',
+  'caramba.multifile',
+  'caramba.testing',
+  'caramba.debug',
+  'caramba.websearch',
+  'caramba.tools',
+  'caramba.ast_transform',
+  'caramba.intelligence',
+  'caramba.pair',
+  'caramba.git',
+  'caramba.tdd',
+  'caramba.consistency',
 }
 
 for _, module in ipairs(modules) do
@@ -37,27 +37,27 @@ for _, module in ipairs(modules) do
 end
 
 -- Export modules
-M.config = require('ai.config')
-M.context = require('ai.context')
-M.llm = require('ai.llm')
-M.edit = require('ai.edit')
-M.refactor = require('ai.refactor')
-M.search = require('ai.search')
-M.planner = require('ai.planner')
-M.embeddings = require('ai.embeddings')
-M.chat = require('ai.chat')
-M.multifile = require('ai.multifile')
-M.testing = require('ai.testing')
-M.debug = require('ai.debug')
-M.websearch = require('ai.websearch')
-M.tools = require('ai.tools')
-M.ast_transform = require('ai.ast_transform')
-M.intelligence = require('ai.intelligence')
-M.pair = require('ai.pair')
-M.git = require('ai.git')
-M.commands = require('ai.commands')
-M.tdd = require('ai.tdd')
-M.consistency = require('ai.consistency')
+M.config = require('caramba.config')
+M.context = require('caramba.context')
+M.llm = require('caramba.llm')
+M.edit = require('caramba.edit')
+M.refactor = require('caramba.refactor')
+M.search = require('caramba.search')
+M.planner = require('caramba.planner')
+M.embeddings = require('caramba.embeddings')
+M.chat = require('caramba.chat')
+M.multifile = require('caramba.multifile')
+M.testing = require('caramba.testing')
+M.debug = require('caramba.debug')
+M.websearch = require('caramba.websearch')
+M.tools = require('caramba.tools')
+M.ast_transform = require('caramba.ast_transform')
+M.intelligence = require('caramba.intelligence')
+M.pair = require('caramba.pair')
+M.git = require('caramba.git')
+M.commands = require('caramba.commands')
+M.tdd = require('caramba.tdd')
+M.consistency = require('caramba.consistency')
 
 -- Initialize the module
 function M.setup(opts)
@@ -71,7 +71,7 @@ function M.setup(opts)
   M.commands.setup()
   
   -- Initialize search index if enabled
-  local search = require('ai.search')
+  local search = require('caramba.search')
   if M.config.get().search.index_on_startup then
     vim.defer_fn(function()
       search.index_workspace()
@@ -79,7 +79,7 @@ function M.setup(opts)
   end
   
   -- Set up autocommands
-  local context = require('ai.context')
+  local context = require('caramba.context')
   vim.api.nvim_create_autocmd({"CursorMoved", "CursorMovedI", "BufEnter"}, {
     group = vim.api.nvim_create_augroup("AIContext", { clear = true }),
     callback = function()

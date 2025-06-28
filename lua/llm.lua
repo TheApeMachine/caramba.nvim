@@ -3,7 +3,7 @@
 
 local M = {}
 local Job = require("plenary.job")
-local config = require("ai.config")
+local config = require("caramba.config")
 
 -- Response cache
 M._cache = {}

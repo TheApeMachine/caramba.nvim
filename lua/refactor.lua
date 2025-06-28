@@ -2,11 +2,11 @@
 -- Tree-sitter powered code transformations
 
 local M = {}
-local context = require("ai.context")
-local llm = require("ai.llm")
-local edit = require("ai.edit")
+local context = require("caramba.context")
+local llm = require("caramba.llm")
+local edit = require("caramba.edit")
 local ts_utils = require("nvim-treesitter.ts_utils")
-local config = require("ai.config")
+local config = require("caramba.config")
 
 -- Common refactoring operations
 M.operations = {

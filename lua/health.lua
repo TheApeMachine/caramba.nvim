@@ -34,7 +34,7 @@ M.check = function()
   end
   
   -- Check for API keys
-  local config = require("ai.config").get()
+  local config = require("caramba.config").get()
   local providers = {"openai", "anthropic", "ollama"}
   
   vim.health.start("LLM Providers")
@@ -59,7 +59,7 @@ M.check = function()
   
   -- Test LLM connection
   vim.health.start("LLM Connection Test")
-  local llm = require("ai.llm")
+  local llm = require("caramba.llm")
   local test_passed = false
   
   llm.request({
