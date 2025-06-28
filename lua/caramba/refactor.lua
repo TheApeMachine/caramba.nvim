@@ -24,64 +24,31 @@ M.operations = {
 -- Rename symbol with AI assistance
 function M.rename_symbol(new_name, opts)
   opts = opts or {}
-  
+  local ts_utils = require("nvim-treesitter.ts_utils")
+  local context = require("caramba.context")
+
   -- Get current symbol
   local node = ts_utils.get_node_at_cursor()
   if not node then
     vim.notify("No symbol at cursor", vim.log.levels.WARN)
     return
   end
-  
+
   -- Find identifier node
-  while node and node:type() ~= "identifier" do
-    node = node:parent()
+  local ident_node = node
+  while ident_node and ident_node:type() ~= "identifier" do
+    ident_node = ident_node:parent()
   end
-  
-  if not node then
+
+  if not ident_node then
     vim.notify("No identifier found at cursor", vim.log.levels.WARN)
     return
   end
-  
-  local old_name = context.get_node_text(node)
-  
-  -- Get buffer content
-  local bufnr = 0
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local content = table.concat(lines, "\n")
-  
-  -- Build prompt
-  local prompt = llm.build_refactor_prompt(
-    content,
-    string.format("Rename all occurrences of '%s' to '%s'. Ensure all references are updated.", 
-      old_name, new_name)
-  )
-  
-  -- Request refactoring
-  llm.request(prompt, opts, function(result, err)
-    if err then
-      vim.schedule(function()
-        vim.notify("Refactoring failed: " .. err, vim.log.levels.ERROR)
-      end)
-      return
-    end
-    
-    -- Apply with preview
-    vim.schedule(function()
-      if config.get().editing.diff_preview then
-        edit.show_diff_preview(bufnr, 0, #lines - 1, result, function()
-          edit.apply_patch(bufnr, result)
-          vim.notify(string.format("Renamed '%s' to '%s'", old_name, new_name))
-        end)
-      else
-        local success, error_msg = edit.apply_patch(bufnr, result)
-        if success then
-          vim.notify(string.format("Renamed '%s' to '%s'", old_name, new_name))
-        else
-          vim.notify("Failed to apply refactoring: " .. error_msg, vim.log.levels.ERROR)
-        end
-      end
-    end)
-  end)
+
+  local old_name = context.get_node_text(ident_node)
+
+  -- Defer to the multi-file implementation for project-wide rename
+  require('caramba.multifile').rename_symbol(old_name, new_name, opts)
 end
 
 -- Extract function from selection
@@ -399,13 +366,13 @@ function M.setup_commands()
   -- Rename symbol
   commands.register("Rename", function(args)
     if args.args == "" then
-      vim.notify("Usage: :AIRename <new_name>", vim.log.levels.ERROR)
+      vim.notify("Usage: :Rename <new_name>", vim.log.levels.ERROR)
       return
     end
     
     M.rename_symbol(args.args)
   end, {
-    desc = "AI: Rename symbol",
+    desc = "AI: Rename symbol project-wide",
     nargs = 1,
   })
   

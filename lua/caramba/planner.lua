@@ -253,11 +253,11 @@ M._show_questions_window = function(lines, callback)
 end
 
 -- Interactive planning session
-function M.interactive_planning_session(task_description)
+function M.interactive_planning_session(task_description, context_info)
   -- Step 1: Create initial plan
   vim.notify("AI Planner: Creating initial plan...", vim.log.levels.INFO)
   
-  local context_info = context.build_context_string(context.collect())
+  context_info = context_info or context.build_context_string(context.collect())
   
   M.create_task_plan(task_description, context_info, function(plan_result, plan_err)
     if plan_err then

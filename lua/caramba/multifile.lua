@@ -388,55 +388,104 @@ end
 
 -- High-level refactoring functions
 
--- Rename a symbol across multiple files
+-- Rename a symbol across multiple files using Tree-sitter for accuracy
 M.rename_symbol = function(old_name, new_name, opts)
   opts = opts or {}
-  
-  -- Find all occurrences
-  local grep_job = require('plenary.job'):new({
-    command = 'rg',
-    args = {
-      '--vimgrep',
-      '--word-regexp',
-      old_name,
-      opts.directory or vim.fn.getcwd()
-    },
-  })
-  
-  local results = grep_job:sync()
-  
-  -- Group by file
-  local by_file = {}
-  for _, line in ipairs(results) do
-    local file, lnum, col, text = line:match("([^:]+):(%d+):(%d+):(.*)$")
-    if file then
-      by_file[file] = by_file[file] or {}
-      table.insert(by_file[file], {
-        line = tonumber(lnum),
-        col = tonumber(col),
-        text = text,
-      })
+  local root = opts.directory or vim.fn.getcwd()
+  local cfg = require("caramba.config").get()
+  local scandir = require('plenary.scandir')
+
+  -- 1. Scan for all relevant files in the project
+  local all_files = scandir.scan_dir(root, { hidden = false, respect_gitignore = true })
+  local files_to_check = {}
+  local include_extensions = cfg.search.include_extensions or { 'lua', 'py', 'js', 'ts', 'jsx', 'tsx', 'go', 'rs', 'rb', 'php' }
+  local include_map = {}
+  for _, ext in ipairs(include_extensions) do include_map[ext] = true end
+
+  for _, path in ipairs(all_files) do
+    if vim.fn.isdirectory(path) == 0 then
+      local ext = path:match("%.([^%.]+)$")
+      if ext and include_map[ext] then
+        local excluded = false
+        for _, pattern in ipairs(cfg.search.exclude_patterns) do
+          if path:match(pattern) then
+            excluded = true
+            break
+          end
+        end
+        if not excluded then
+          table.insert(files_to_check, path)
+        end
+      end
     end
   end
-  
-  -- Start transaction
+
+  -- 2. Start transaction
   M.begin_transaction()
-  
-  -- Create modifications for each file
-  for filepath, occurrences in pairs(by_file) do
-    M.add_operation({
-      type = M.OpType.MODIFY,
-      path = filepath,
-      description = string.format("Rename %s to %s", old_name, new_name),
-      callback = function(content)
-        -- Simple word boundary replacement
-        return content:gsub("([^%w_])" .. old_name .. "([^%w_])", "%1" .. new_name .. "%2")
-      end,
-    })
+  local modified_files = 0
+
+  -- 3. Iterate through files and create modification operations
+  for _, filepath in ipairs(files_to_check) do
+    local content
+    local ok, lines = pcall(vim.fn.readfile, filepath)
+    if not ok then goto continue end
+    content = table.concat(lines, "\n")
+
+    if not content:find(old_name, 1, true) then goto continue end
+
+    local lang = vim.filetype.match({filename = filepath})
+    if not lang or not require('nvim-treesitter.parsers').has_parser(lang) then goto continue end
+
+    local parser = vim.treesitter.get_string_parser(content, lang)
+    local tree = parser:parse()[1]
+    if not tree then goto continue end
+
+    local root = tree:root()
+    local query = vim.treesitter.query.parse(lang, "(identifier) @ident")
+    local replacements = {}
+
+    if query then
+      for _, node in query:iter_captures(root, content) do
+        if vim.treesitter.get_node_text(node, content) == old_name then
+          local start_row, start_col, end_row, end_col = node:range()
+          table.insert(replacements, { row = start_row, col = start_col, end_col = end_col })
+        end
+      end
+    end
+
+    if #replacements > 0 then
+      modified_files = modified_files + 1
+      M.add_operation({
+        type = M.OpType.MODIFY,
+        path = filepath,
+        description = string.format("Rename %s to %s", old_name, new_name),
+        callback = function(original_content)
+          local cb_lines = vim.split(original_content, '\n')
+          table.sort(replacements, function(a,b)
+            if a.row ~= b.row then return a.row > b.row end
+            return a.col > b.col
+          end)
+
+          for _, rep in ipairs(replacements) do
+            local line_content = cb_lines[rep.row + 1]
+            cb_lines[rep.row + 1] = line_content:sub(1, rep.col) .. new_name .. line_content:sub(rep.end_col + 1)
+          end
+
+          return table.concat(cb_lines, '\n')
+        end
+      })
+    end
+
+    ::continue::
   end
-  
-  -- Preview changes
-  M.preview_transaction()
+
+  if modified_files > 0 then
+    vim.notify(string.format("Found '%s' in %d files. Previewing changes...", old_name, modified_files), vim.log.levels.INFO)
+    M.preview_transaction()
+  else
+    vim.notify("Symbol '" .. old_name .. "' not found in project.", vim.log.levels.INFO)
+    M.rollback_transaction()
+  end
 end
 
 -- Extract a module from multiple files

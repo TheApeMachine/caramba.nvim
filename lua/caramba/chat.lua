@@ -8,6 +8,7 @@ local llm = require('caramba.llm')
 local edit = require('caramba.edit')
 local config = require('caramba.config')
 local context = require('caramba.context')
+local planner = require('caramba.planner')
 
 -- Chat state
 M._chat_state = {
@@ -112,43 +113,54 @@ local function format_message(msg)
   return lines
 end
 
--- Extract code blocks from message
+-- Extract code blocks from message using Tree-sitter
 local function extract_code_blocks(content)
   local blocks = {}
-  local lines = vim.split(content, "\n")
-  local in_code_block = false
-  local current_block = nil
-  local current_line = 1
-  
-  for i, line in ipairs(lines) do
-    if line:match("^```") then
-      if in_code_block then
-        -- End of code block
-        if current_block then
-          table.insert(blocks, current_block)
-          current_block = nil
+  local parser = vim.treesitter.get_string_parser(content, "markdown")
+  if not parser then
+    return blocks
+  end
+
+  local tree = parser:parse()[1]
+  if not tree then
+    return blocks
+  end
+
+  local root = tree:root()
+  local query_string = [[
+    (fenced_code_block
+      (info_string (language) @language)?
+      (code_fence_content) @code) @fenced_code
+  ]]
+  local query = vim.treesitter.query.parse("markdown", query_string)
+
+  if not query then
+    return blocks
+  end
+
+  for id, node, metadata in query:iter_matches(root, content) do
+    local capture_name = query.captures[id]
+    if capture_name == "fenced_code" then
+      local lang_node = metadata.language
+      local code_node = metadata.code
+      
+      if code_node then
+        local lang = "text"
+        if lang_node then
+          lang = vim.treesitter.get_node_text(lang_node, content)
         end
-        in_code_block = false
-      else
-        -- Start of code block
-        local lang = line:match("^```(%w*)")
-        current_block = {
-          language = lang ~= "" and lang or "text",
-          code = {},
-          start_line = i + 1, -- Next line is where code starts
-        }
-        in_code_block = true
+        
+        local start_line, _, _, _ = node:range()
+        
+        table.insert(blocks, {
+          language = lang,
+          code = vim.treesitter.get_node_text(code_node, content),
+          start_line = start_line + 1, -- 1-based line number for the start of the block
+        })
       end
-    elseif in_code_block and current_block then
-      table.insert(current_block.code, line)
     end
   end
-  
-  -- Process blocks to join code lines
-  for _, block in ipairs(blocks) do
-    block.code = table.concat(block.code, "\n")
-  end
-  
+
   return blocks
 end
 
@@ -310,6 +322,21 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     vim.notify("AI: Sending message: " .. string.sub(cleaned_message, 1, 50) .. "...", vim.log.levels.INFO)
   end
   
+  -- If no context commands were used, automatically add smart context
+  if #contexts == 0 and #search_results == 0 then
+    local smart_context = context.collect()
+    if smart_context and smart_context.content then
+      table.insert(contexts, {
+        type = "buffer",
+        name = smart_context.filename or "[Current Buffer]",
+        content = context.build_context_string(smart_context)
+      })
+      if config.get().debug then
+        vim.notify("AI: Automatically added smart context.", vim.log.levels.INFO)
+      end
+    end
+  end
+  
   -- Build full prompt with contexts
   local full_content = cleaned_message
   if #contexts > 0 then
@@ -343,102 +370,8 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   -- Render immediately to show user message
   M._render_chat()
   
-  -- Build conversation for API
-  local conversation = {}
-  for _, msg in ipairs(M._chat_state.history) do
-    table.insert(conversation, {
-      role = msg.role,
-      content = msg.full_content or msg.content
-    })
-  end
-  
-  -- Debug logging
-  if config.get().debug then
-    vim.notify("AI: Conversation has " .. #conversation .. " messages", vim.log.levels.INFO)
-    vim.notify("AI: Requesting response with streaming...", vim.log.levels.INFO)
-  end
-  
-  -- Request response
-  llm.request_conversation(conversation, {
-    temperature = 0.7,
-    stream = true,
-  }, function(chunk, is_complete)
-    vim.schedule(function()
-      if config.get().debug then
-        if is_complete then
-          vim.notify("AI: Response complete", vim.log.levels.INFO)
-        elseif chunk then
-          vim.notify("AI: Received chunk", vim.log.levels.DEBUG)
-        end
-      end
-
-      if is_complete then
-        -- Final message is complete. A final render ensures code blocks are parsed.
-        M._render_chat()
-        return
-      end
-
-      -- Handle errors
-      if chunk == nil then
-        table.insert(M._chat_state.history, {
-          role = "assistant",
-          content = "Error: Failed to get response from AI. Please check your API key and connection.",
-        })
-        M._render_chat()
-        return
-      end
-
-      -- Efficiently handle streaming chunks
-      if chunk then
-        local history = M._chat_state.history
-        local bufnr = M._chat_state.bufnr
-        local winid = M._chat_state.winid
-
-        if #history == 0 or history[#history].role ~= "assistant" then
-          -- First chunk: start a new message in history and add header to buffer
-          table.insert(history, { role = "assistant", content = chunk })
-          
-          vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
-          local header = { "## Assistant:", "" }
-          vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, header)
-          vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
-        else
-          -- Subsequent chunk: append to history
-          history[#history].content = history[#history].content .. chunk
-        end
-        
-        -- Append the chunk to the buffer directly
-        vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
-        local chunk_lines = vim.split(chunk, "\n", { plain = true })
-        if #chunk_lines > 0 then
-          local line_count = vim.api.nvim_buf_line_count(bufnr)
-          if line_count > 0 then
-            local last_line = vim.api.nvim_buf_get_lines(bufnr, line_count - 1, line_count, false)[1] or ""
-            -- Append first part of chunk to the last line
-            vim.api.nvim_buf_set_lines(bufnr, line_count - 1, line_count, false, { last_line .. chunk_lines[1] })
-          else
-            vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, { chunk_lines[1] })
-          end
-
-          -- Append the rest of the lines if any
-          if #chunk_lines > 1 then
-            local rest_of_lines = {}
-            for i = 2, #chunk_lines do
-              table.insert(rest_of_lines, chunk_lines[i])
-            end
-            vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, rest_of_lines)
-          end
-        end
-        vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
-        
-        -- Scroll to bottom
-        if winid and vim.api.nvim_win_is_valid(winid) then
-          local new_line_count = vim.api.nvim_buf_line_count(bufnr)
-          vim.api.nvim_win_set_cursor(winid, { new_line_count, 0 })
-        end
-      end
-    end)
-  end)
+  -- Use the planner to handle the request, which will create its own UI for now
+  planner.interactive_planning_session(cleaned_message, full_content)
 end
 
 -- Cancel input
@@ -488,8 +421,10 @@ M._render_chat = function()
     if msg.role == "assistant" then
       local blocks = extract_code_blocks(msg.content)
       for _, block in ipairs(blocks) do
-        -- Adjust start line based on current position in buffer
-        block.start_line = line_offset + block.start_line + 6 -- Account for headers
+        -- Adjust start line based on its position in the buffer.
+        -- line_offset: lines from previous messages
+        -- 2: lines from message header ("## Assistant:" and a blank line)
+        block.start_line = line_offset + block.start_line + 2
         table.insert(code_blocks, block)
       end
     end
@@ -520,9 +455,16 @@ local function get_code_block_at_cursor()
   
   -- Find code block containing current line
   for _, block in ipairs(M._chat_state.code_blocks) do
-    if block.start_line and line >= block.start_line and 
-       line <= block.start_line + #vim.split(block.code, "\n") + 2 then
-      return block
+    if block.start_line and line >= block.start_line then
+      -- The block's start_line is the opening ```. The code content starts on the next line.
+      local code_start_line = block.start_line + 1
+      local num_code_lines = #vim.split(block.code, "\n")
+      local code_end_line = code_start_line + num_code_lines -1
+      
+      -- The cursor can be on the opening ```, any line of code, or the closing ```
+      if line >= block.start_line and line <= code_end_line + 1 then
+        return block
+      end
     end
   end
   

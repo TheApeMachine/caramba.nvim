@@ -624,34 +624,68 @@ end
 
 -- Find undefined symbols in buffer
 M._find_undefined_symbols = function()
-  local undefined = {}
   local bufnr = vim.api.nvim_get_current_buf()
-  
-  -- Get all identifiers in buffer
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local content = table.concat(lines, '\n')
-  
-  -- Simple pattern matching for now
-  -- In production, would use Tree-sitter for accuracy
-  for identifier in content:gmatch("([%w_]+)") do
-    -- Check if it's defined locally
-    if not content:match("function%s+" .. identifier) and
-       not content:match("const%s+" .. identifier) and
-       not content:match("let%s+" .. identifier) and
-       not content:match("var%s+" .. identifier) and
-       not content:match("class%s+" .. identifier) then
-      -- Might be undefined
-      undefined[identifier] = true
+  local ft = vim.bo[bufnr].filetype
+  local lang = require("nvim-treesitter.language").get_lang(ft)
+
+  if not lang then
+    return {}
+  end
+
+  local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+  local parser = vim.treesitter.get_string_parser(content, lang)
+  local tree = parser:parse()[1]
+  if not tree then
+    return {}
+  end
+
+  local root = tree:root()
+  local declared_symbols = {}
+  local used_symbols = {}
+
+  -- Query for all declarations (variables, functions, classes, imports)
+  local declaration_query_string = [[
+    (variable_declarator name: (identifier) @variable.name)
+    (function_declaration name: (identifier) @function.name)
+    (class_declaration name: (identifier) @class.name)
+    (import_specifier name: (identifier) @import.name)
+    (namespace_import (identifier) @import.name)
+    (formal_parameters (identifier) @param.name)
+  ]]
+  local declaration_query = vim.treesitter.query.parse(lang, declaration_query_string)
+  if declaration_query then
+    for _, node in declaration_query:iter_captures(root, content) do
+      declared_symbols[vim.treesitter.get_node_text(node, content)] = true
     end
   end
-  
-  -- Convert to list
-  local result = {}
-  for symbol, _ in pairs(undefined) do
-    table.insert(result, symbol)
+
+  -- Query for all identifiers being used
+  local usage_query_string = [[
+    (identifier) @usage
+  ]]
+  local usage_query = vim.treesitter.query.parse(lang, usage_query_string)
+  if usage_query then
+    for _, node, _ in usage_query:iter_matches(root, content) do
+      -- Check parent to avoid capturing property names etc.
+      local parent = node:parent()
+      if parent then
+        local parent_type = parent:type()
+        if parent_type ~= 'property_identifier' and parent_type ~= 'field_identifier' then
+          used_symbols[vim.treesitter.get_node_text(node, content)] = true
+        end
+      end
+    end
   end
-  
-  return result
+
+  -- Find symbols that are used but not declared
+  local undefined = {}
+  for symbol, _ in pairs(used_symbols) do
+    if not declared_symbols[symbol] then
+      table.insert(undefined, symbol)
+    end
+  end
+
+  return undefined
 end
 
 -- Generate import statement
