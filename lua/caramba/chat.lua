@@ -369,9 +369,8 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
         if is_complete then
           vim.notify("AI: Response complete", vim.log.levels.INFO)
         elseif chunk then
-          vim.notify("AI: Received chunk: " .. string.sub(chunk, 1, 50) .. "...", vim.log.levels.INFO)
-        else
-          vim.notify("AI: Received nil chunk", vim.log.levels.WARN)
+          -- Only log that we received a chunk, not the content
+          vim.notify("AI: Received chunk", vim.log.levels.DEBUG)
         end
       end
       
