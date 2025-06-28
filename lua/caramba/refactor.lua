@@ -378,4 +378,57 @@ function M.refactor_with_instruction(instruction, opts)
   end)
 end
 
+-- Setup commands for this module
+function M.setup_commands()
+  local commands = require('caramba.core.commands')
+  
+  -- Main refactoring command
+  commands.register("Refactor", function(args)
+    if args.args == "" then
+      vim.notify("Please provide refactoring instruction", vim.log.levels.WARN)
+      return
+    end
+    
+    M.refactor_with_instruction(args.args)
+  end, {
+    desc = "AI: Refactor with custom instruction",
+    nargs = "+",
+    range = true,
+  })
+  
+  -- Rename symbol
+  commands.register("Rename", function(args)
+    if args.args == "" then
+      vim.notify("Usage: :AIRename <new_name>", vim.log.levels.ERROR)
+      return
+    end
+    
+    M.rename_symbol(args.args)
+  end, {
+    desc = "AI: Rename symbol",
+    nargs = 1,
+  })
+  
+  -- Extract function
+  commands.register("ExtractFunction", M.extract_function, {
+    desc = "AI: Extract function from selection",
+    range = true,
+  })
+  
+  -- Simplify logic
+  commands.register("SimplifyLogic", M.simplify_conditional, {
+    desc = "AI: Simplify conditional logic",
+  })
+  
+  -- Add type annotations
+  commands.register("AddTypes", M.add_type_annotations, {
+    desc = "AI: Add type annotations",
+  })
+  
+  -- Organize imports
+  commands.register("OrganizeImports", M.organize_imports, {
+    desc = "AI: Organize imports",
+  })
+end
+
 return M 

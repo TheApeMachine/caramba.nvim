@@ -491,4 +491,39 @@ Provide a brief review with any concerns or suggestions.
   end)
 end
 
+-- Setup commands for this module
+function M.setup_commands()
+  local commands = require('caramba.core.commands')
+  
+  -- Git commit message generation
+  commands.register('CommitMessage', M.generate_commit_message, {
+    desc = 'Generate semantic commit message from staged changes',
+  })
+  
+  -- Merge conflict resolution
+  commands.register('ResolveConflict', M.resolve_conflict, {
+    desc = 'Resolve merge conflicts using semantic understanding',
+  })
+  
+  -- PR description generation
+  commands.register('GeneratePR', M.generate_pr_description, {
+    desc = 'Generate comprehensive pull request description',
+  })
+  
+  -- Branch naming
+  commands.register('SuggestBranch', M.suggest_branch_name, {
+    desc = 'Suggest branch name based on changes',
+  })
+  
+  -- Interactive rebase helper
+  commands.register('RebaseHelper', M.interactive_rebase_helper, {
+    desc = 'Analyze and optimize interactive rebase',
+  })
+  
+  -- Pre-push review
+  commands.register('PrePushReview', M.pre_push_review, {
+    desc = 'Review commits before pushing',
+  })
+end
+
 return M 

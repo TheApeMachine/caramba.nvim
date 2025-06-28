@@ -70,7 +70,36 @@ function M.setup(opts)
   -- Setup search module
   M.search.setup()
   
-  -- Setup commands
+  -- Setup commands for each module
+  local modules_with_commands = {
+    M.git,
+    M.planner,
+    M.refactor,
+    M.search,
+    M.chat,
+    M.testing,
+    M.tdd,
+    M.multifile,
+    M.debug,
+    M.websearch,
+    M.tools,
+    M.ast_transform,
+    M.intelligence,
+    M.pair,
+    M.consistency,
+    M.edit,
+  }
+  
+  for _, module in ipairs(modules_with_commands) do
+    if module and module.setup_commands then
+      local ok, err = pcall(module.setup_commands)
+      if not ok then
+        vim.notify("Failed to setup commands for module: " .. tostring(err), vim.log.levels.ERROR)
+      end
+    end
+  end
+  
+  -- Setup core commands
   M.commands.setup()
   
   -- Initialize search index if enabled
