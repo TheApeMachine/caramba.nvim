@@ -7,6 +7,7 @@ local llm = require("caramba.llm")
 local edit = require("caramba.edit")
 local ts_utils = require("nvim-treesitter.ts_utils")
 local config = require("caramba.config")
+local utils = require('caramba.utils')
 
 -- Common refactoring operations
 M.operations = {
@@ -45,7 +46,7 @@ function M.rename_symbol(new_name, opts)
     return
   end
 
-  local old_name = context.get_node_text(ident_node)
+  local old_name = utils.get_node_text(ident_node)
 
   -- Defer to the multi-file implementation for project-wide rename
   require('caramba.multifile').rename_symbol(old_name, new_name, opts)

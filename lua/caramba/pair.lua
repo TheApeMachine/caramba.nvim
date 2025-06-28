@@ -7,6 +7,7 @@ local context = require('caramba.context')
 local llm = require('caramba.llm')
 local intelligence = require('caramba.intelligence')
 local config = require('caramba.config')
+local utils = require('caramba.utils')
 
 -- State management
 M.state = {
@@ -698,7 +699,7 @@ M._find_undefined_symbols = function()
   local declaration_query = vim.treesitter.query.parse(lang, lang_queries.declarations)
   if declaration_query then
     for _, node in declaration_query:iter_captures(root, content) do
-      declared_symbols[vim.treesitter.get_node_text(node, content)] = true
+      declared_symbols[utils.get_node_text(node, content)] = true
     end
   end
 
@@ -713,7 +714,7 @@ M._find_undefined_symbols = function()
         if parent then
           local parent_type = parent:type()
           if parent_type ~= 'property_identifier' and parent_type ~= 'field_identifier' then
-            used_symbols[vim.treesitter.get_node_text(node, content)] = true
+            used_symbols[utils.get_node_text(node, content)] = true
           end
         end
       end

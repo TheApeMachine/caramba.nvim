@@ -6,6 +6,7 @@ local M = {}
 local ts_utils = require('nvim-treesitter.ts_utils')
 local parsers = require('nvim-treesitter.parsers')
 local llm = require('caramba.llm')
+local utils = require('caramba.utils')
 
 -- Transformation registry
 M.transformations = {}
@@ -13,24 +14,6 @@ M.transformations = {}
 -- Register a transformation
 M.register_transformation = function(name, transform_fn)
   M.transformations[name] = transform_fn
-end
-
--- Get node text with proper handling
-local function get_node_text(node, bufnr)
-  if not node then return "" end
-  local start_row, start_col, end_row, end_col = node:range()
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
-  
-  if #lines == 0 then return "" end
-  
-  if #lines == 1 then
-    lines[1] = string.sub(lines[1], start_col + 1, end_col)
-  else
-    lines[1] = string.sub(lines[1], start_col + 1)
-    lines[#lines] = string.sub(lines[#lines], 1, end_col)
-  end
-  
-  return table.concat(lines, '\n')
 end
 
 -- Find nodes matching a query
@@ -81,7 +64,7 @@ M.transformations.callback_to_async = {
   end,
   
   transform = function(node, bufnr)
-    local text = get_node_text(node.node, bufnr)
+    local text = utils.get_node_text(node.node, bufnr)
     
     -- Use AI to transform
     local prompt = string.format([[
@@ -124,7 +107,7 @@ M.transformations.class_to_function = {
   end,
   
   transform = function(node, bufnr)
-    local text = get_node_text(node.node, bufnr)
+    local text = utils.get_node_text(node.node, bufnr)
     
     local prompt = string.format([[
 Convert this React class component to a functional component with hooks:

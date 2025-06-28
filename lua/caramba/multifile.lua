@@ -7,6 +7,7 @@ local config = require('caramba.config')
 local edit = require('caramba.edit')
 local llm = require('caramba.llm')
 local context = require('caramba.context')
+local utils = require('caramba.utils')
 
 -- Transaction state
 M._transaction = {
@@ -446,7 +447,7 @@ M.rename_symbol = function(old_name, new_name, opts)
 
     if query then
       for _, node in query:iter_captures(root, content) do
-        if vim.treesitter.get_node_text(node, content) == old_name then
+        if utils.get_node_text(node, content) == old_name then
           local start_row, start_col, end_row, end_col = node:range()
           table.insert(replacements, { row = start_row, col = start_col, end_col = end_col })
         end

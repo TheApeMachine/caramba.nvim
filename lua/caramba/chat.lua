@@ -9,6 +9,7 @@ local edit = require('caramba.edit')
 local config = require('caramba.config')
 local context = require('caramba.context')
 local planner = require('caramba.planner')
+local utils = require('caramba.utils')
 
 -- Chat state
 M._chat_state = {
@@ -150,12 +151,12 @@ local function extract_code_blocks(content)
     if code_node and fenced_node then
       local lang = "text"
       if captures.language then
-        lang = vim.treesitter.get_node_text(captures.language, content)
+        lang = utils.get_node_text(captures.language, content)
       end
       
       local start_line, _, _, _ = fenced_node:range()
       
-      local code_content = vim.treesitter.get_node_text(code_node, content)
+      local code_content = utils.get_node_text(code_node, content)
       table.insert(blocks, {
         language = lang,
         code = code_content,

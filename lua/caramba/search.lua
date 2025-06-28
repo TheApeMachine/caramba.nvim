@@ -9,6 +9,7 @@ local config = require("caramba.config")
 local parsers = require("nvim-treesitter.parsers")
 local scan = require('plenary.scandir')
 local embeddings = require('caramba.embeddings')
+local utils = require('caramba.utils')
 
 -- Search index storage
 M._index = {}
@@ -191,7 +192,7 @@ M._extract_symbols = function(filepath, content)
   if not ok_query then return symbols end
   
   for id, node in query:iter_captures(root, content) do
-    local name = vim.treesitter.get_node_text(node, content)
+    local name = utils.get_node_text(node, content)
     local start_row, start_col, end_row, end_col = node:range()
     
     table.insert(symbols, {
