@@ -364,46 +364,77 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     stream = true,
   }, function(chunk, is_complete)
     vim.schedule(function()
-      -- Debug logging
       if config.get().debug then
         if is_complete then
           vim.notify("AI: Response complete", vim.log.levels.INFO)
         elseif chunk then
-          -- Only log that we received a chunk, not the content
           vim.notify("AI: Received chunk", vim.log.levels.DEBUG)
         end
       end
-      
+
       if is_complete then
-        -- Final message is complete
+        -- Final message is complete. A final render ensures code blocks are parsed.
         M._render_chat()
-      else
-        -- Check for errors - if chunk is nil and not complete, it's an error
-        if chunk == nil and not is_complete then
-          -- Error occurred
-          table.insert(M._chat_state.history, {
-            role = "assistant",
-            content = "Error: Failed to get response from AI. Please check your API key and connection.",
-          })
-          M._render_chat()
-          return
+        return
+      end
+
+      -- Handle errors
+      if chunk == nil then
+        table.insert(M._chat_state.history, {
+          role = "assistant",
+          content = "Error: Failed to get response from AI. Please check your API key and connection.",
+        })
+        M._render_chat()
+        return
+      end
+
+      -- Efficiently handle streaming chunks
+      if chunk then
+        local history = M._chat_state.history
+        local bufnr = M._chat_state.bufnr
+        local winid = M._chat_state.winid
+
+        if #history == 0 or history[#history].role ~= "assistant" then
+          -- First chunk: start a new message in history and add header to buffer
+          table.insert(history, { role = "assistant", content = chunk })
+          
+          vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
+          local header = { "## Assistant:", "" }
+          vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, header)
+          vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
+        else
+          -- Subsequent chunk: append to history
+          history[#history].content = history[#history].content .. chunk
         end
         
-        -- Streaming update - only process if we have a chunk
-        if chunk then
-          if #M._chat_state.history == 0 or 
-             M._chat_state.history[#M._chat_state.history].role ~= "assistant" then
-            -- Start new assistant message
-            table.insert(M._chat_state.history, {
-              role = "assistant",
-              content = chunk,
-            })
+        -- Append the chunk to the buffer directly
+        vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
+        local chunk_lines = vim.split(chunk, "\n", { plain = true })
+        if #chunk_lines > 0 then
+          local line_count = vim.api.nvim_buf_line_count(bufnr)
+          if line_count > 0 then
+            local last_line = vim.api.nvim_buf_get_lines(bufnr, line_count - 1, line_count, false)[1] or ""
+            -- Append first part of chunk to the last line
+            vim.api.nvim_buf_set_lines(bufnr, line_count - 1, line_count, false, { last_line .. chunk_lines[1] })
           else
-            -- Append to existing assistant message
-            M._chat_state.history[#M._chat_state.history].content = 
-              M._chat_state.history[#M._chat_state.history].content .. chunk
+            vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, { chunk_lines[1] })
           end
-          M._render_chat()
+
+          -- Append the rest of the lines if any
+          if #chunk_lines > 1 then
+            local rest_of_lines = {}
+            for i = 2, #chunk_lines do
+              table.insert(rest_of_lines, chunk_lines[i])
+            end
+            vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, rest_of_lines)
+          end
+        end
+        vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
+        
+        -- Scroll to bottom
+        if winid and vim.api.nvim_win_is_valid(winid) then
+          local new_line_count = vim.api.nvim_buf_line_count(bufnr)
+          vim.api.nvim_win_set_cursor(winid, { new_line_count, 0 })
         end
       end
     end)
