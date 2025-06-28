@@ -532,7 +532,7 @@ function M.build_context_string(context)
   local parts = {}
   
   -- File information
-  table.insert(parts, string.format("File: %s", context.filepath or "unknown"))
+  table.insert(parts, string.format("File: %s", context.file_path or "unknown"))
   table.insert(parts, string.format("Language: %s", context.language or "unknown"))
   
   -- Documentation

@@ -209,7 +209,7 @@ function M.setup()
     if ctx then
       local info = string.format(
         "File: %s\nLanguage: %s\nFunction: %s\nClass: %s\nImports: %d\nContent Length: %d chars",
-        ctx.file or "unknown",
+        ctx.file_path or "unknown",
         ctx.language or "unknown",
         ctx.current_function or "none",
         ctx.current_class or "none",
