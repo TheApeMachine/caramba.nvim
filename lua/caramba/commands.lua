@@ -313,7 +313,21 @@ function M.setup()
     vim.notify("=== AI Index Diagnostics ===", vim.log.levels.INFO)
     vim.notify("Current directory: " .. vim.fn.getcwd(), vim.log.levels.INFO)
     
+    -- First, test with vim's globpath to see what files exist
+    vim.notify("\n--- Testing with vim.fn.globpath ---", vim.log.levels.INFO)
+    local go_files = vim.fn.globpath(vim.fn.getcwd(), "**/*.go", false, true)
+    vim.notify("Go files found with globpath: " .. #go_files, vim.log.levels.INFO)
+    if #go_files > 0 then
+      for i = 1, math.min(10, #go_files) do
+        vim.notify("  " .. vim.fn.fnamemodify(go_files[i], ":~:."), vim.log.levels.INFO)
+      end
+      if #go_files > 10 then
+        vim.notify("  ... and " .. (#go_files - 10) .. " more", vim.log.levels.INFO)
+      end
+    end
+    
     -- Test basic file scanning
+    vim.notify("\n--- Testing with plenary scan_dir ---", vim.log.levels.INFO)
     local test_files = {}
     local test_count = 0
     
