@@ -220,14 +220,11 @@ end
 -- Process queued requests
 local function process_queue()
   -- Use iterative approach instead of recursion
-  while #M._request_queue > 0 and M._active_requests < M._max_concurrent do
+  while #M._request_queue > 0 and vim.tbl_count(M._active_requests) < M._max_concurrent do
     local queued = table.remove(M._request_queue, 1)
     if queued then
-      M._active_requests = M._active_requests + 1
-      
       -- Process the queued request
       local function on_complete(response)
-        M._active_requests = M._active_requests - 1
         queued.callback(response)
       end
       
@@ -245,6 +242,20 @@ end
 M.request = function(messages, opts, callback)
   opts = opts or {}
   local provider = opts.provider or config.get().provider
+  
+  -- Validate API key for providers that need it
+  local api_config = config.get().api[provider]
+  if provider == "openai" and not api_config.api_key then
+    vim.schedule(function()
+      callback(nil, "OpenAI API key not set. Please set OPENAI_API_KEY environment variable.")
+    end)
+    return
+  elseif provider == "anthropic" and not api_config.api_key then
+    vim.schedule(function()
+      callback(nil, "Anthropic API key not set. Please set ANTHROPIC_API_KEY environment variable.")
+    end)
+    return
+  end
   
   -- Check if we're at the concurrent limit
   if vim.tbl_count(M._active_requests) >= M._max_concurrent then
@@ -308,9 +319,16 @@ M.request = function(messages, opts, callback)
       M._active_requests[request_id] = nil
       M._active_jobs[request_id] = nil
       
-      if return_val ~= 0 then
+      if return_val and return_val ~= 0 then
         vim.schedule(function()
-          callback(nil, "Request failed with code: " .. return_val)
+          callback(nil, "Request failed with code: " .. tostring(return_val))
+        end)
+        -- Process any queued requests
+        process_queue()
+        return
+      elseif not return_val then
+        vim.schedule(function()
+          callback(nil, "Request terminated unexpectedly")
         end)
         -- Process any queued requests
         process_queue()
@@ -339,6 +357,13 @@ M.request = function(messages, opts, callback)
   
   -- Track the job before starting
   M._active_jobs[request_id] = job
+  
+  -- Debug logging
+  if config.get().debug then
+    vim.schedule(function()
+      vim.notify(string.format("AI: Starting request to %s (ID: %s)", provider, request_id), vim.log.levels.INFO)
+    end)
+  end
   
   -- Start job
   job:start()
@@ -472,6 +497,20 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   opts = opts or {}
   local provider = opts.provider or config.get().provider
   
+  -- Validate API key for providers that need it
+  local api_config = config.get().api[provider]
+  if provider == "openai" and not api_config.api_key then
+    vim.schedule(function()
+      on_complete(nil, "OpenAI API key not set. Please set OPENAI_API_KEY environment variable.")
+    end)
+    return
+  elseif provider == "anthropic" and not api_config.api_key then
+    vim.schedule(function()
+      on_complete(nil, "Anthropic API key not set. Please set ANTHROPIC_API_KEY environment variable.")
+    end)
+    return
+  end
+  
   -- Only OpenAI supports streaming currently
   if provider ~= "openai" then
     -- Fall back to regular request
@@ -576,15 +615,19 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       M._active_requests[request_id] = nil
       M._active_jobs[request_id] = nil
       
-      if return_val ~= 0 then
+      if return_val and return_val ~= 0 then
         vim.schedule(function()
-          local error_msg = "Stream failed with code: " .. return_val
+          local error_msg = "Stream failed with code: " .. tostring(return_val)
           if return_val == 28 then
             error_msg = "Request timed out"
           elseif return_val == 7 then
             error_msg = "Failed to connect to API"
           end
           on_complete(nil, error_msg)
+        end)
+      elseif not return_val then
+        vim.schedule(function()
+          on_complete(nil, "Stream terminated unexpectedly")
         end)
       end
       
@@ -596,6 +639,14 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   -- Track the job before starting
   M._active_jobs[request_id] = job
   
+  -- Debug logging
+  if config.get().debug then
+    vim.schedule(function()
+      vim.notify(string.format("AI: Starting request to %s (ID: %s)", provider, request_id), vim.log.levels.INFO)
+    end)
+  end
+  
+  -- Start job
   job:start()
   
   -- Add timeout handling
