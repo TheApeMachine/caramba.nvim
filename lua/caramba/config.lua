@@ -80,6 +80,7 @@ M.defaults = {
       "dist/",
       "build/",
     },
+    include_extensions = { "lua", "py", "js", "ts", "jsx", "tsx", "go", "rs", "java", "c", "cpp", "h", "hpp" },
     use_embeddings = false, -- Enable embeddings-based search
     embedding_chunk_size = 50, -- Lines per chunk for embedding
     embedding_model = "text-embedding-3-small", -- OpenAI embedding model (3-small or 3-large)

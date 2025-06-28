@@ -110,14 +110,37 @@ end
 M.index_project = function(opts)
   opts = opts or {}
   local root = opts.root or vim.fn.getcwd()
+  local scandir = require('plenary.scandir')
+  local config = require('caramba.config').get()
   
   M.db.symbols = {}
   
-  -- Find all source files
-  local files = vim.fn.systemlist("find " .. root .. " -type f -name '*.js' -o -name '*.ts' -o -name '*.py' -o -name '*.lua' | grep -v node_modules | grep -v .git")
+  -- Use plenary.scandir for robust file finding
+  local files_to_scan = scandir.scan_dir(root, {
+    hidden = false,
+    respect_gitignore = true,
+    exclude = config.search.exclude_patterns,
+  })
+
+  -- Filter for included extensions
+  local files = {}
+  local include_map = {}
+  for _, ext in ipairs(config.search.include_extensions or {}) do
+    include_map[ext] = true
+  end
+
+  for _, file in ipairs(files_to_scan) do
+    if vim.fn.isdirectory(file) == 0 then
+      local ext = vim.fn.fnamemodify(file, ':e')
+      if include_map[ext] then
+        table.insert(files, file)
+      end
+    end
+  end
   
   local total = #files
   local processed = 0
+  local symbol_count = 0
   
   for _, file in ipairs(files) do
     -- Load file into temporary buffer
@@ -135,7 +158,10 @@ M.index_project = function(opts)
       local symbols = M.extract_symbols(buf)
       for _, symbol in ipairs(symbols) do
         symbol.file = file -- Ensure absolute path
-        M.db.symbols[symbol.name] = M.db.symbols[symbol.name] or {}
+        if not M.db.symbols[symbol.name] then
+          M.db.symbols[symbol.name] = {}
+          symbol_count = symbol_count + 1
+        end
         table.insert(M.db.symbols[symbol.name], symbol)
       end
       
@@ -149,7 +175,7 @@ M.index_project = function(opts)
     end
   end
   
-  vim.notify(string.format("Indexed %d symbols from %d files", vim.tbl_count(M.db.symbols), total))
+  vim.notify(string.format("Indexed %d symbols from %d files", symbol_count, total))
   
   -- Build dependency graph
   M._build_dependency_graph()

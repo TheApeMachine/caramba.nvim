@@ -84,7 +84,7 @@ patterns, and architecture.]]
   }
   
   -- Use structured output with JSON schema for OpenAI
-  local opts = { temperature = 0.3 }
+  local opts = { }
   
   if config.get().provider == "openai" then
     opts.response_format = {
@@ -392,7 +392,7 @@ Existing Conventions:
   }
   
   -- Use structured output with JSON schema for OpenAI
-  local opts = { temperature = 0.2 }
+  local opts = { }
   
   if config.get().provider == "openai" then
     opts.response_format = {
@@ -486,7 +486,7 @@ Known Issues:
   }
   
   -- Use structured output with JSON schema for OpenAI
-  local opts = { temperature = 0.1 }
+  local opts = { }
   
   if config.get().provider == "openai" then
     opts.response_format = {

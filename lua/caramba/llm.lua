@@ -23,7 +23,7 @@ M.providers.openai = {
     opts = vim.tbl_extend("force", {
       model = api_config.model,
       temperature = api_config.temperature,
-      max_completion_tokens = api_config.max_tokens,
+      max_tokens = api_config.max_tokens,
     }, opts or {})
     
     local messages = type(prompt) == "string" 
@@ -34,7 +34,7 @@ M.providers.openai = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_completion_tokens = opts.max_tokens,
+      max_tokens = opts.max_tokens,
       stream = false,
     }
     
@@ -84,7 +84,7 @@ M.providers.google = {
     opts = vim.tbl_extend("force", {
       model = api_config.model,
       temperature = api_config.temperature,
-      max_completion_tokens = api_config.max_tokens,
+      max_tokens = api_config.max_tokens,
     }, opts or {})
     
     local messages = type(prompt) == "string" 
@@ -95,7 +95,7 @@ M.providers.google = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_completion_tokens = opts.max_tokens,
+      max_tokens = opts.max_tokens,
       stream = false,
     }
     
@@ -120,7 +120,7 @@ M.providers.anthropic = {
     opts = vim.tbl_extend("force", {
       model = api_config.model,
       temperature = api_config.temperature,
-      max_completion_tokens = api_config.max_tokens,
+      max_tokens = api_config.max_tokens,
     }, opts or {})
     
     local messages = type(prompt) == "string"
@@ -145,7 +145,7 @@ M.providers.anthropic = {
       model = opts.model,
       messages = anthropic_messages,
       temperature = opts.temperature,
-      max_completion_tokens = opts.max_tokens,
+      max_tokens = opts.max_tokens,
     }
     
     if opts.system then
@@ -622,34 +622,63 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       if not data or not M._active_requests[request_id] then return end
       
       for _, line in ipairs(data) do
-        if line and line:match("^data: ") then
-          local data_content = line:sub(7)
-          
-          if data_content == "[DONE]" then
-            if M._active_requests[request_id] then
-              M._active_requests[request_id] = nil
-              vim.schedule(function()
-                on_complete(accumulated_content, nil)
-              end)
-              -- Stop the job as we are done.
-              pcall(vim.fn.jobstop, job_id)
-            end
-            return
-          end
-          
-          local ok, chunk_data = pcall(vim.json.decode, data_content)
-          if ok and chunk_data then
-            if chunk_data.choices and chunk_data.choices[1] and chunk_data.choices[1].delta and chunk_data.choices[1].delta.content then
-              local delta_content = chunk_data.choices[1].delta.content
-              accumulated_content = accumulated_content .. delta_content
-              vim.schedule(function()
-                on_chunk(delta_content)
-              end)
-            elseif chunk_data.error then
+        if line and line ~= "" then
+          if line:match("^data: ") then
+            local data_content = line:sub(7)
+            
+            if data_content == "[DONE]" then
               if M._active_requests[request_id] then
                 M._active_requests[request_id] = nil
                 vim.schedule(function()
-                  on_complete(nil, chunk_data.error.message or "Unknown API error in stream")
+                  on_complete(accumulated_content, nil)
+                end)
+                pcall(vim.fn.jobstop, job_id)
+              end
+              return
+            end
+            
+            local ok, chunk_data = pcall(vim.json.decode, data_content)
+            if ok and chunk_data then
+              if chunk_data.choices and chunk_data.choices[1] and chunk_data.choices[1].delta and chunk_data.choices[1].delta.content then
+                local delta_content = chunk_data.choices[1].delta.content
+                accumulated_content = accumulated_content .. delta_content
+                vim.schedule(function()
+                  on_chunk(delta_content)
+                end)
+              elseif chunk_data.error then
+                if M._active_requests[request_id] then
+                  M._active_requests[request_id] = nil
+                  local err_msg = chunk_data.error.message or "Unknown API error in stream"
+                  vim.schedule(function()
+                    on_complete(nil, err_msg)
+                  end)
+                  pcall(vim.fn.jobstop, job_id)
+                end
+                return
+              end
+            else
+              -- Handle non-JSON data in stream, which could be an error message
+              if config.get().debug then
+                vim.schedule(function()
+                  vim.notify("AI: Non-JSON data in stream: " .. data_content, vim.log.levels.WARN)
+                end)
+              end
+            end
+          else
+            -- Line does not start with "data: ", could be an error from the API provider
+            if config.get().debug then
+              vim.schedule(function()
+                vim.notify("AI: Received raw line in stream: " .. line, vim.log.levels.INFO)
+              end)
+            end
+            -- Check if this raw line is a JSON error object
+            local ok, err_data = pcall(vim.json.decode, line)
+            if ok and err_data and err_data.error then
+              if M._active_requests[request_id] then
+                M._active_requests[request_id] = nil
+                local err_msg = err_data.error.message or "Unknown API error in stream"
+                vim.schedule(function()
+                  on_complete(nil, err_msg)
                 end)
                 pcall(vim.fn.jobstop, job_id)
               end
