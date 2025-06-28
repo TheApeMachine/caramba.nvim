@@ -584,6 +584,29 @@ M.setup_commands = function()
   end, {
     desc = 'Test LLM connection',
   })
+  
+  -- Test LLM streaming
+  commands.register('TestLLMStream', function()
+    local messages = {
+      { role = "user", content = "Count from 1 to 10 slowly." }
+    }
+    
+    vim.notify("Testing LLM streaming...", vim.log.levels.INFO)
+    
+    local chunks = {}
+    llm.request_conversation(messages, { stream = true }, function(chunk, is_complete)
+      if is_complete then
+        vim.notify("Streaming complete. Total response: " .. table.concat(chunks, ""), vim.log.levels.INFO)
+      elseif chunk then
+        table.insert(chunks, chunk)
+        vim.notify("Chunk: " .. chunk, vim.log.levels.INFO)
+      else
+        vim.notify("Streaming error occurred", vim.log.levels.ERROR)
+      end
+    end)
+  end, {
+    desc = 'Test LLM streaming',
+  })
 end
 
 return M 

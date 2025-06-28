@@ -583,10 +583,32 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     on_stdout = function(_, data)
       if not data then return end
       
+      -- Debug raw data
+      if config.get().debug then
+        vim.schedule(function()
+          vim.notify("AI: Received stdout data: " .. string.sub(data, 1, 100) .. "...", vim.log.levels.INFO)
+        end)
+      end
+      
       buffer = buffer .. data
       
+      -- Debug buffer content
+      if config.get().debug and buffer:len() > 0 then
+        vim.schedule(function()
+          vim.notify("AI: Buffer length: " .. buffer:len(), vim.log.levels.INFO)
+        end)
+      end
+      
       -- Process complete SSE events
-      for line in buffer:gmatch("([^\n]*)\n") do
+      -- Split by newlines and process each line
+      local lines = vim.split(buffer, "\n", { plain = true })
+      
+      -- Process all complete lines (all but the last if it doesn't end with newline)
+      local last_line_complete = buffer:sub(-1) == "\n"
+      local lines_to_process = last_line_complete and #lines or #lines - 1
+      
+      for i = 1, lines_to_process do
+        local line = lines[i]
         if line:match("^data: ") then
           local json_str = line:sub(7) -- Remove "data: " prefix
           
@@ -610,17 +632,18 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
               end)
             end
           end
+        elseif config.get().debug and line ~= "" then
+          vim.schedule(function()
+            vim.notify("AI: Unexpected line: " .. line, vim.log.levels.WARN)
+          end)
         end
       end
       
-      -- Keep any incomplete line in buffer
-      local last_newline = buffer:find("\n[^\n]*$")
-      if last_newline then
-        buffer = buffer:sub(last_newline + 1)
-      end
+      -- Keep any incomplete last line in buffer
+      buffer = last_line_complete and "" or (lines[#lines] or "")
     end,
     on_stderr = function(_, data)
-      if data and config.get().debug then
+      if data then
         vim.schedule(function()
           vim.notify("AI: Curl error: " .. data, vim.log.levels.ERROR)
         end)
