@@ -351,7 +351,7 @@ M.collect = function(opts)
   end
   
   -- Generate cache key based on buffer, node ID, and whether we want full context
-  local cache_key = string.format("%d:%d:%s", bufnr, node:id(), opts.full and "full" or "partial")
+              local cache_key = string.format("%d:%s:%s", bufnr, tostring(node:id()), opts.full and "full" or "partial")
   
   -- Check cache unless forced refresh
   if not opts.force and M._cache[cache_key] then
