@@ -585,62 +585,55 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       
       buffer = buffer .. data
       
-      -- Process complete SSE events
-      -- Look for complete "data: " lines ending with two newlines (SSE format)
-      local pos = 1
+      -- Process SSE events - they are separated by double newlines
       while true do
-        -- Find next "data: " prefix
-        local data_start = buffer:find("data: ", pos, true)
-        if not data_start then break end
-        
-        -- Find the end of this data line (double newline in SSE)
-        local data_end = buffer:find("\n\n", data_start, true)
-        if not data_end then
-          -- Also check for single newline followed by another "data: " or end
-          data_end = buffer:find("\n", data_start, true)
-          if data_end then
-            local next_data = buffer:find("data: ", data_end + 1, true)
-            if not next_data then
-              -- No next data, might be incomplete
-              break
-            end
-          else
-            -- No complete line yet
-            break
-          end
+        -- Find the next complete event (ends with \n\n)
+        local event_end = buffer:find("\n\n", 1, true)
+        if not event_end then
+          -- No complete event yet
+          break
         end
         
-        -- Extract the data line
-        local line = buffer:sub(data_start, data_end - 1)
-        local json_str = line:sub(7) -- Remove "data: " prefix
+        -- Extract the event
+        local event = buffer:sub(1, event_end - 1)
+        buffer = buffer:sub(event_end + 2) -- Skip the \n\n
         
-        if json_str == "[DONE]" then
-          vim.schedule(function()
-            on_complete(accumulated_content, nil)
-          end)
-          pos = data_end + 1
-        else
-          local ok, chunk_data = pcall(vim.json.decode, json_str)
-          if ok and chunk_data.choices and chunk_data.choices[1] then
-            local delta = chunk_data.choices[1].delta
-            if delta and delta.content then
-              accumulated_content = accumulated_content .. delta.content
+        -- Process each line in the event
+        for line in event:gmatch("[^\n]+") do
+          if line:match("^data: ") then
+            local data_content = line:sub(7) -- Remove "data: " prefix
+            
+            if data_content == "[DONE]" then
               vim.schedule(function()
-                on_chunk(delta.content)
+                on_complete(accumulated_content, nil)
               end)
+            else
+              -- Parse the JSON data
+              local ok, chunk_data = pcall(vim.json.decode, data_content)
+              if ok and chunk_data then
+                if chunk_data.choices and chunk_data.choices[1] then
+                  local delta = chunk_data.choices[1].delta
+                  if delta and delta.content then
+                    accumulated_content = accumulated_content .. delta.content
+                    vim.schedule(function()
+                      on_chunk(delta.content)
+                    end)
+                  end
+                elseif chunk_data.error then
+                  -- Handle API errors
+                  vim.schedule(function()
+                    on_complete(nil, chunk_data.error.message or "Unknown API error")
+                  end)
+                  return
+                end
+              elseif not ok and config.get().debug then
+                vim.schedule(function()
+                  vim.notify("AI: Failed to parse chunk: " .. vim.inspect(data_content), vim.log.levels.WARN)
+                end)
+              end
             end
-          elseif not ok and config.get().debug then
-            vim.schedule(function()
-              vim.notify("AI: Failed to parse streaming chunk: " .. string.sub(json_str, 1, 100), vim.log.levels.WARN)
-            end)
           end
-          pos = data_end + 1
         end
-      end
-      
-      -- Keep unprocessed data in buffer
-      if pos > 1 then
-        buffer = buffer:sub(pos)
       end
     end,
     on_stderr = function(_, data)
