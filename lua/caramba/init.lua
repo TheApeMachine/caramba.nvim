@@ -80,23 +80,43 @@ function M.setup(opts)
   
   -- Set up autocommands
   local context = require('caramba.context')
-  local debounce_timer = nil
+  local last_update_time = 0
+  local pending_update = false
   
   -- Only track cursor context if enabled
   if M.config.get().features.track_cursor_context then
     vim.api.nvim_create_autocmd({"CursorMoved", "CursorMovedI", "BufEnter"}, {
       group = vim.api.nvim_create_augroup("AIContext", { clear = true }),
       callback = function()
-        -- Cancel any pending update
-        if debounce_timer then
-          vim.fn.timer_stop(debounce_timer)
-        end
+        -- Simple time-based debouncing
+        local current_time = vim.loop.now()
+        local time_since_last = current_time - last_update_time
         
-        -- Update cursor context in the background with debounce
-        debounce_timer = vim.defer_fn(function()
-          context.update_cursor_context()
-          debounce_timer = nil
-        end, 150) -- Increased delay to 150ms for less frequent updates
+        if time_since_last >= 150 then
+          -- Enough time has passed, update immediately
+          last_update_time = current_time
+          pending_update = false
+          
+          -- Wrap in pcall to prevent errors
+          local ok, err = pcall(context.update_cursor_context)
+          if not ok and M.config.get().debug then
+            vim.notify("Error updating cursor context: " .. tostring(err), vim.log.levels.ERROR)
+          end
+        elseif not pending_update then
+          -- Schedule an update for later
+          pending_update = true
+          vim.defer_fn(function()
+            if pending_update then
+              pending_update = false
+              last_update_time = vim.loop.now()
+              
+              local ok, err = pcall(context.update_cursor_context)
+              if not ok and M.config.get().debug then
+                vim.notify("Error updating cursor context: " .. tostring(err), vim.log.levels.ERROR)
+              end
+            end
+          end, 150)
+        end
       end,
     })
   end
