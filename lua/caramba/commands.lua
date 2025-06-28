@@ -11,7 +11,7 @@ function M.setup()
   local refactor = require("caramba.refactor")
   local search = require("caramba.search")
   local config = require("caramba.config")
-  local ai = require('ai')
+  local caramba = require('caramba')
   
   -- Completion command
   vim.api.nvim_create_user_command("AIComplete", function(args)
