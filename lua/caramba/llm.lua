@@ -286,6 +286,7 @@ M.request = function(messages, opts, callback)
     "-sS",
     request_data.url,
     "-X", "POST",
+    "--max-time", "30", -- Add timeout to prevent hanging
   }
   
   for header, value in pairs(request_data.headers) do
@@ -495,6 +496,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     "-N", -- No buffering for streaming
     request_data.url,
     "-X", "POST",
+    "--max-time", "30", -- Add timeout to prevent hanging
   }
   
   for header, value in pairs(request_data.headers) do
@@ -513,6 +515,11 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   
   local accumulated_content = ""
   local buffer = ""
+  
+  -- Debug logging
+  if config.get().debug then
+    vim.notify("AI: Starting streaming request to " .. provider, vim.log.levels.INFO)
+  end
   
   -- Create streaming job
   local job = Job:new({
@@ -542,6 +549,10 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
                   on_chunk(delta.content)
                 end)
               end
+            elseif not ok and config.get().debug then
+              vim.schedule(function()
+                vim.notify("AI: Failed to parse streaming chunk: " .. json_str, vim.log.levels.WARN)
+              end)
             end
           end
         end
@@ -553,6 +564,13 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
         buffer = buffer:sub(last_newline + 1)
       end
     end,
+    on_stderr = function(_, data)
+      if data and config.get().debug then
+        vim.schedule(function()
+          vim.notify("AI: Curl error: " .. data, vim.log.levels.ERROR)
+        end)
+      end
+    end,
     on_exit = function(j, return_val)
       -- Clean up tracking
       M._active_requests[request_id] = nil
@@ -560,7 +578,13 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       
       if return_val ~= 0 then
         vim.schedule(function()
-          on_complete(nil, "Stream failed with code: " .. return_val)
+          local error_msg = "Stream failed with code: " .. return_val
+          if return_val == 28 then
+            error_msg = "Request timed out"
+          elseif return_val == 7 then
+            error_msg = "Failed to connect to API"
+          end
+          on_complete(nil, error_msg)
         end)
       end
       
@@ -604,13 +628,30 @@ M.request_conversation = function(messages, opts, callback)
       callback(chunk, false) -- Not complete yet
     end
     local on_complete = function(result, err)
-      -- Signal completion with nil chunk and true for is_complete
-      callback(nil, true)
+      if err then
+        -- Signal error
+        callback(nil, false)
+        vim.schedule(function()
+          vim.notify("AI Error: " .. err, vim.log.levels.ERROR)
+        end)
+      else
+        -- Signal completion with nil chunk and true for is_complete
+        callback(nil, true)
+      end
     end
     
     return M.request_stream(messages, opts, on_chunk, on_complete)
   else
-    return M.request(messages, opts, callback)
+    return M.request(messages, opts, function(result, err)
+      if err then
+        vim.schedule(function()
+          vim.notify("AI Error: " .. err, vim.log.levels.ERROR)
+        end)
+        callback(nil, true)
+      else
+        callback(result, true)
+      end
+    end)
   end
 end
 

@@ -117,6 +117,38 @@ function M.setup(opts)
     })
   end
   
+  -- Add debug commands if debug mode is enabled
+  if M.config.get().debug then
+    vim.api.nvim_create_user_command("AITestConnection", function()
+      local test_messages = {
+        { role = "user", content = "Say 'Hello, I'm working!' if you can see this." }
+      }
+      
+      M.llm.request(test_messages, { 
+        temperature = 0.1,
+        max_tokens = 50
+      }, function(result, err)
+        if err then
+          vim.notify("LLM Test Failed: " .. err, vim.log.levels.ERROR)
+          vim.notify("Provider: " .. M.config.get().provider, vim.log.levels.INFO)
+        else
+          vim.notify("LLM Test Success: " .. (result or "No response"), vim.log.levels.INFO)
+        end
+      end)
+    end, { desc = "Test LLM connection" })
+    
+    vim.api.nvim_create_user_command("AIShowConfig", function()
+      local cfg = M.config.get()
+      vim.notify("Provider: " .. cfg.provider, vim.log.levels.INFO)
+      
+      if cfg.provider == "openai" then
+        local has_key = cfg.api.openai.api_key and cfg.api.openai.api_key ~= ""
+        vim.notify("OpenAI API Key: " .. (has_key and "Set" or "Not Set"), vim.log.levels.INFO)
+        vim.notify("Model: " .. cfg.api.openai.model, vim.log.levels.INFO)
+      end
+    end, { desc = "Show AI configuration" })
+  end
+  
   vim.notify("AI Assistant initialized", vim.log.levels.INFO)
 end
 

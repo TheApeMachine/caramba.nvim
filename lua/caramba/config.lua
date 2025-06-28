@@ -111,6 +111,7 @@ M.defaults = {
   },
   
   -- Planning settings
+  debug = false, -- Enable debug logging
 }
 
 -- Current configuration

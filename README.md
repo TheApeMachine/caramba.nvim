@@ -383,3 +383,44 @@ Error: No Tree-sitter parser for language
 <p align="center">
 Made with ❤️ for the Neovim community
 </p>
+
+## Installation
+
+## Troubleshooting
+
+### Neovim becomes unresponsive when using AI Chat
+
+If Neovim freezes when using the AI chat feature, this is likely due to a network timeout or API connection issue. We've added several fixes to prevent this:
+
+1. **Enable debug mode** to see what's happening:
+   ```lua
+   require('caramba').setup({
+     debug = true,
+     -- your other config...
+   })
+   ```
+
+2. **Test your connection** with the debug commands:
+   ```vim
+   :AITestConnection
+   :AIShowConfig
+   ```
+
+3. **Common causes and solutions**:
+   - **API Key not set**: Ensure your `OPENAI_API_KEY` environment variable is set
+   - **Network issues**: The plugin now has a 30-second timeout on all requests
+   - **API endpoint issues**: Check if the OpenAI API is accessible from your network
+
+4. **If Neovim still hangs**:
+   - The plugin should now timeout after 30 seconds instead of hanging indefinitely
+   - You can kill the curl process from another terminal: `pkill -f "curl.*openai"`
+   - Report the issue with debug logs enabled
+
+### Error Messages
+
+- **"Request timed out"**: The API didn't respond within 30 seconds. Check your internet connection.
+- **"Failed to connect to API"**: Network connection failed. Check if you can access the API endpoint.
+- **"Stream failed with code: X"**: Curl error. Common codes:
+  - 7: Failed to connect
+  - 28: Timeout
+  - 35: SSL connection error

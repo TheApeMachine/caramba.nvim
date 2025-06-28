@@ -356,6 +356,17 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
         -- Final message is complete
         M._render_chat()
       else
+        -- Check for errors
+        if chunk == nil then
+          -- Error occurred
+          table.insert(M._chat_state.history, {
+            role = "assistant",
+            content = "Error: Failed to get response from AI. Please check your API key and connection.",
+          })
+          M._render_chat()
+          return
+        end
+        
         -- Streaming update
         if #M._chat_state.history == 0 or 
            M._chat_state.history[#M._chat_state.history].role ~= "assistant" then
