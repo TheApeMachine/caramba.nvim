@@ -583,64 +583,65 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     on_stdout = function(_, data)
       if not data then return end
       
-      -- Debug raw data
-      if config.get().debug then
-        vim.schedule(function()
-          vim.notify("AI: Received stdout data: " .. string.sub(data, 1, 100) .. "...", vim.log.levels.INFO)
-        end)
-      end
-      
       buffer = buffer .. data
       
-      -- Debug buffer content
-      if config.get().debug and buffer:len() > 0 then
-        vim.schedule(function()
-          vim.notify("AI: Buffer length: " .. buffer:len(), vim.log.levels.INFO)
-        end)
-      end
-      
       -- Process complete SSE events
-      -- Split by newlines and process each line
-      local lines = vim.split(buffer, "\n", { plain = true })
-      
-      -- Process all complete lines (all but the last if it doesn't end with newline)
-      local last_line_complete = buffer:sub(-1) == "\n"
-      local lines_to_process = last_line_complete and #lines or #lines - 1
-      
-      for i = 1, lines_to_process do
-        local line = lines[i]
-        if line:match("^data: ") then
-          local json_str = line:sub(7) -- Remove "data: " prefix
-          
-          if json_str == "[DONE]" then
-            vim.schedule(function()
-              on_complete(accumulated_content, nil)
-            end)
+      -- Look for complete "data: " lines ending with two newlines (SSE format)
+      local pos = 1
+      while true do
+        -- Find next "data: " prefix
+        local data_start = buffer:find("data: ", pos, true)
+        if not data_start then break end
+        
+        -- Find the end of this data line (double newline in SSE)
+        local data_end = buffer:find("\n\n", data_start, true)
+        if not data_end then
+          -- Also check for single newline followed by another "data: " or end
+          data_end = buffer:find("\n", data_start, true)
+          if data_end then
+            local next_data = buffer:find("data: ", data_end + 1, true)
+            if not next_data then
+              -- No next data, might be incomplete
+              break
+            end
           else
-            local ok, chunk_data = pcall(vim.json.decode, json_str)
-            if ok and chunk_data.choices and chunk_data.choices[1] then
-              local delta = chunk_data.choices[1].delta
-              if delta and delta.content then
-                accumulated_content = accumulated_content .. delta.content
-                vim.schedule(function()
-                  on_chunk(delta.content)
-                end)
-              end
-            elseif not ok and config.get().debug then
+            -- No complete line yet
+            break
+          end
+        end
+        
+        -- Extract the data line
+        local line = buffer:sub(data_start, data_end - 1)
+        local json_str = line:sub(7) -- Remove "data: " prefix
+        
+        if json_str == "[DONE]" then
+          vim.schedule(function()
+            on_complete(accumulated_content, nil)
+          end)
+          pos = data_end + 1
+        else
+          local ok, chunk_data = pcall(vim.json.decode, json_str)
+          if ok and chunk_data.choices and chunk_data.choices[1] then
+            local delta = chunk_data.choices[1].delta
+            if delta and delta.content then
+              accumulated_content = accumulated_content .. delta.content
               vim.schedule(function()
-                vim.notify("AI: Failed to parse streaming chunk: " .. json_str, vim.log.levels.WARN)
+                on_chunk(delta.content)
               end)
             end
+          elseif not ok and config.get().debug then
+            vim.schedule(function()
+              vim.notify("AI: Failed to parse streaming chunk: " .. string.sub(json_str, 1, 100), vim.log.levels.WARN)
+            end)
           end
-        elseif config.get().debug and line ~= "" then
-          vim.schedule(function()
-            vim.notify("AI: Unexpected line: " .. line, vim.log.levels.WARN)
-          end)
+          pos = data_end + 1
         end
       end
       
-      -- Keep any incomplete last line in buffer
-      buffer = last_line_complete and "" or (lines[#lines] or "")
+      -- Keep unprocessed data in buffer
+      if pos > 1 then
+        buffer = buffer:sub(pos)
+      end
     end,
     on_stderr = function(_, data)
       if data then
