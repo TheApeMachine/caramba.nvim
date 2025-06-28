@@ -19,8 +19,8 @@ M._last_indexed = nil
 
 -- Configuration
 M.config = {
-  index_path = vim.fn.stdpath('cache') .. '/ai_search_index.json',
-  embeddings_path = vim.fn.stdpath('cache') .. '/ai_embeddings.json',
+  index_path = nil,  -- Will be set dynamically based on workspace
+  embeddings_path = nil,  -- Will be set dynamically based on workspace
   exclude_dirs = {
     '.git', 'node_modules', '.venv', 'venv', '__pycache__', 
     'dist', 'build', 'target', '.idea', '.vscode'
@@ -33,15 +33,48 @@ M.config = {
   chunk_size = 50, -- Lines per chunk for embedding
 }
 
+-- Generate workspace-specific paths
+local function get_workspace_paths()
+  local workspace = vim.fn.getcwd()
+  -- Create a simple hash of the workspace path to make filenames unique
+  local hash = vim.fn.sha256(workspace):sub(1, 8)
+  local workspace_name = vim.fn.fnamemodify(workspace, ':t')
+  
+  local cache_dir = vim.fn.stdpath('cache')
+  return {
+    index_path = string.format('%s/ai_search_index_%s_%s.json', cache_dir, workspace_name, hash),
+    embeddings_path = string.format('%s/ai_embeddings_%s_%s.json', cache_dir, workspace_name, hash),
+  }
+end
+
 -- Initialize search index
 function M.setup(opts)
   if opts then
     M.config = vim.tbl_extend('force', M.config, opts)
   end
   
+  -- Set workspace-specific paths
+  local paths = get_workspace_paths()
+  M.config.index_path = paths.index_path
+  M.config.embeddings_path = paths.embeddings_path
+  
   -- Load existing index and embeddings
   M.load_index()
   M.load_embeddings()
+  
+  -- Setup file watchers for automatic updates
+  M.setup_file_watchers()
+  
+  -- Check index freshness on startup
+  vim.defer_fn(function()
+    if vim.tbl_count(M._index) > 0 then
+      local freshness = M.check_index_freshness()
+      if freshness.total_stale > 0 or freshness.total_missing > 0 then
+        vim.notify(string.format("AI: Found %d stale and %d missing files in index. Run :AIRefreshIndex to update.", 
+          freshness.total_stale, freshness.total_missing), vim.log.levels.WARN)
+      end
+    end
+  end, 2000)
 end
 
 -- Check if file should be indexed
@@ -319,9 +352,30 @@ end
 -- Update file in index
 function M.update_file(filepath)
   filepath = vim.fn.fnamemodify(filepath, ":p")
+  
+  -- Check if file should be indexed
+  if not should_include(filepath) or should_exclude(filepath) then
+    -- Remove from index if it was previously indexed
+    if M._index[filepath] then
+      M._index[filepath] = nil
+      vim.notify("AI: Removed " .. vim.fn.fnamemodify(filepath, ":~:.") .. " from index", vim.log.levels.DEBUG)
+    end
+    return
+  end
+  
   local file_data = M.index_file(filepath)
   if file_data then
     M._index[filepath] = file_data
+    vim.notify("AI: Updated " .. vim.fn.fnamemodify(filepath, ":~:.") .. " in index", vim.log.levels.DEBUG)
+    
+    -- Update embeddings if enabled
+    if config.get().search.use_embeddings then
+      M.index_file_with_embeddings(filepath, function(success)
+        if success then
+          vim.notify("AI: Updated embeddings for " .. vim.fn.fnamemodify(filepath, ":~:."), vim.log.levels.DEBUG)
+        end
+      end)
+    end
   end
 end
 
@@ -718,6 +772,11 @@ end
 
 -- Update the main index_workspace to use embeddings if available
 M.index_workspace = function(callback)
+  -- Refresh paths in case workspace changed
+  local paths = get_workspace_paths()
+  M.config.index_path = paths.index_path
+  M.config.embeddings_path = paths.embeddings_path
+  
   local provider = config.get().provider
   
   -- Use embeddings for OpenAI or if explicitly enabled
@@ -856,6 +915,251 @@ M.index_workspace_keyword = function(callback)
     M._last_indexed = os.time()
     if callback then callback() end
   end)
+end
+
+-- List all index files in cache directory
+M.list_index_files = function()
+  local cache_dir = vim.fn.stdpath('cache')
+  local files = vim.fn.globpath(cache_dir, 'ai_search_index_*.json', false, true)
+  local embeddings = vim.fn.globpath(cache_dir, 'ai_embeddings_*.json', false, true)
+  
+  local all_files = {}
+  for _, f in ipairs(files) do
+    table.insert(all_files, { path = f, type = "index" })
+  end
+  for _, f in ipairs(embeddings) do
+    table.insert(all_files, { path = f, type = "embeddings" })
+  end
+  
+  return all_files
+end
+
+-- Clean up old index files (keep only current workspace)
+M.cleanup_old_indexes = function()
+  local current_paths = get_workspace_paths()
+  local all_files = M.list_index_files()
+  local removed = 0
+  
+  for _, file_info in ipairs(all_files) do
+    if file_info.path ~= current_paths.index_path and 
+       file_info.path ~= current_paths.embeddings_path then
+      vim.fn.delete(file_info.path)
+      removed = removed + 1
+    end
+  end
+  
+  vim.notify(string.format("Removed %d old index files", removed), vim.log.levels.INFO)
+  return removed
+end
+
+-- Get current workspace index info
+M.get_index_info = function()
+  local paths = get_workspace_paths()
+  local info = {
+    workspace = vim.fn.getcwd(),
+    index_path = paths.index_path,
+    embeddings_path = paths.embeddings_path,
+    index_exists = vim.fn.filereadable(paths.index_path) == 1,
+    embeddings_exist = vim.fn.filereadable(paths.embeddings_path) == 1,
+  }
+  
+  -- Get file sizes if they exist
+  if info.index_exists then
+    local stat = vim.loop.fs_stat(paths.index_path)
+    if stat then
+      info.index_size = stat.size
+    end
+  end
+  
+  if info.embeddings_exist then
+    local stat = vim.loop.fs_stat(paths.embeddings_path)
+    if stat then
+      info.embeddings_size = stat.size
+    end
+  end
+  
+  return info
+end
+
+-- Setup file watchers for automatic index updates
+M.setup_file_watchers = function()
+  local group = vim.api.nvim_create_augroup("AISearchIndexUpdate", { clear = true })
+  
+  -- Update on file save
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    group = group,
+    pattern = "*",
+    callback = function(args)
+      -- Skip if indexing is disabled
+      if not config.get().search.enable_index then
+        return
+      end
+      
+      -- Skip if we're currently doing a full index
+      if M._indexing then
+        return
+      end
+      
+      -- Update the file in the index
+      vim.defer_fn(function()
+        M.update_file(args.file)
+        -- Save index periodically (debounced)
+        M.schedule_save()
+      end, 100)
+    end,
+  })
+  
+  -- Handle file deletion
+  vim.api.nvim_create_autocmd("BufDelete", {
+    group = group,
+    pattern = "*",
+    callback = function(args)
+      local filepath = vim.fn.fnamemodify(args.file, ":p")
+      if M._index[filepath] then
+        M._index[filepath] = nil
+        
+        -- Remove embeddings
+        local i = 1
+        while true do
+          local chunk_id = filepath .. ":" .. i
+          if M._embeddings[chunk_id] then
+            M._embeddings[chunk_id] = nil
+            i = i + 1
+          else
+            break
+          end
+        end
+        
+        vim.notify("AI: Removed " .. vim.fn.fnamemodify(filepath, ":~:.") .. " from index", vim.log.levels.DEBUG)
+        M.schedule_save()
+      end
+    end,
+  })
+  
+  -- Handle file rename (via LSP)
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "LspRename",
+    callback = function(args)
+      if args.data and args.data.old_name and args.data.new_name then
+        local old_path = vim.fn.fnamemodify(args.data.old_name, ":p")
+        local new_path = vim.fn.fnamemodify(args.data.new_name, ":p")
+        
+        if M._index[old_path] then
+          -- Move the index entry
+          M._index[new_path] = M._index[old_path]
+          M._index[new_path].path = new_path
+          M._index[old_path] = nil
+          
+          -- Update embeddings
+          local i = 1
+          while true do
+            local old_chunk_id = old_path .. ":" .. i
+            local new_chunk_id = new_path .. ":" .. i
+            if M._embeddings[old_chunk_id] then
+              M._embeddings[new_chunk_id] = M._embeddings[old_chunk_id]
+              M._embeddings[old_chunk_id] = nil
+              i = i + 1
+            else
+              break
+            end
+          end
+          
+          vim.notify("AI: Renamed " .. vim.fn.fnamemodify(old_path, ":~:.") .. " to " .. vim.fn.fnamemodify(new_path, ":~:.") .. " in index", vim.log.levels.DEBUG)
+          M.schedule_save()
+        end
+      end
+    end,
+  })
+end
+
+-- Debounced save functionality
+M._save_timer = nil
+M.schedule_save = function()
+  if M._save_timer then
+    vim.fn.timer_stop(M._save_timer)
+  end
+  
+  M._save_timer = vim.fn.timer_start(5000, function()
+    M.save_index()
+    M.save_embeddings()
+    vim.notify("AI: Index saved", vim.log.levels.DEBUG)
+    M._save_timer = nil
+  end)
+end
+
+-- Check if index needs refresh (for stale files)
+M.check_index_freshness = function()
+  local stale_files = {}
+  local missing_files = {}
+  
+  for filepath, file_data in pairs(M._index) do
+    local stat = vim.loop.fs_stat(filepath)
+    
+    if not stat then
+      -- File no longer exists
+      table.insert(missing_files, filepath)
+    elseif stat.mtime.sec > file_data.modified then
+      -- File has been modified outside of Neovim
+      table.insert(stale_files, filepath)
+    end
+  end
+  
+  return {
+    stale = stale_files,
+    missing = missing_files,
+    total_stale = #stale_files,
+    total_missing = #missing_files,
+  }
+end
+
+-- Refresh stale files in index
+M.refresh_stale_files = function(callback)
+  local freshness = M.check_index_freshness()
+  local total_updates = freshness.total_stale + freshness.total_missing
+  
+  if total_updates == 0 then
+    vim.notify("AI: Index is up to date", vim.log.levels.INFO)
+    if callback then callback() end
+    return
+  end
+  
+  vim.notify(string.format("AI: Refreshing %d stale and %d missing files", freshness.total_stale, freshness.total_missing), vim.log.levels.INFO)
+  
+  -- Remove missing files
+  for _, filepath in ipairs(freshness.missing) do
+    M._index[filepath] = nil
+    
+    -- Remove embeddings
+    local i = 1
+    while true do
+      local chunk_id = filepath .. ":" .. i
+      if M._embeddings[chunk_id] then
+        M._embeddings[chunk_id] = nil
+        i = i + 1
+      else
+        break
+      end
+    end
+  end
+  
+  -- Update stale files
+  local updated = 0
+  for _, filepath in ipairs(freshness.stale) do
+    M.update_file(filepath)
+    updated = updated + 1
+    
+    if updated % 10 == 0 then
+      vim.notify(string.format("AI: Updated %d/%d stale files", updated, freshness.total_stale), vim.log.levels.INFO)
+    end
+  end
+  
+  -- Save changes
+  M.save_index()
+  M.save_embeddings()
+  
+  vim.notify("AI: Index refresh complete", vim.log.levels.INFO)
+  if callback then callback() end
 end
 
 return M 

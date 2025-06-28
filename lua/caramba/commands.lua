@@ -471,6 +471,7 @@ function M.setup()
   vim.api.nvim_create_user_command("AIIndexStats", function()
     local search = require("caramba.search")
     local stats = search.get_stats()
+    local info = search.get_index_info()
     
     vim.notify("=== AI Index Statistics ===", vim.log.levels.INFO)
     vim.notify(string.format("Files indexed: %d", stats.files), vim.log.levels.INFO)
@@ -491,6 +492,22 @@ function M.setup()
     
     vim.notify(string.format("Current directory: %s", vim.fn.getcwd()), vim.log.levels.INFO)
     
+    -- Show index file info
+    vim.notify("\n=== Index Files ===", vim.log.levels.INFO)
+    vim.notify(string.format("Index path: %s", vim.fn.fnamemodify(info.index_path, ":~")), vim.log.levels.INFO)
+    if info.index_exists then
+      vim.notify(string.format("  Size: %.2f KB", (info.index_size or 0) / 1024), vim.log.levels.INFO)
+    else
+      vim.notify("  Status: Not found", vim.log.levels.INFO)
+    end
+    
+    vim.notify(string.format("Embeddings path: %s", vim.fn.fnamemodify(info.embeddings_path, ":~")), vim.log.levels.INFO)
+    if info.embeddings_exist then
+      vim.notify(string.format("  Size: %.2f KB", (info.embeddings_size or 0) / 1024), vim.log.levels.INFO)
+    else
+      vim.notify("  Status: Not found", vim.log.levels.INFO)
+    end
+    
     -- Show sample indexed files if any
     local index = search._index
     if vim.tbl_count(index) > 0 then
@@ -510,6 +527,79 @@ function M.setup()
     end
   end, {
     desc = "AI: Show index statistics",
+  })
+  
+  vim.api.nvim_create_user_command("AIListIndexes", function()
+    local search = require("caramba.search")
+    local files = search.list_index_files()
+    local current_info = search.get_index_info()
+    
+    vim.notify("=== AI Index Files ===", vim.log.levels.INFO)
+    vim.notify(string.format("Current workspace: %s", current_info.workspace), vim.log.levels.INFO)
+    vim.notify("", vim.log.levels.INFO)
+    
+    if #files == 0 then
+      vim.notify("No index files found", vim.log.levels.INFO)
+    else
+      for _, file_info in ipairs(files) do
+        local is_current = file_info.path == current_info.index_path or 
+                          file_info.path == current_info.embeddings_path
+        local marker = is_current and " (current)" or ""
+        local size = ""
+        
+        local stat = vim.loop.fs_stat(file_info.path)
+        if stat then
+          size = string.format(" [%.2f KB]", stat.size / 1024)
+        end
+        
+        vim.notify(string.format("%s: %s%s%s", 
+          file_info.type, 
+          vim.fn.fnamemodify(file_info.path, ":t"),
+          size,
+          marker
+        ), vim.log.levels.INFO)
+      end
+    end
+  end, {
+    desc = "AI: List all index files",
+  })
+  
+  vim.api.nvim_create_user_command("AICleanupIndexes", function()
+    local search = require("caramba.search")
+    
+    -- First show what will be removed
+    local files = search.list_index_files()
+    local current_info = search.get_index_info()
+    local to_remove = {}
+    
+    for _, file_info in ipairs(files) do
+      if file_info.path ~= current_info.index_path and 
+         file_info.path ~= current_info.embeddings_path then
+        table.insert(to_remove, file_info.path)
+      end
+    end
+    
+    if #to_remove == 0 then
+      vim.notify("No old index files to remove", vim.log.levels.INFO)
+      return
+    end
+    
+    vim.notify("Files to be removed:", vim.log.levels.WARN)
+    for _, path in ipairs(to_remove) do
+      vim.notify("  " .. vim.fn.fnamemodify(path, ":t"), vim.log.levels.WARN)
+    end
+    
+    vim.ui.input({
+      prompt = "Remove " .. #to_remove .. " old index files? (y/n): ",
+    }, function(input)
+      if input and input:lower() == "y" then
+        search.cleanup_old_indexes()
+      else
+        vim.notify("Cleanup cancelled", vim.log.levels.INFO)
+      end
+    end)
+  end, {
+    desc = "AI: Clean up old index files",
   })
   
   -- Edit commands
@@ -1272,6 +1362,66 @@ Provide specific, actionable feedback with examples where applicable.
   vim.api.nvim_create_user_command('AIRenameAcrossLanguages', function()
     caramba.ast_transform.rename_across_languages()
   end, { desc = 'Rename symbol across different languages' })
+  
+  vim.api.nvim_create_user_command("AIRefreshIndex", function()
+    local search = require("caramba.search")
+    search.refresh_stale_files()
+  end, {
+    desc = "AI: Refresh stale files in index",
+  })
+  
+  vim.api.nvim_create_user_command("AICheckIndex", function()
+    local search = require("caramba.search")
+    local freshness = search.check_index_freshness()
+    
+    vim.notify("=== AI Index Freshness Check ===", vim.log.levels.INFO)
+    
+    if freshness.total_stale == 0 and freshness.total_missing == 0 then
+      vim.notify("✓ Index is up to date", vim.log.levels.INFO)
+    else
+      if freshness.total_stale > 0 then
+        vim.notify(string.format("⚠️  %d stale files found:", freshness.total_stale), vim.log.levels.WARN)
+        for i, filepath in ipairs(freshness.stale) do
+          if i <= 10 then
+            vim.notify("  " .. vim.fn.fnamemodify(filepath, ":~:."), vim.log.levels.WARN)
+          end
+        end
+        if freshness.total_stale > 10 then
+          vim.notify(string.format("  ... and %d more", freshness.total_stale - 10), vim.log.levels.WARN)
+        end
+      end
+      
+      if freshness.total_missing > 0 then
+        vim.notify(string.format("❌ %d missing files found:", freshness.total_missing), vim.log.levels.ERROR)
+        for i, filepath in ipairs(freshness.missing) do
+          if i <= 10 then
+            vim.notify("  " .. vim.fn.fnamemodify(filepath, ":~:."), vim.log.levels.ERROR)
+          end
+        end
+        if freshness.total_missing > 10 then
+          vim.notify(string.format("  ... and %d more", freshness.total_missing - 10), vim.log.levels.ERROR)
+        end
+      end
+      
+      vim.notify("\nRun :AIRefreshIndex to update the index", vim.log.levels.INFO)
+    end
+  end, {
+    desc = "AI: Check index freshness",
+  })
+  
+  vim.api.nvim_create_user_command("AIToggleAutoIndex", function()
+    local cfg = config.get()
+    local new_state = not cfg.search.enable_index
+    config.update("search.enable_index", new_state)
+    
+    if new_state then
+      vim.notify("AI: Auto-indexing enabled", vim.log.levels.INFO)
+    else
+      vim.notify("AI: Auto-indexing disabled", vim.log.levels.INFO)
+    end
+  end, {
+    desc = "AI: Toggle automatic index updates",
+  })
 end
 
 -- Show results in a floating window
