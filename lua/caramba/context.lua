@@ -312,7 +312,7 @@ local function clear_buffer_cache(bufnr)
   bufnr = tonumber(bufnr) or vim.api.nvim_get_current_buf()
   -- Clear all cache entries for this buffer
   for key, _ in pairs(M._cache) do
-    if key:match("^" .. bufnr .. ":") then
+    if key:match("^" .. tostring(bufnr) .. ":") then
       M._cache[key] = nil
     end
   end
@@ -331,7 +331,17 @@ vim.api.nvim_create_autocmd({"TextChanged", "TextChangedI", "TextChangedP"}, {
 -- Collect context information around cursor
 M.collect = function(opts)
   opts = opts or {}
-  local bufnr = tonumber(opts.bufnr) or vim.api.nvim_get_current_buf()
+  -- Ensure bufnr is always a number
+  local bufnr
+  if opts.bufnr then
+    bufnr = tonumber(opts.bufnr)
+    if not bufnr then
+      vim.notify("Invalid buffer number: " .. tostring(opts.bufnr), vim.log.levels.ERROR)
+      bufnr = vim.api.nvim_get_current_buf()
+    end
+  else
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   
   -- Get buffer info
   local filetype = vim.api.nvim_buf_get_option(bufnr, "filetype")
@@ -356,7 +366,7 @@ M.collect = function(opts)
   end
   
   -- Generate cache key based on buffer, node ID, and whether we want full context
-  local cache_key = string.format("%s:%s:%s", tostring(bufnr), tostring(node:id()), opts.full and "full" or "partial")
+  local cache_key = string.format("%d:%s:%s", bufnr, tostring(node:id()), opts.full and "full" or "partial")
   
   -- Check cache unless forced refresh
   if not opts.force and M._cache[cache_key] then
