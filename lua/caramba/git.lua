@@ -491,6 +491,56 @@ Provide a brief review with any concerns or suggestions.
   end)
 end
 
+-- Helper: Build review prompt
+M._build_review_prompt = function(params)
+  return string.format([[
+Review the following %s code with full project context:
+
+Language: %s
+%s
+
+%s
+%s%s%s%s%s%s%s%s
+
+Code to review (starting at line %d):
+```%s
+%s
+```
+
+Please provide a comprehensive review covering:
+1. Code quality and adherence to %s best practices
+2. Potential bugs or logic errors
+3. Performance implications
+4. Security vulnerabilities
+5. Integration issues with imported dependencies
+6. Suggestions for improvement
+7. Consistency with project patterns
+8. Test coverage adequacy (if test files found)
+9. Documentation completeness
+
+Consider the semantic context and how this code interacts with:
+- Imported modules and their APIs
+- Related files in the project (especially tests)
+- Available symbols and their usage
+- Overall project architecture
+- Recent changes and git history
+
+Provide specific line references and actionable suggestions. If tests exist, comment on test coverage gaps.
+]], params.language, params.language, params.review_type,
+    table.concat(params.context_sections, "\n"),
+    params.semantic_context,
+    params.related_files,
+    table.concat(params.related_content, "\n"),
+    params.references,
+    params.conventions,
+    params.test_framework and ("\nTest Framework: " .. params.test_framework) or "",
+    params.git_context,
+    params.documentation and ("\n## Existing Documentation:\n" .. params.documentation) or "",
+    params.start_line,
+    params.language,
+    params.code_to_review)
+end
+
 -- Review current code for quality, bugs, and improvements
 M.review_code = function()
   local utils = require("caramba.utils")
@@ -570,34 +620,84 @@ M.review_code = function()
     local current_ext = vim.fn.expand('%:e')
     local current_dir = vim.fn.expand('%:h')
     
-    -- Common patterns for related files
-    local patterns = {
-      current_file .. "_test." .. current_ext,
-      current_file .. ".test." .. current_ext,
-      current_file .. "_spec." .. current_ext,
-      current_file .. ".spec." .. current_ext,
-      "test_" .. current_file .. "." .. current_ext,
-      current_file .. ".d.ts", -- TypeScript definitions
+    -- Language-specific test file patterns
+    local test_patterns_by_lang = {
+      javascript = {
+        current_file .. "_test." .. current_ext,
+        current_file .. ".test." .. current_ext,
+        current_file .. "_spec." .. current_ext,
+        current_file .. ".spec." .. current_ext,
+        "test_" .. current_file .. "." .. current_ext,
+        "__tests__/" .. current_file .. ".test." .. current_ext,
+      },
+      typescript = {
+        current_file .. "_test." .. current_ext,
+        current_file .. ".test." .. current_ext,
+        current_file .. "_spec." .. current_ext,
+        current_file .. ".spec." .. current_ext,
+        "test_" .. current_file .. "." .. current_ext,
+        "__tests__/" .. current_file .. ".test." .. current_ext,
+        current_file .. ".d.ts", -- TypeScript definitions
+      },
+      python = {
+        "test_" .. current_file .. ".py",
+        current_file .. "_test.py",
+        "tests/test_" .. current_file .. ".py",
+      },
+      ruby = {
+        current_file .. "_spec.rb",
+        "spec/" .. current_file .. "_spec.rb",
+      },
+      lua = {
+        current_file .. "_spec.lua",
+        "spec/" .. current_file .. "_spec.lua",
+        current_file .. "_test.lua",
+        "test/" .. current_file .. "_test.lua",
+      },
+      go = {
+        current_file .. "_test.go",
+      },
+      rust = {
+        "tests/" .. current_file .. ".rs",
+      },
     }
     
-    related_files = "\n## Potentially Related Files:\n"
+    -- Get patterns for current language or fallback to JavaScript patterns
+    local patterns = test_patterns_by_lang[language] or test_patterns_by_lang.javascript or {}
+    
+    -- Add TypeScript definition file for TS/JS files
+    if language == "typescript" or language == "javascript" then
+      if language == "javascript" then
+        table.insert(patterns, current_file .. ".d.ts")
+      end
+    end
+    
+    local found_related = false
+    local related_files_list = {}
+    
     for _, pattern in ipairs(patterns) do
       local full_path = current_dir .. "/" .. pattern
       if vim.fn.filereadable(full_path) == 1 then
-        related_files = related_files .. "- " .. pattern .. " (test file)\n"
+        found_related = true
+        table.insert(related_files_list, "- " .. pattern .. " (test file)")
+        
         -- Read first few lines to understand test structure
-        local test_lines = vim.fn.readfile(full_path, '', 20)
+        local test_lines = vim.fn.readfile(full_path, '', 20) -- '' for text mode
         if #test_lines > 0 then
           table.insert(related_content, "\nTest file structure (" .. pattern .. "):")
           table.insert(related_content, "```")
           for i, line in ipairs(test_lines) do
-            if i <= 10 and line:match("describe%s*%(") or line:match("test%s*%(") or line:match("it%s*%(") then
+            if i <= 10 and (line:match("describe%s*%(") or line:match("test%s*%(") or line:match("it%s*%(")) then
               table.insert(related_content, line)
             end
           end
           table.insert(related_content, "```")
         end
       end
+    end
+    
+    if found_related then
+      related_files = "\n## Potentially Related Files:\n" .. table.concat(related_files_list, "\n")
     end
   end
   
@@ -646,57 +746,41 @@ M.review_code = function()
   
   -- Get git context if available
   local git_context = ""
-  local git_status = vim.fn.system("git status --porcelain " .. vim.fn.expand('%:p'))
-  if vim.v.shell_error == 0 and git_status ~= "" then
-    git_context = "\n## Git Status:\nFile has uncommitted changes"
+  local file_path_escaped = vim.fn.shellescape(vim.fn.expand('%:p'))
+  local git_status = vim.fn.system("git status --porcelain " .. file_path_escaped)
+  if vim.v.shell_error == 0 then
+    if git_status ~= "" then
+      git_context = "\n## Git Status:\nFile has uncommitted changes"
+    end
+  else
+    -- Git not available or file not in repository
+    git_context = ""
   end
   
   -- Check recent commits affecting this file
-  local recent_commits = vim.fn.system("git log -3 --oneline " .. vim.fn.expand('%:p'))
-  if vim.v.shell_error == 0 and recent_commits ~= "" then
-    git_context = git_context .. "\n\n## Recent commits:\n" .. recent_commits
+  local recent_commits = vim.fn.system("git log -3 --oneline " .. file_path_escaped)
+  if vim.v.shell_error == 0 then
+    if recent_commits ~= "" then
+      git_context = git_context .. "\n\n## Recent commits:\n" .. recent_commits
+    end
   end
   
   -- Build comprehensive prompt
-  local prompt = string.format([[
-Review the following %s code with full project context:
-
-Language: %s
-%s
-
-%s
-%s%s%s%s%s%s%s%s
-
-Code to review (starting at line %d):
-```%s
-%s
-```
-
-Please provide a comprehensive review covering:
-1. Code quality and adherence to %s best practices
-2. Potential bugs or logic errors
-3. Performance implications
-4. Security vulnerabilities
-5. Integration issues with imported dependencies
-6. Suggestions for improvement
-7. Consistency with project patterns
-8. Test coverage adequacy (if test files found)
-9. Documentation completeness
-
-Consider the semantic context and how this code interacts with:
-- Imported modules and their APIs
-- Related files in the project (especially tests)
-- Available symbols and their usage
-- Overall project architecture
-- Recent changes and git history
-
-Provide specific line references and actionable suggestions. If tests exist, comment on test coverage gaps.
-]], language, language, review_type, table.concat(context_sections, "\n"), semantic_context, related_files, 
-    table.concat(related_content, "\n"), references, conventions,
-    ctx and ctx.test_framework and ("\nTest Framework: " .. ctx.test_framework) or "",
-    git_context,
-    ctx and ctx.documentation and ("\n## Existing Documentation:\n" .. ctx.documentation) or "",
-    start_line, language, code_to_review)
+  local prompt = M._build_review_prompt({
+    language = language,
+    review_type = review_type,
+    context_sections = context_sections,
+    semantic_context = semantic_context,
+    related_files = related_files,
+    related_content = related_content,
+    references = references,
+    conventions = conventions,
+    test_framework = ctx and ctx.test_framework,
+    git_context = git_context,
+    documentation = ctx and ctx.documentation,
+    start_line = start_line,
+    code_to_review = code_to_review,
+  })
 
   vim.notify("AI: Analyzing code with full context...", vim.log.levels.INFO)
   
@@ -732,6 +816,11 @@ Provide specific line references and actionable suggestions. If tests exist, com
         
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
         vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+        
+        -- Add keybinding hint at the top
+        local hint_lines = {"-- Press <leader>gl on a line number to jump to it --", ""}
+        vim.api.nvim_buf_set_lines(buf, 0, 0, false, hint_lines)
+        
         vim.api.nvim_buf_set_option(buf, 'modifiable', false)
         
         -- Open in a new split
@@ -747,7 +836,8 @@ Provide specific line references and actionable suggestions. If tests exist, com
         end, { buffer = buf, desc = "Copy review to clipboard" })
         
         -- Add keymap to jump to specific line mentioned in review
-        vim.keymap.set('n', 'gd', function()
+        -- Use <leader>gl (go to line) to avoid conflicts with built-in gd
+        vim.keymap.set('n', '<leader>gl', function()
           local line = vim.fn.getline('.')
           local line_num = line:match("line (%d+)") or line:match("Line (%d+)")
           if line_num then
@@ -756,6 +846,8 @@ Provide specific line references and actionable suggestions. If tests exist, com
             vim.cmd('normal! zz') -- Center the line
           end
         end, { buffer = buf, desc = "Go to line mentioned in review" })
+        
+
         
         vim.notify("AI: Context-aware code review complete", vim.log.levels.INFO)
       end)
