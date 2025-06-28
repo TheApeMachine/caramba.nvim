@@ -78,6 +78,7 @@ M.defaults = {
     enable_completions = true,
     enable_refactoring = true,
     enable_explanations = true,
+    auto_install_parsers = true, -- Automatically install missing Tree-sitter parsers
   },
   
   -- UI settings

@@ -424,3 +424,41 @@ If Neovim freezes when using the AI chat feature, this is likely due to a networ
   - 7: Failed to connect
   - 28: Timeout
   - 35: SSL connection error
+
+### Tree-sitter Parser Warnings
+
+If you see "No Tree-sitter parser available for X" warnings:
+
+1. **Parsers are now auto-installed by default!** When you open a file with a missing Tree-sitter parser, caramba.nvim will automatically install it for you.
+
+2. **To disable auto-installation**:
+   ```lua
+   require('caramba').setup({
+     features = {
+       auto_install_parsers = false,  -- Disable automatic parser installation
+     },
+   })
+   ```
+
+3. **Manual installation** (if auto-install is disabled):
+   ```vim
+   :TSInstall <language>
+   ```
+
+4. **The warning only appears once per buffer** and won't spam you.
+
+5. **Disable cursor context tracking entirely** if you don't need it:
+   ```lua
+   require('caramba').setup({
+     features = {
+       track_cursor_context = false,  -- Disable cursor context tracking
+     },
+   })
+   ```
+
+6. **Common languages without Tree-sitter parsers**:
+   - Plain text files
+   - Some configuration formats
+   - Proprietary or very new languages
+
+The plugin uses Tree-sitter for intelligent code analysis. Without a parser, some features like context-aware completions may be less accurate, but the plugin will still work.

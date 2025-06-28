@@ -10,6 +10,8 @@ local parsers = require('nvim-treesitter.parsers')
 -- Cache for parsed contexts
 M._cache = {}
 M._cursor_context = nil
+M._warned_buffers = {} -- Track buffers that have already shown the warning
+M._installing_parsers = {} -- Track parsers being installed
 
 -- Common node types for different languages
 M.node_types = {
@@ -31,9 +33,81 @@ M.node_types = {
   }
 }
 
+-- Auto-install Tree-sitter parser if missing
+local function ensure_parser_installed(lang)
+  -- Check if auto-install is enabled
+  local config = require('caramba.config')
+  if not config.get().features.auto_install_parsers then
+    return false
+  end
+  
+  -- Skip if already installing
+  if M._installing_parsers[lang] then
+    return
+  end
+  
+  -- Check if nvim-treesitter is available
+  local ok, configs = pcall(require, 'nvim-treesitter.parsers')
+  if not ok then
+    return false
+  end
+  
+  -- Get available parsers
+  local available_parsers = configs.get_parser_configs()
+  if not available_parsers[lang] then
+    return false
+  end
+  
+  -- Check if parser is already installed
+  if configs.has_parser(lang) then
+    return true
+  end
+  
+  -- Mark as installing
+  M._installing_parsers[lang] = true
+  
+  -- Install the parser
+  vim.notify("Installing Tree-sitter parser for " .. lang .. "...", vim.log.levels.INFO)
+  
+  -- Use vim.cmd to run TSInstall command
+  vim.schedule(function()
+    local install_ok = pcall(vim.cmd, "TSInstall " .. lang)
+    
+    vim.defer_fn(function()
+      M._installing_parsers[lang] = nil
+      
+      if install_ok and configs.has_parser(lang) then
+        vim.notify("Tree-sitter parser for " .. lang .. " installed successfully!", vim.log.levels.INFO)
+        -- Clear the warning for all buffers of this filetype
+        for bufnr, _ in pairs(M._warned_buffers) do
+          if vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].filetype == lang then
+            M._warned_buffers[bufnr] = nil
+          end
+        end
+      else
+        vim.notify("Failed to install Tree-sitter parser for " .. lang, vim.log.levels.ERROR)
+      end
+    end, 5000) -- Wait 5 seconds for installation to complete
+  end)
+  
+  return false
+end
+
 -- Get the current buffer's parser
 function M.get_parser(bufnr)
   bufnr = bufnr or 0
+  local lang = vim.bo[bufnr].filetype
+  
+  -- Try to auto-install if missing
+  if lang and lang ~= "" and not parsers.has_parser(lang) then
+    -- Check if this is a known language that has a parser available
+    local configs = require('nvim-treesitter.parsers').get_parser_configs()
+    if configs[lang] then
+      ensure_parser_installed(lang)
+    end
+    return nil
+  end
+  
   if not parsers.has_parser() then
     return nil
   end
@@ -47,7 +121,23 @@ function M.get_node_at_cursor(winnr)
   
   local parser = M.get_parser()
   if not parser then 
-    vim.notify("No Tree-sitter parser available for this buffer", vim.log.levels.WARN)
+    local bufnr = vim.api.nvim_get_current_buf()
+    local lang = vim.bo[bufnr].filetype
+    
+    -- Only warn once per buffer and not for special buffers
+    if not M._warned_buffers[bufnr] and vim.bo[bufnr].buftype == "" then
+      M._warned_buffers[bufnr] = true
+      
+      -- Check if parser is available but not installed
+      local configs = require('nvim-treesitter.parsers').get_parser_configs()
+      if lang and configs[lang] and not M._installing_parsers[lang] then
+        -- Parser is available, will be auto-installed
+        vim.notify("Tree-sitter parser for " .. lang .. " will be installed automatically", vim.log.levels.INFO)
+      elseif lang and lang ~= "" then
+        -- Parser not available
+        vim.notify("No Tree-sitter parser available for " .. lang, vim.log.levels.WARN)
+      end
+    end
     return nil 
   end
   
@@ -226,6 +316,8 @@ local function clear_buffer_cache(bufnr)
       M._cache[key] = nil
     end
   end
+  -- Also clear warning status when buffer changes
+  M._warned_buffers[bufnr] = nil
 end
 
 -- Set up cache invalidation
@@ -377,6 +469,23 @@ end
 
 -- Update cursor context (called on cursor movement)
 function M.update_cursor_context()
+  local bufnr = vim.api.nvim_get_current_buf()
+  
+  -- Skip special buffers that don't need Tree-sitter
+  local buftype = vim.bo[bufnr].buftype
+  if buftype ~= "" then
+    -- Special buffer types like 'help', 'terminal', 'quickfix', etc.
+    M._cursor_context = nil
+    return
+  end
+  
+  -- Skip if filetype is empty or known to not have Tree-sitter support
+  local filetype = vim.bo[bufnr].filetype
+  if filetype == "" or filetype == "text" or filetype == "conf" then
+    M._cursor_context = nil
+    return
+  end
+  
   local node = M.get_node_at_cursor()
   if not node then
     M._cursor_context = nil

@@ -79,6 +79,39 @@ M.check = function()
     vim.health.error("LLM connection test failed")
     vim.health.info("Check your API key and network connection")
   end
+
+  -- Check optional features
+  vim.health.start("Optional Features")
+  
+  -- Tree-sitter
+  local has_ts = pcall(require, 'nvim-treesitter')
+  if has_ts then
+    vim.health.ok("nvim-treesitter is installed")
+    
+    -- Check auto-install feature
+    if config.features.auto_install_parsers then
+      vim.health.ok("Tree-sitter auto-install is enabled")
+    else
+      vim.health.info("Tree-sitter auto-install is disabled")
+    end
+    
+    -- Check installed parsers
+    local parsers = require('nvim-treesitter.parsers')
+    local installed = parsers.available_parsers()
+    if #installed > 0 then
+      vim.health.ok(string.format("%d Tree-sitter parsers installed", #installed))
+    else
+      vim.health.warn("No Tree-sitter parsers installed", {
+        "Install parsers with :TSInstall <language>",
+        "Or enable auto-install in config"
+      })
+    end
+  else
+    vim.health.warn("nvim-treesitter not found", {
+      "Install with your package manager",
+      "Tree-sitter provides better code analysis"
+    })
+  end
 end
 
 return M 

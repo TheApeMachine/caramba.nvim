@@ -80,15 +80,26 @@ function M.setup(opts)
   
   -- Set up autocommands
   local context = require('caramba.context')
-  vim.api.nvim_create_autocmd({"CursorMoved", "CursorMovedI", "BufEnter"}, {
-    group = vim.api.nvim_create_augroup("AIContext", { clear = true }),
-    callback = function()
-      -- Update cursor context in the background
-      vim.defer_fn(function()
-        context.update_cursor_context()
-      end, 100) -- Small delay to avoid too frequent updates
-    end,
-  })
+  local debounce_timer = nil
+  
+  -- Only track cursor context if enabled
+  if M.config.get().features.track_cursor_context then
+    vim.api.nvim_create_autocmd({"CursorMoved", "CursorMovedI", "BufEnter"}, {
+      group = vim.api.nvim_create_augroup("AIContext", { clear = true }),
+      callback = function()
+        -- Cancel any pending update
+        if debounce_timer then
+          vim.fn.timer_stop(debounce_timer)
+        end
+        
+        -- Update cursor context in the background with debounce
+        debounce_timer = vim.defer_fn(function()
+          context.update_cursor_context()
+          debounce_timer = nil
+        end, 150) -- Increased delay to 150ms for less frequent updates
+      end,
+    })
+  end
   
   -- Initialize sub-modules that have setup functions
   if M.consistency.setup then
