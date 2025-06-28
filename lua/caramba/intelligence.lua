@@ -806,4 +806,43 @@ M.show_report = function()
   vim.api.nvim_set_current_buf(buf)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Index project command
+  commands.register('IndexProject', M.index_project, {
+    desc = 'Index project for intelligent code understanding',
+  })
+  
+  -- Find symbol
+  commands.register('FindSymbol', function(args)
+    local symbol = args.args
+    if symbol == "" then
+      vim.ui.input({
+        prompt = "Symbol name: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.find_symbol(input)
+        end
+      end)
+    else
+      M.find_symbol(symbol)
+    end
+  end, {
+    desc = 'Find symbol definition and usages',
+    nargs = '?',
+  })
+  
+  -- Show project map
+  commands.register('ProjectMap', M.show_project_map, {
+    desc = 'Show visual project structure map',
+  })
+  
+  -- Analyze dependencies
+  commands.register('AnalyzeDeps', M.analyze_dependencies, {
+    desc = 'Analyze project dependencies',
+  })
+end
+
 return M 

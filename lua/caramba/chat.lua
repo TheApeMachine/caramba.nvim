@@ -520,4 +520,24 @@ M.toggle = function()
   end
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Open chat window
+  commands.register('Chat', M.open, {
+    desc = 'Open AI chat window',
+  })
+  
+  -- Toggle chat window
+  commands.register('ChatToggle', M.toggle, {
+    desc = 'Toggle AI chat window',
+  })
+  
+  -- Clear chat history
+  commands.register('ChatClear', M.clear_history, {
+    desc = 'Clear chat history',
+  })
+end
+
 return M 

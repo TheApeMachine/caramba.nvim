@@ -287,4 +287,28 @@ M.query_with_tools = function(query)
   end)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Query with tools command
+  commands.register('Query', function(args)
+    local query = args.args
+    if query == "" then
+      vim.ui.input({
+        prompt = "Query: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.query_with_tools(input)
+        end
+      end)
+    else
+      M.query_with_tools(query)
+    end
+  end, {
+    desc = 'Query AI with tool support',
+    nargs = '?',
+  })
+end
+
 return M 

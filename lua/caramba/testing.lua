@@ -465,4 +465,24 @@ Provide actionable fixes that can be applied to the code.
   end)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Generate tests command
+  commands.register('GenerateTests', M.generate_tests, {
+    desc = 'Generate unit tests for current function/class',
+  })
+  
+  -- Update tests command
+  commands.register('UpdateTests', M.update_tests, {
+    desc = 'Update tests to match implementation changes',
+  })
+  
+  -- Analyze test failures
+  commands.register('AnalyzeTestFailures', M.analyze_test_failures, {
+    desc = 'Analyze test failures and suggest fixes',
+  })
+end
+
 return M 

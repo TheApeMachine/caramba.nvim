@@ -674,4 +674,29 @@ M._show_coverage_suggestions = function(suggestions)
   vim.api.nvim_set_current_buf(buf)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Implement from test
+  commands.register('ImplementFromTest', M.implement_from_test, {
+    desc = 'Generate implementation from test specification',
+  })
+  
+  -- Generate property tests
+  commands.register('GeneratePropertyTests', M.generate_property_tests, {
+    desc = 'Generate property-based tests for function',
+  })
+  
+  -- Watch tests
+  commands.register('WatchTests', M.watch_tests, {
+    desc = 'Enable TDD watch mode',
+  })
+  
+  -- Implement uncovered code
+  commands.register('ImplementUncovered', M.implement_uncovered_code, {
+    desc = 'Generate tests for uncovered code',
+  })
+end
+
 return M 

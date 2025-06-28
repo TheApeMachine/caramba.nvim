@@ -820,4 +820,29 @@ M._navigate_from_voice = function(target)
   vim.notify("Voice navigation not yet implemented", vim.log.levels.INFO)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Start pair programming session
+  commands.register('PairStart', M.start_session, {
+    desc = 'Start AI pair programming session',
+  })
+  
+  -- End pair programming session
+  commands.register('PairEnd', M.end_session, {
+    desc = 'End AI pair programming session',
+  })
+  
+  -- Toggle pair mode
+  commands.register('PairToggle', M.toggle, {
+    desc = 'Toggle AI pair programming mode',
+  })
+  
+  -- Show pair stats
+  commands.register('PairStats', M.show_stats, {
+    desc = 'Show pair programming statistics',
+  })
+end
+
 return M 

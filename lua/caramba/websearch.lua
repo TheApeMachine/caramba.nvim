@@ -574,4 +574,66 @@ Format as a well-structured technical document.
   end)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Web search command
+  commands.register('WebSearch', function(args)
+    local query = args.args
+    if query == "" then
+      vim.ui.input({
+        prompt = "Search query: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.search(input)
+        end
+      end)
+    else
+      M.search(query)
+    end
+  end, {
+    desc = 'Search the web',
+    nargs = '?',
+  })
+  
+  -- Search and summarize
+  commands.register('WebSearchSummarize', function(args)
+    local query = args.args
+    if query == "" then
+      vim.ui.input({
+        prompt = "Search query: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.search_and_summarize(input)
+        end
+      end)
+    else
+      M.search_and_summarize(query)
+    end
+  end, {
+    desc = 'Search web and summarize with AI',
+    nargs = '?',
+  })
+  
+  -- Research topic
+  commands.register('ResearchTopic', function(args)
+    local topic = args.args
+    if topic == "" then
+      vim.ui.input({
+        prompt = "Research topic: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.research_topic(input)
+        end
+      end)
+    else
+      M.research_topic(topic)
+    end
+  end, {
+    desc = 'Deep research on a topic',
+    nargs = '?',
+  })
+end
+
 return M 

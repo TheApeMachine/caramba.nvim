@@ -463,4 +463,54 @@ M.migrate_pattern = function(pattern_name, opts)
   -- Implementation continues...
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Transform code command
+  commands.register('Transform', function(args)
+    local transform_name = args.args
+    if transform_name == "" then
+      -- Show available transformations
+      local available = vim.tbl_keys(M.transformations)
+      vim.ui.select(available, {
+        prompt = "Select transformation:",
+      }, function(choice)
+        if choice then
+          M.apply_transformation(choice)
+        end
+      end)
+    else
+      M.apply_transformation(transform_name)
+    end
+  end, {
+    desc = 'Apply AST-based code transformation',
+    nargs = '?',
+    complete = function()
+      return vim.tbl_keys(M.transformations)
+    end,
+  })
+  
+  -- Cross-language rename
+  commands.register('CrossRename', function(args)
+    local parts = vim.split(args.args, " ")
+    if #parts < 2 then
+      vim.notify("Usage: :AICrossRename <old_name> <new_name>", vim.log.levels.ERROR)
+      return
+    end
+    M.cross_language_rename(parts[1], parts[2])
+  end, {
+    desc = 'Rename symbol across multiple languages',
+    nargs = '+',
+  })
+  
+  -- Migrate pattern
+  commands.register('MigratePattern', function(args)
+    M.migrate_pattern(args.args)
+  end, {
+    desc = 'Apply migration pattern',
+    nargs = '?',
+  })
+end
+
 return M 

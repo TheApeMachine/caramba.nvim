@@ -416,4 +416,29 @@ Focus on practical, implementable solutions.
   end)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Analyze error command
+  commands.register('DebugError', M.analyze_error, {
+    desc = 'Analyze error with stack trace and suggest fixes',
+  })
+  
+  -- Apply debug fixes
+  commands.register('ApplyFix', M.apply_fixes, {
+    desc = 'Apply pending debug fixes',
+  })
+  
+  -- Start debug session
+  commands.register('DebugSession', M.start_debug_session, {
+    desc = 'Start interactive debugging session',
+  })
+  
+  -- Analyze performance
+  commands.register('AnalyzePerformance', M.analyze_performance, {
+    desc = 'Analyze performance profile and suggest optimizations',
+  })
+end
+
 return M 

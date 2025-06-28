@@ -428,4 +428,30 @@ M._apply_patch_to_content = function(content, patch)
   return table.concat(result, "\n")
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Apply patch command
+  commands.register('ApplyPatch', function(args)
+    local patch = args.args
+    if patch == "" then
+      vim.notify("Please provide patch content", vim.log.levels.ERROR)
+      return
+    end
+    M.apply_patch(vim.api.nvim_get_current_buf(), patch)
+  end, {
+    desc = 'Apply code patch to current buffer',
+    nargs = '+',
+  })
+  
+  -- Show diff preview
+  commands.register('DiffPreview', function()
+    -- This would need to be integrated with current editing context
+    vim.notify("Use diff preview within edit operations", vim.log.levels.INFO)
+  end, {
+    desc = 'Show diff preview for pending changes',
+  })
+end
+
 return M 

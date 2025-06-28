@@ -504,4 +504,38 @@ Be precise and include all necessary changes.
   end)
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Multi-file edit command
+  commands.register('MultiEdit', function()
+    M.begin_transaction()
+    vim.notify("Multi-file transaction started. Use transaction API to add operations.", vim.log.levels.INFO)
+  end, {
+    desc = 'Start multi-file editing transaction',
+  })
+  
+  -- Preview transaction
+  commands.register('MultiPreview', function()
+    M.preview_transaction()
+  end, {
+    desc = 'Preview multi-file transaction',
+  })
+  
+  -- Commit transaction
+  commands.register('MultiCommit', function()
+    M.commit_transaction()
+  end, {
+    desc = 'Commit multi-file transaction',
+  })
+  
+  -- Abort transaction
+  commands.register('MultiAbort', function()
+    M.abort_transaction()
+  end, {
+    desc = 'Abort multi-file transaction',
+  })
+end
+
 return M 

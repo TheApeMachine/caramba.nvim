@@ -416,6 +416,12 @@ M.check_file = function(opts)
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
   local filename = vim.api.nvim_buf_get_name(bufnr)
   
+  -- Ensure patterns are loaded
+  if not M.patterns or not M.patterns.style or not M.patterns.naming then
+    vim.notify("No consistency patterns found. Run :AILearnPatterns first to analyze your project.", vim.log.levels.WARN)
+    return {}
+  end
+  
   local issues = {}
   
   -- Check naming conventions
@@ -591,7 +597,7 @@ M._check_style_consistency = function(bufnr)
   
   for i, line in ipairs(lines) do
     -- Check line length
-    if M.patterns.style.line_length and #line > M.patterns.style.line_length.recommended then
+    if M.patterns.style.line_length and M.patterns.style.line_length.recommended and #line > M.patterns.style.line_length.recommended then
       table.insert(issues, {
         type = "style",
         severity = "hint",
@@ -602,7 +608,7 @@ M._check_style_consistency = function(bufnr)
     end
     
     -- Check indentation
-    if M.patterns.style.indentation then
+    if M.patterns.style.indentation and M.patterns.style.indentation.size then
       local indent = line:match("^(%s+)")
       if indent and #indent % M.patterns.style.indentation.size ~= 0 then
         table.insert(issues, {
