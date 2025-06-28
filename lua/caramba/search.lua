@@ -220,7 +220,7 @@ M.index_workspace_with_embeddings = function(callback)
     hidden = false,
     depth = 10,
     add_dirs = false,
-    respect_gitignore = true,
+    respect_gitignore = false, -- Changed to false to ensure we scan all files
     on_insert = function(path)
       if should_exclude(path) or not should_include(path) then
         return false
@@ -745,7 +745,7 @@ M.index_workspace_keyword = function(callback)
     hidden = false,
     depth = 10,
     add_dirs = false,
-    respect_gitignore = true,
+    respect_gitignore = false, -- Changed to false to ensure we scan all files
     on_insert = function(path)
       files_scanned = files_scanned + 1
       

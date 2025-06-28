@@ -306,6 +306,84 @@ function M.setup()
     desc = "AI: Index workspace for search",
   })
   
+  vim.api.nvim_create_user_command("AIIndexDiagnostics", function()
+    local search = require("caramba.search")
+    local scan = require('plenary.scandir')
+    
+    vim.notify("=== AI Index Diagnostics ===", vim.log.levels.INFO)
+    vim.notify("Current directory: " .. vim.fn.getcwd(), vim.log.levels.INFO)
+    
+    -- Test basic file scanning
+    local test_files = {}
+    local test_count = 0
+    
+    local ok, err = pcall(function()
+      scan.scan_dir(vim.fn.getcwd(), {
+        hidden = false,
+        depth = 3,
+        add_dirs = false,
+        on_insert = function(path)
+          test_count = test_count + 1
+          if test_count <= 10 then
+            table.insert(test_files, path)
+          end
+          return test_count < 20 -- Stop after 20 files for diagnostic
+        end,
+      })
+    end)
+    
+    if not ok then
+      vim.notify("Scan error: " .. tostring(err), vim.log.levels.ERROR)
+      return
+    end
+    
+    vim.notify("Files found by scanner: " .. test_count, vim.log.levels.INFO)
+    
+    if #test_files > 0 then
+      vim.notify("Sample files:", vim.log.levels.INFO)
+      for i, file in ipairs(test_files) do
+        local ext = file:match("%.([^%.]+)$") or "no-ext"
+        vim.notify(string.format("  %d: %s (ext: %s)", i, vim.fn.fnamemodify(file, ":~:."), ext), vim.log.levels.INFO)
+      end
+    end
+    
+    -- Check include extensions
+    vim.notify("\nIncluded extensions: " .. table.concat(search.config.include_extensions, ", "), vim.log.levels.INFO)
+    
+    -- Check exclude patterns
+    local cfg = require("caramba.config").get()
+    vim.notify("\nExclude patterns:", vim.log.levels.INFO)
+    for _, pattern in ipairs(cfg.search.exclude_patterns) do
+      vim.notify("  " .. pattern, vim.log.levels.INFO)
+    end
+    
+    -- Test with a specific file
+    if #test_files > 0 then
+      local test_file = nil
+      for _, file in ipairs(test_files) do
+        local ext = file:match("%.([^%.]+)$")
+        if ext and vim.tbl_contains(search.config.include_extensions, ext) then
+          test_file = file
+          break
+        end
+      end
+      
+      if test_file then
+        vim.notify("\nTesting file: " .. test_file, vim.log.levels.INFO)
+        local file_data = search.index_file(test_file)
+        if file_data then
+          vim.notify("  Successfully indexed!", vim.log.levels.INFO)
+          vim.notify("  Size: " .. file_data.size .. " bytes", vim.log.levels.INFO)
+          vim.notify("  Symbols found: " .. #(file_data.symbols or {}), vim.log.levels.INFO)
+        else
+          vim.notify("  Failed to index file", vim.log.levels.ERROR)
+        end
+      end
+    end
+  end, {
+    desc = "AI: Diagnose indexing issues",
+  })
+  
   vim.api.nvim_create_user_command("AIFindDefinition", function(args)
     local symbol = args.args
     if symbol == "" then
@@ -356,13 +434,45 @@ function M.setup()
   
   -- Index management
   vim.api.nvim_create_user_command("AIIndexStats", function()
+    local search = require("caramba.search")
     local stats = search.get_stats()
-    vim.notify(string.format(
-      "AI Index: %d files, %d nodes%s",
-      stats.files,
-      stats.nodes,
-      stats.indexing and " (indexing...)" or ""
-    ))
+    
+    vim.notify("=== AI Index Statistics ===", vim.log.levels.INFO)
+    vim.notify(string.format("Files indexed: %d", stats.files), vim.log.levels.INFO)
+    vim.notify(string.format("Symbols found: %d", stats.symbols), vim.log.levels.INFO)
+    
+    if stats.last_indexed then
+      local age = os.time() - stats.last_indexed
+      local age_str = string.format("%d seconds ago", age)
+      if age > 3600 then
+        age_str = string.format("%.1f hours ago", age / 3600)
+      elseif age > 60 then
+        age_str = string.format("%.1f minutes ago", age / 60)
+      end
+      vim.notify(string.format("Last indexed: %s", age_str), vim.log.levels.INFO)
+    else
+      vim.notify("Last indexed: Never", vim.log.levels.INFO)
+    end
+    
+    vim.notify(string.format("Current directory: %s", vim.fn.getcwd()), vim.log.levels.INFO)
+    
+    -- Show sample indexed files if any
+    local index = search._index
+    if vim.tbl_count(index) > 0 then
+      vim.notify("\nSample indexed files:", vim.log.levels.INFO)
+      local count = 0
+      for filepath, _ in pairs(index) do
+        count = count + 1
+        if count <= 5 then
+          vim.notify("  " .. vim.fn.fnamemodify(filepath, ":~:."), vim.log.levels.INFO)
+        else
+          break
+        end
+      end
+      if vim.tbl_count(index) > 5 then
+        vim.notify(string.format("  ... and %d more", vim.tbl_count(index) - 5), vim.log.levels.INFO)
+      end
+    end
   end, {
     desc = "AI: Show index statistics",
   })
@@ -994,12 +1104,6 @@ Provide specific, actionable feedback with examples where applicable.
   end, {
     desc = "AI: Semantic merge for conflicts"
   })
-  
-
-  
-
-  
-
   
   -- TDD commands
   vim.api.nvim_create_user_command('AIImplementFromTest', function()
