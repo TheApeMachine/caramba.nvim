@@ -9,6 +9,9 @@ Features include intelligent code completion, refactoring, test generation, and 
   <img src="https://img.shields.io/badge/Lua-5.1+-purple.svg" alt="Lua 5.1+"/>
 </p>
 
+> [!WARNING]
+> This project is under construction and may not work as expected.
+
 ## ✨ Features
 
 ### 🚀 Core Features
