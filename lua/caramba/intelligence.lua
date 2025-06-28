@@ -540,6 +540,208 @@ M._ext_to_filetype = function(ext)
   return map[ext] or ext
 end
 
+-- Helper: Extract symbols from code
+M._extract_symbols_from_code = function(code_content)
+  local symbols = {}
+  local symbol_data = {}
+  local lines = vim.split(code_content, '\n')
+
+  local symbol_pattern = {
+    -- Functions
+    { pattern = "function%s+([%w_]+)", type = "function" },
+    { pattern = "([%w_]+)%s*=%s*function", type = "function" },
+    { pattern = "([%w_]+)%s*:%s*function", type = "method" },
+    { pattern = "([%w_]+)%s*=%s*%(%s*%)%s*=>", type = "arrow_function" },
+    { pattern = "async%s+function%s+([%w_]+)", type = "async_function" },
+    -- Variables
+    { pattern = "local%s+([%w_]+)", type = "variable" },
+    { pattern = "const%s+([%w_]+)", type = "variable" },
+    { pattern = "let%s+([%w_]+)", type = "variable" },
+    { pattern = "var%s+([%w_]+)", type = "variable" },
+    -- Classes and types
+    { pattern = "class%s+([%w_]+)", type = "class" },
+    { pattern = "interface%s+([%w_]+)", type = "interface" },
+    { pattern = "type%s+([%w_]+)", type = "type" },
+    -- Methods (simple pattern)
+    { pattern = "%.([%w_]+)%s*%(", type = "method_call" },
+    { pattern = ":([%w_]+)%s*%(", type = "method_call" },
+  }
+
+  -- Extract symbols with line numbers
+  for line_num, line in ipairs(lines) do
+    for _, pattern_info in ipairs(symbol_pattern) do
+      for symbol in line:gmatch(pattern_info.pattern) do
+        if not symbols[symbol] then
+          symbols[symbol] = true
+          symbol_data[symbol] = { line = line_num, type = pattern_info.type }
+        end
+      end
+    end
+  end
+
+  return symbols, symbol_data
+end
+
+-- Helper: Check symbols in dependencies
+M._check_symbols_in_dependencies = function(symbols, deps)
+  local context_parts = {}
+  
+  if #deps == 0 then
+    return context_parts
+  end
+
+  table.insert(context_parts, "\nKnown dependencies:")
+  for _, dep in ipairs(deps) do
+    table.insert(context_parts, "  - " .. dep)
+  end
+
+  -- Batch check for symbols to improve performance
+  local symbol_list = vim.tbl_keys(symbols)
+  if #symbol_list > 0 then
+    -- Create a single regex pattern for all symbols
+    local symbol_pattern = table.concat(vim.tbl_map(function(s)
+      return vim.fn.escape(s, '\\')
+    end, symbol_list), '\\|')
+
+    -- Single rg call to find all symbols in dependency files
+    local cmd = string.format(
+      "rg -l '\\b(%s)\\b' --type-add 'code:*.{js,ts,py,lua}' -t code | head -20",
+      symbol_pattern
+    )
+    local files_with_symbols = vim.fn.system(cmd)
+
+    if vim.v.shell_error == 0 and files_with_symbols ~= "" then
+      -- Check which files match our dependencies
+      for _, dep in ipairs(deps) do
+        local dep_escaped = vim.fn.escape(dep, '.')
+        if files_with_symbols:match(dep_escaped) then
+          table.insert(context_parts, string.format("    Module '%s' contains referenced symbols", dep))
+        end
+      end
+    end
+  end
+
+  return context_parts
+end
+
+-- Helper: Analyze impact of symbols
+M._analyze_symbol_impact = function(symbol_data, file_path)
+  local impact_symbols = {}
+  
+  for symbol, data in pairs(symbol_data) do
+    -- Only analyze impact for defined symbols (not method calls)
+    if data.type ~= "method_call" then
+      -- Check if this symbol is defined in the current file
+      local symbol_locations = M.db.symbols[symbol] or {}
+      local found_in_current_file = false
+
+      for _, loc in ipairs(symbol_locations) do
+        if loc.file == file_path then
+          -- Use the actual line from the database if available
+          local impact = M.analyze_impact(file_path, loc.line)
+          if #impact.direct > 0 or #impact.critical > 0 then
+            impact_symbols[symbol] = impact
+          end
+          found_in_current_file = true
+          break
+        end
+      end
+
+      -- If not in database but defined in current code, analyze from the found line
+      if not found_in_current_file and (data.type == "function" or data.type == "class") then
+        local impact = M.analyze_impact(file_path, data.line)
+        if #impact.direct > 0 or #impact.critical > 0 then
+          impact_symbols[symbol] = impact
+        end
+      end
+    end
+  end
+
+  return impact_symbols
+end
+
+-- Helper: Detect code patterns
+M._detect_code_patterns = function(code_content)
+  local patterns_found = {}
+  local pattern_checks = {
+    { pattern = "console%.log", name = "Debug logging" },
+    { pattern = "TODO", name = "TODO comments" },
+    { pattern = "FIXME", name = "FIXME comments" },
+    { pattern = "any%s*[%),]", name = "TypeScript 'any' type" },
+    { pattern = "!important", name = "CSS !important" },
+    { pattern = "eval%s*%(", name = "eval() usage" },
+    { pattern = "innerHTML%s*=", name = "innerHTML assignment" },
+    { pattern = "dangerouslySetInnerHTML", name = "React dangerouslySetInnerHTML" },
+    { pattern = "process%.env", name = "Environment variables" },
+    { pattern = "hardcoded%s*=%s*['\"]", name = "Possible hardcoded values" },
+  }
+
+  for _, check in ipairs(pattern_checks) do
+    if code_content:match(check.pattern) then
+      table.insert(patterns_found, check.name)
+    end
+  end
+
+  return patterns_found
+end
+
+-- Get semantic context for code review
+M.get_semantic_context = function(file_path, code_content)
+  local context_parts = {}
+
+  -- Extract symbols using helper function
+  local symbols, symbol_data = M._extract_symbols_from_code(code_content)
+
+  -- Look up symbols in database
+  for symbol, data in pairs(symbol_data) do
+    local symbol_info = M.db.symbols[symbol]
+    if symbol_info and #symbol_info > 0 then
+      table.insert(context_parts, string.format("Symbol '%s' is defined in:", symbol))
+      for _, loc in ipairs(symbol_info) do
+        if loc.file ~= file_path then
+          table.insert(context_parts, string.format("  - %s:%d (%s)",
+            vim.fn.fnamemodify(loc.file, ':~:.'), loc.line, loc.type))
+        end
+      end
+    end
+  end
+
+  -- Check for potential dependencies
+  local deps = M.db.dependencies[file_path] or {}
+  local dep_context = M._check_symbols_in_dependencies(symbols, deps)
+  vim.list_extend(context_parts, dep_context)
+
+  -- Analyze potential impact
+  local impact_symbols = M._analyze_symbol_impact(symbol_data, file_path)
+  if vim.tbl_count(impact_symbols) > 0 then
+    table.insert(context_parts, "\nPotential impact of changes:")
+    for symbol, impact in pairs(impact_symbols) do
+      if #impact.direct > 0 then
+        table.insert(context_parts, string.format("  Symbol '%s' is used by %d files",
+          symbol, #impact.direct))
+      end
+      if #impact.critical > 0 then
+        table.insert(context_parts, "  Critical dependencies:")
+        for _, crit in ipairs(impact.critical) do
+          table.insert(context_parts, string.format("    - %s (%s)",
+            vim.fn.fnamemodify(crit.file, ':~:.'), crit.reason))
+        end
+      end
+    end
+  end
+
+  -- Check for common patterns or anti-patterns
+  local patterns_found = M._detect_code_patterns(code_content)
+  if #patterns_found > 0 then
+    table.insert(context_parts, "\nPatterns detected:")
+    for _, pattern in ipairs(patterns_found) do
+      table.insert(context_parts, "  - " .. pattern)
+    end
+  end
+
+  return #context_parts > 0 and table.concat(context_parts, "\n") or nil
+end
+
 -- Show intelligence report
 M.show_report = function()
   local buf = vim.api.nvim_create_buf(false, true)
