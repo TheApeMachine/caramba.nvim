@@ -611,6 +611,40 @@ M.setup_commands = function()
   end, {
     desc = 'Test LLM streaming',
   })
+  
+  -- Test raw curl
+  commands.register('TestCurl', function()
+    vim.notify("Testing raw curl to OpenAI...", vim.log.levels.INFO)
+    
+    local api_key = config.get().api.openai.api_key
+    if not api_key then
+      vim.notify("No OpenAI API key set", vim.log.levels.ERROR)
+      return
+    end
+    
+    -- Simple non-streaming request first
+    local curl_cmd = string.format(
+      'curl -sS -X POST https://api.openai.com/v1/chat/completions ' ..
+      '-H "Authorization: Bearer %s" ' ..
+      '-H "Content-Type: application/json" ' ..
+      '-d \'{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}\'',
+      api_key
+    )
+    
+    vim.fn.jobstart(curl_cmd, {
+      on_stdout = function(_, data)
+        vim.notify("Curl stdout: " .. vim.inspect(data), vim.log.levels.INFO)
+      end,
+      on_stderr = function(_, data)
+        vim.notify("Curl stderr: " .. vim.inspect(data), vim.log.levels.ERROR)
+      end,
+      on_exit = function(_, code)
+        vim.notify("Curl exited with code: " .. code, vim.log.levels.INFO)
+      end,
+    })
+  end, {
+    desc = 'Test raw curl to OpenAI',
+  })
 end
 
 return M 

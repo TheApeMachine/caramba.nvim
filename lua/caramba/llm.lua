@@ -484,7 +484,12 @@ end
 function M.cancel_all()
   for request_id, job in pairs(M._active_jobs) do
     if job then
-      job:shutdown()
+      if job.id then
+        vim.fn.jobstop(job.id)
+      elseif job.shutdown then
+        -- Legacy plenary job
+        job:shutdown()
+      end
     end
   end
   M._active_requests = {}
@@ -537,28 +542,22 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   body.stream = true
   request_data.body = vim.json.encode(body)
   
-  -- Build curl command for streaming
-  local curl_args = {
-    "-sS",
-    "-N", -- No buffering for streaming
-    request_data.url,
-    "-X", "POST",
-    "--max-time", "30", -- Add timeout to prevent hanging
-  }
-  
-  for header, value in pairs(request_data.headers) do
-    table.insert(curl_args, "-H")
-    table.insert(curl_args, header .. ": " .. value)
+  -- Debug logging
+  if config.get().debug then
+    vim.notify("AI: Starting streaming request to " .. provider, vim.log.levels.INFO)
   end
   
-  table.insert(curl_args, "-d")
-  table.insert(curl_args, request_data.body)
+  -- Build curl command as a single string for better compatibility
+  local curl_cmd = "curl -sS -N " .. request_data.url .. " -X POST --max-time 30"
+  for header, value in pairs(request_data.headers) do
+    curl_cmd = curl_cmd .. " -H '" .. header .. ": " .. value .. "'"
+  end
+  curl_cmd = curl_cmd .. " -d '" .. request_data.body .. "'"
   
   -- Debug logging
   if config.get().debug then
     vim.schedule(function()
-      vim.notify("AI: Curl command: curl " .. table.concat(curl_args, " "), vim.log.levels.INFO)
-      vim.notify("AI: Request body: " .. string.sub(request_data.body, 1, 200) .. "...", vim.log.levels.INFO)
+      vim.notify("AI: Curl command: " .. curl_cmd, vim.log.levels.INFO)
     end)
   end
   
@@ -571,19 +570,18 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   local accumulated_content = ""
   local buffer = ""
   
-  -- Debug logging
-  if config.get().debug then
-    vim.notify("AI: Starting streaming request to " .. provider, vim.log.levels.INFO)
-  end
-  
-  -- Create streaming job
-  local job = Job:new({
-    command = "curl",
-    args = curl_args,
-    on_stdout = function(_, data)
-      if not data then return end
+  -- Use vim's jobstart for better streaming support
+  local job_id = vim.fn.jobstart(curl_cmd, {
+    on_stdout = function(_, data, _)
+      -- data is an array of lines
+      if not data or #data == 0 then return end
       
-      buffer = buffer .. data
+      -- Join lines and add to buffer
+      for _, line in ipairs(data) do
+        if line and line ~= "" then
+          buffer = buffer .. line .. "\n"
+        end
+      end
       
       -- Process SSE events - they are separated by double newlines
       while true do
@@ -636,17 +634,28 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
         end
       end
     end,
-    on_stderr = function(_, data)
-      if data then
-        vim.schedule(function()
-          vim.notify("AI: Curl error: " .. data, vim.log.levels.ERROR)
-        end)
+    on_stderr = function(_, data, _)
+      if data and #data > 0 then
+        local error_text = table.concat(data, "\n")
+        if error_text ~= "" then
+          vim.schedule(function()
+            vim.notify("AI: Curl error: " .. error_text, vim.log.levels.ERROR)
+          end)
+        end
       end
     end,
-    on_exit = function(j, return_val)
+    on_exit = function(_, return_val, _)
       -- Clean up tracking
       M._active_requests[request_id] = nil
       M._active_jobs[request_id] = nil
+      
+      -- Debug logging
+      if config.get().debug then
+        vim.schedule(function()
+          vim.notify(string.format("AI: Stream job exited with code: %s", tostring(return_val or "nil")), vim.log.levels.INFO)
+          vim.notify(string.format("AI: Accumulated content length: %d", #accumulated_content), vim.log.levels.INFO)
+        end)
+      end
       
       if return_val and return_val ~= 0 then
         vim.schedule(function()
@@ -658,9 +667,11 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
           end
           on_complete(nil, error_msg)
         end)
-      elseif not return_val then
+      elseif return_val == 0 and #accumulated_content == 0 then
+        -- Success but no content received
         vim.schedule(function()
-          on_complete(nil, "Stream terminated unexpectedly")
+          vim.notify("AI: Stream completed but no content was received", vim.log.levels.WARN)
+          on_complete(nil, "No response received from API")
         end)
       end
       
@@ -669,18 +680,8 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     end,
   })
   
-  -- Track the job before starting
-  M._active_jobs[request_id] = job
-  
-  -- Debug logging
-  if config.get().debug then
-    vim.schedule(function()
-      vim.notify(string.format("AI: Starting request to %s (ID: %s)", provider, request_id), vim.log.levels.INFO)
-    end)
-  end
-  
-  -- Start job
-  job:start()
+  -- Track the job
+  M._active_jobs[request_id] = { id = job_id }
   
   -- Add timeout handling
   local timeout_ms = config.get().performance.request_timeout_ms or 30000
@@ -688,7 +689,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     if M._active_requests[request_id] then
       M._active_requests[request_id] = nil
       if M._active_jobs[request_id] then
-        M._active_jobs[request_id]:shutdown()
+        vim.fn.jobstop(M._active_jobs[request_id].id)
         M._active_jobs[request_id] = nil
       end
       vim.schedule(function()
@@ -698,7 +699,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     end
   end, timeout_ms)
   
-  return job
+  return { id = job_id }
 end
 
 -- Request a conversation (multi-turn chat)
