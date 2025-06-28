@@ -538,7 +538,8 @@ Provide specific line references and actionable suggestions. If tests exist, com
     params.documentation and ("\n## Existing Documentation:\n" .. params.documentation) or "",
     params.start_line,
     params.language,
-    params.code_to_review)
+    params.code_to_review,
+    params.language)
 end
 
 -- Review current code for quality, bugs, and improvements

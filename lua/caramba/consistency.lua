@@ -828,4 +828,44 @@ M.setup = function()
   M.load_patterns()
 end
 
+-- Setup commands for this module
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  -- Learn patterns from codebase
+  commands.register('LearnPatterns', M.learn_patterns, {
+    desc = 'Learn coding patterns from the current project',
+  })
+  
+  -- Check current file consistency
+  commands.register('CheckConsistency', M.check_file, {
+    desc = 'Check current file for consistency issues',
+  })
+  
+  -- Enable auto-check on save
+  commands.register('EnableConsistencyCheck', M.enable_auto_check, {
+    desc = 'Enable automatic consistency checking on file save',
+  })
+  
+  -- Disable auto-check
+  commands.register('DisableConsistencyCheck', function()
+    vim.api.nvim_del_augroup_by_name("ConsistencyCheck")
+    vim.notify("Auto consistency checking disabled", vim.log.levels.INFO)
+  end, {
+    desc = 'Disable automatic consistency checking',
+  })
+  
+  -- Fix all issues in current file
+  commands.register('FixConsistencyIssues', function()
+    local issues = M.check_file({ bufnr = vim.api.nvim_get_current_buf() })
+    if #issues > 0 then
+      M._fix_all_issues(issues)
+    else
+      vim.notify("No consistency issues found!", vim.log.levels.INFO)
+    end
+  end, {
+    desc = 'Automatically fix consistency issues in current file',
+  })
+end
+
 return M 
