@@ -98,25 +98,23 @@ function M.setup(opts)
   -- Create WhichKey mappings
   local ok, which_key = pcall(require, 'which-key')
   if ok then
-    which_key.register({
-      ['<leader>a'] = {
-        name = '+AI',
-        c = { '<cmd>AIComplete<cr>', 'Complete code' },
-        e = { '<cmd>AIExplain<cr>', 'Explain code' },
-        r = { '<cmd>AIRefactor<cr>', 'Refactor code' },
-        s = { '<cmd>AISearch<cr>', 'Search code' },
-        p = { '<cmd>AIPlan<cr>', 'Plan implementation' },
-        t = { '<cmd>AIChat<cr>', 'Open chat' },
-        g = { '<cmd>AIGenerateTests<cr>', 'Generate tests' },
-        d = { '<cmd>AIDebugError<cr>', 'Debug error' },
-        m = { '<cmd>AICommitMessage<cr>', 'Generate commit message' },
-        w = { '<cmd>AIWebSearch<cr>', 'Web search' },
-        q = { '<cmd>AIQuery<cr>', 'Query with tools' },
-        x = { '<cmd>AITransform<cr>', 'Transform code' },
-        i = { '<cmd>AIImplementFromTest<cr>', 'Implement from test' },
-        o = { '<cmd>AICheckConsistency<cr>', 'Check consistency' },
-      }
-    }, { mode = 'n' })
+    which_key.add({
+      { "<leader>a", group = "AI" },
+      { "<leader>ac", "<cmd>AIComplete<cr>", desc = "Complete code" },
+      { "<leader>ad", "<cmd>AIDebugError<cr>", desc = "Debug error" },
+      { "<leader>ae", "<cmd>AIExplain<cr>", desc = "Explain code" },
+      { "<leader>ag", "<cmd>AIGenerateTests<cr>", desc = "Generate tests" },
+      { "<leader>ai", "<cmd>AIImplementFromTest<cr>", desc = "Implement from test" },
+      { "<leader>am", "<cmd>AICommitMessage<cr>", desc = "Generate commit message" },
+      { "<leader>ao", "<cmd>AICheckConsistency<cr>", desc = "Check consistency" },
+      { "<leader>ap", "<cmd>AIPlan<cr>", desc = "Plan implementation" },
+      { "<leader>aq", "<cmd>AIQuery<cr>", desc = "Query with tools" },
+      { "<leader>ar", "<cmd>AIRefactor<cr>", desc = "Refactor code" },
+      { "<leader>as", "<cmd>AISearch<cr>", desc = "Search code" },
+      { "<leader>at", "<cmd>AIChat<cr>", desc = "Open chat" },
+      { "<leader>aw", "<cmd>AIWebSearch<cr>", desc = "Web search" },
+      { "<leader>ax", "<cmd>AITransform<cr>", desc = "Transform code" },
+    })
   end
   
   vim.notify("AI Assistant initialized", vim.log.levels.INFO)
