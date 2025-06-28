@@ -152,8 +152,10 @@ end
 
 -- Check if a path should be excluded
 local function should_exclude(path)
-  for _, exclude in ipairs(M.config.exclude_dirs) do
-    if path:match(exclude) then
+  local cfg = config.get()
+  -- Check against exclude_patterns from the main config
+  for _, pattern in ipairs(cfg.search.exclude_patterns) do
+    if path:match(pattern) then
       return true
     end
   end
@@ -165,6 +167,8 @@ local function should_include(path)
   local ext = path:match("%.([^%.]+)$")
   if not ext then return false end
   
+  -- Use the include_extensions from M.config for now
+  -- since the main config doesn't have an include list
   for _, include_ext in ipairs(M.config.include_extensions) do
     if ext == include_ext then
       return true
@@ -724,19 +728,45 @@ M.index_workspace_keyword = function(callback)
   
   local workspace_root = vim.fn.getcwd()
   local files_indexed = 0
+  local files_scanned = 0
+  local files_excluded = 0
+  
+  vim.notify("AI: Scanning directory: " .. workspace_root, vim.log.levels.INFO)
+  
+  -- Check if the directory exists
+  if vim.fn.isdirectory(workspace_root) == 0 then
+    vim.notify("AI: Error - workspace directory does not exist: " .. workspace_root, vim.log.levels.ERROR)
+    if callback then callback() end
+    return
+  end
   
   -- Use plenary's scandir for cross-platform file scanning
-  local files = scan.scan_dir(workspace_root, {
+  local ok, files = pcall(scan.scan_dir, workspace_root, {
     hidden = false,
     depth = 10,
     add_dirs = false,
     respect_gitignore = true,
     on_insert = function(path)
+      files_scanned = files_scanned + 1
+      
+      -- Debug first few files
+      if files_scanned <= 5 then
+        vim.notify("AI: Scanning file: " .. path, vim.log.levels.DEBUG)
+      end
+      
       -- Check if we should process this file
       if should_exclude(path) then
+        files_excluded = files_excluded + 1
+        if files_excluded <= 5 then
+          vim.notify("AI: Excluded: " .. path, vim.log.levels.DEBUG)
+        end
         return false
       end
       if not should_include(path) then
+        if files_scanned <= 10 then
+          local ext = path:match("%.([^%.]+)$") or "no extension"
+          vim.notify("AI: Skipped (extension " .. ext .. "): " .. path, vim.log.levels.DEBUG)
+        end
         return false
       end
       
@@ -758,11 +788,19 @@ M.index_workspace_keyword = function(callback)
     end,
   })
   
+  if not ok then
+    vim.notify("AI: Error scanning directory: " .. tostring(files), vim.log.levels.ERROR)
+    if callback then callback() end
+    return
+  end
+  
   -- Save index to cache
   M.save_index()
   
   vim.schedule(function()
-    vim.notify(string.format("AI Search: Indexed %d files", files_indexed), vim.log.levels.INFO)
+    local stats = M.get_stats()
+    vim.notify(string.format("AI Search: Indexed %d symbols from %d files (scanned: %d, excluded: %d)", 
+      stats.symbols, files_indexed, files_scanned, files_excluded), vim.log.levels.INFO)
     M._last_indexed = os.time()
     if callback then callback() end
   end)
