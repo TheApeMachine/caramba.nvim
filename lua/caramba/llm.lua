@@ -23,7 +23,7 @@ M.providers.openai = {
     opts = vim.tbl_extend("force", {
       model = api_config.model,
       temperature = api_config.temperature,
-      max_tokens = api_config.max_tokens,
+      max_completion_tokens = api_config.max_tokens,
     }, opts or {})
     
     local messages = type(prompt) == "string" 
@@ -34,7 +34,7 @@ M.providers.openai = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_tokens = opts.max_tokens,
+      max_completion_tokens = opts.max_tokens,
       stream = false,
     }
     
@@ -84,7 +84,7 @@ M.providers.google = {
     opts = vim.tbl_extend("force", {
       model = api_config.model,
       temperature = api_config.temperature,
-      max_tokens = api_config.max_tokens,
+      max_completion_tokens = api_config.max_tokens,
     }, opts or {})
     
     local messages = type(prompt) == "string" 
@@ -95,7 +95,7 @@ M.providers.google = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_tokens = opts.max_tokens,
+      max_completion_tokens = opts.max_tokens,
       stream = false,
     }
     
@@ -120,7 +120,7 @@ M.providers.anthropic = {
     opts = vim.tbl_extend("force", {
       model = api_config.model,
       temperature = api_config.temperature,
-      max_tokens = api_config.max_tokens,
+      max_completion_tokens = api_config.max_tokens,
     }, opts or {})
     
     local messages = type(prompt) == "string"
@@ -145,7 +145,7 @@ M.providers.anthropic = {
       model = opts.model,
       messages = anthropic_messages,
       temperature = opts.temperature,
-      max_tokens = opts.max_tokens,
+      max_completion_tokens = opts.max_tokens,
     }
     
     if opts.system then
