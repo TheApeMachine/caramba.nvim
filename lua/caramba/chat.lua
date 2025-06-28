@@ -138,26 +138,30 @@ local function extract_code_blocks(content)
     return blocks
   end
 
-  for id, node, metadata in query:iter_matches(root, content) do
-    local capture_name = query.captures[id]
-    if capture_name == "fenced_code" then
-      local lang_node = metadata.language
-      local code_node = metadata.code
-      
-      if code_node then
-        local lang = "text"
-        if lang_node then
-          lang = vim.treesitter.get_node_text(lang_node, content)
-        end
-        
-        local start_line, _, _, _ = node:range()
-        
-        table.insert(blocks, {
-          language = lang,
-          code = vim.treesitter.get_node_text(code_node, content),
-          start_line = start_line + 1, -- 1-based line number for the start of the block
-        })
+  for _, match, _ in query:iter_matches(root, content) do
+    local captures = {}
+    for cap_id, cap_node in pairs(match) do
+      captures[query.captures[cap_id]] = cap_node
+    end
+
+    local fenced_node = captures.fenced_code
+    local code_node = captures.code
+    
+    if code_node and fenced_node then
+      local lang = "text"
+      if captures.language then
+        lang = vim.treesitter.get_node_text(captures.language, content)
       end
+      
+      local start_line, _, _, _ = fenced_node:range()
+      
+      local code_content = vim.treesitter.get_node_text(code_node, content)
+      table.insert(blocks, {
+        language = lang,
+        code = code_content,
+        start_line = start_line + 1, -- 1-based line number for the start of the block
+        line_count = #vim.split(code_content, "\n"),
+      })
     end
   end
 
@@ -370,8 +374,68 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   -- Render immediately to show user message
   M._render_chat()
   
-  -- Use the planner to handle the request, which will create its own UI for now
-  planner.interactive_planning_session(cleaned_message, full_content)
+  -- Use the planner to handle the request
+  planner.interactive_planning_session(cleaned_message, full_content, function(plan, review, err)
+    if err then
+      vim.schedule(function()
+        table.insert(M._chat_state.history, {
+          role = "assistant",
+          content = "I'm sorry, I encountered an error during planning: " .. tostring(err),
+        })
+        M._render_chat()
+      end)
+      return
+    end
+
+    vim.schedule(function()
+      local content = M._format_plan_for_chat(plan, review)
+      table.insert(M._chat_state.history, {
+        role = "assistant",
+        content = content,
+        plan = plan, -- Store for later execution
+      })
+      M._render_chat()
+    end)
+  end)
+end
+
+-- Format a plan to be displayed in the chat window
+M._format_plan_for_chat = function(plan, review)
+  local lines = {}
+  
+  if not plan then
+    return "Failed to generate a plan."
+  end
+  
+  table.insert(lines, "I have created a plan to address your request. Here is the summary:")
+  table.insert(lines, "")
+  table.insert(lines, "**Understanding:** " .. (plan.understanding or "N/A"))
+  table.insert(lines, "**Complexity:** " .. (plan.estimated_complexity or "N/A"))
+  table.insert(lines, "")
+  
+  if review and review.decision ~= "APPROVE" then
+    table.insert(lines, "### ⚠️ Plan Review Feedback")
+    table.insert(lines, "**Decision:** " .. review.decision)
+    if review.feedback then
+      for _, fb in ipairs(review.feedback) do table.insert(lines, "- " .. fb) end
+    end
+    table.insert(lines, "")
+  end
+  
+  table.insert(lines, "### Implementation Steps")
+  if plan.implementation_steps and #plan.implementation_steps > 0 then
+    for _, step in ipairs(plan.implementation_steps) do
+      table.insert(lines, string.format("- **%s** (`%s`)", step.action, step.file or "N/A"))
+    end
+  else
+    table.insert(lines, "_No specific implementation steps were generated._")
+  end
+  
+  table.insert(lines, "")
+  table.insert(lines, "---")
+  table.insert(lines, "_You can now approve this plan to execute it, or continue the conversation to refine it._")
+  
+  return table.concat(lines, "\n")
 end
 
 -- Cancel input
@@ -456,12 +520,14 @@ local function get_code_block_at_cursor()
   -- Find code block containing current line
   for _, block in ipairs(M._chat_state.code_blocks) do
     if block.start_line and line >= block.start_line then
-      -- The block's start_line is the opening ```. The code content starts on the next line.
+      -- The block's start_line refers to the opening ```. The actual code content starts on the next line.
       local code_start_line = block.start_line + 1
-      local num_code_lines = #vim.split(block.code, "\n")
-      local code_end_line = code_start_line + num_code_lines -1
+      local code_end_line = code_start_line + block.line_count - 1
       
-      -- The cursor can be on the opening ```, any line of code, or the closing ```
+      -- Check if the cursor is within the code block boundaries:
+      -- - On the opening fence line (block.start_line)
+      -- - Within the code content (code_start_line to code_end_line)
+      -- - On the closing fence line (code_end_line + 1)
       if line >= block.start_line and line <= code_end_line + 1 then
         return block
       end
@@ -522,6 +588,25 @@ M.toggle = function()
   end
 end
 
+-- Approve the last plan in the chat
+M.approve_plan = function()
+  local last_plan = nil
+  -- Iterate backwards to find the last message with a plan
+  for i = #M._chat_state.history, 1, -1 do
+    if M._chat_state.history[i].plan then
+      last_plan = M._chat_state.history[i].plan
+      break
+    end
+  end
+
+  if last_plan then
+    vim.notify("Approving and executing the last plan.", vim.log.levels.INFO)
+    require('caramba.planner').execute_plan(last_plan)
+  else
+    vim.notify("No plan found in the recent chat history to approve.", vim.log.levels.WARN)
+  end
+end
+
 -- Setup commands for this module
 M.setup_commands = function()
   local commands = require('caramba.core.commands')
@@ -539,6 +624,11 @@ M.setup_commands = function()
   -- Clear chat history
   commands.register('ChatClear', M.clear_history, {
     desc = 'Clear chat history',
+  })
+  
+  -- Approve the last plan
+  commands.register('ApprovePlan', M.approve_plan, {
+    desc = 'Approve and execute the last plan proposed in the chat',
   })
   
   -- Test LLM connection

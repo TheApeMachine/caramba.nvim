@@ -632,6 +632,57 @@ M._find_undefined_symbols = function()
     return {}
   end
 
+  -- Language-specific queries
+  local queries = {
+    javascript = {
+      declarations = [[
+        (variable_declarator name: (identifier) @variable.name)
+        (function_declaration name: (identifier) @function.name)
+        (class_declaration name: (identifier) @class.name)
+        (import_specifier name: (identifier) @import.name)
+        (namespace_import (identifier) @import.name)
+        (formal_parameters (identifier) @param.name)
+      ]],
+      usage = "(identifier) @usage",
+    },
+    typescript = {
+      declarations = [[
+        (variable_declarator name: (identifier) @variable.name)
+        (function_declaration name: (identifier) @function.name)
+        (class_declaration name: (identifier) @class.name)
+        (import_specifier name: (identifier) @import.name)
+        (namespace_import (identifier) @import.name)
+        (formal_parameters (identifier) @param.name)
+      ]],
+      usage = "(identifier) @usage",
+    },
+    lua = {
+      declarations = [[
+        (variable_declaration name: (identifier) @variable.name)
+        (function_declaration name: (identifier) @function.name)
+        (parameter (identifier) @param.name)
+      ]],
+      usage = "(identifier) @usage",
+    },
+    python = {
+      declarations = [[
+        (assignment left: (identifier) @variable.name)
+        (function_definition name: (identifier) @function.name)
+        (class_definition name: (identifier) @class.name)
+        (aliased_import (dotted_name (identifier) @import.name))
+        (parameters (identifier) @param.name)
+      ]],
+      usage = "(identifier) @usage",
+    },
+    -- Add more languages as needed
+  }
+
+  local lang_queries = queries[ft]
+  if not lang_queries then
+    -- Silently fail if language is not supported for this feature
+    return {}
+  end
+
   local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
   local parser = vim.treesitter.get_string_parser(content, lang)
   local tree = parser:parse()[1]
@@ -643,16 +694,8 @@ M._find_undefined_symbols = function()
   local declared_symbols = {}
   local used_symbols = {}
 
-  -- Query for all declarations (variables, functions, classes, imports)
-  local declaration_query_string = [[
-    (variable_declarator name: (identifier) @variable.name)
-    (function_declaration name: (identifier) @function.name)
-    (class_declaration name: (identifier) @class.name)
-    (import_specifier name: (identifier) @import.name)
-    (namespace_import (identifier) @import.name)
-    (formal_parameters (identifier) @param.name)
-  ]]
-  local declaration_query = vim.treesitter.query.parse(lang, declaration_query_string)
+  -- Query for all declarations
+  local declaration_query = vim.treesitter.query.parse(lang, lang_queries.declarations)
   if declaration_query then
     for _, node in declaration_query:iter_captures(root, content) do
       declared_symbols[vim.treesitter.get_node_text(node, content)] = true
@@ -660,18 +703,18 @@ M._find_undefined_symbols = function()
   end
 
   -- Query for all identifiers being used
-  local usage_query_string = [[
-    (identifier) @usage
-  ]]
-  local usage_query = vim.treesitter.query.parse(lang, usage_query_string)
+  local usage_query = vim.treesitter.query.parse(lang, lang_queries.usage)
   if usage_query then
-    for _, node, _ in usage_query:iter_matches(root, content) do
-      -- Check parent to avoid capturing property names etc.
-      local parent = node:parent()
-      if parent then
-        local parent_type = parent:type()
-        if parent_type ~= 'property_identifier' and parent_type ~= 'field_identifier' then
-          used_symbols[vim.treesitter.get_node_text(node, content)] = true
+    for _, match in usage_query:iter_matches(root, content) do
+      local node = match[1] -- The first capture in a simple query is the node itself
+      if node then
+        -- Check parent to avoid capturing property names etc.
+        local parent = node:parent()
+        if parent then
+          local parent_type = parent:type()
+          if parent_type ~= 'property_identifier' and parent_type ~= 'field_identifier' then
+            used_symbols[vim.treesitter.get_node_text(node, content)] = true
+          end
         end
       end
     end

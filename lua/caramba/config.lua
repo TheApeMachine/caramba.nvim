@@ -11,23 +11,39 @@ M.defaults = {
   api = {
     openai = {
       endpoint = "https://api.openai.com/v1/chat/completions",
-      model = "gpt-4o-mini",
+      model = "o4-mini",
       temperature = 0.3,
       max_tokens = 4096,
       api_key = vim.env.OPENAI_API_KEY,
+      -- Common models:
+      -- "gpt-4-turbo"
+      -- "gpt-4o"
+      -- "gpt-4o-mini"
+      -- "gpt-3.5-turbo"
+      models = { "gpt-4.1", "o4-mini", "o3", "o3-pro" },
     },
     anthropic = {
       endpoint = "https://api.anthropic.com/v1/messages",
-      model = "claude-3-sonnet-20240229",
+      model = "claude-sonnet-4-20250514",
       temperature = 0.3,
       max_tokens = 4096,
       api_key = vim.env.ANTHROPIC_API_KEY,
+      models = { "claude-opus-4-20250514", "claude-sonnet-4-20250514" },
     },
     ollama = {
       endpoint = "http://localhost:11434/api/generate",
       model = "codellama",
       temperature = 0.3,
+      models = { "codellama", "llama3", "mistral", "phi3" },
     },
+    google = {
+      endpoint = "https://generativelanguage.googleapis.com/v1beta",
+      model = "gemini-2.5-flash",
+      temperature = 0.3,
+      max_tokens = 4096,
+      api_key = vim.env.GOOGLE_API_KEY,
+      models = { "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite-preview-06-17" },
+    }
   },
   
   -- Context extraction settings
@@ -138,6 +154,8 @@ function M._validate()
     vim.notify("AI: OpenAI API key not found. Set OPENAI_API_KEY environment variable.", vim.log.levels.WARN)
   elseif provider == "anthropic" and not M.options.api.anthropic.api_key then
     vim.notify("AI: Anthropic API key not found. Set ANTHROPIC_API_KEY environment variable.", vim.log.levels.WARN)
+  elseif provider == "google" and not M.options.api.google.api_key then
+    vim.notify("AI: Google API key not found. Set GOOGLE_API_KEY environment variable.", vim.log.levels.WARN)
   end
   
   -- Validate numeric values

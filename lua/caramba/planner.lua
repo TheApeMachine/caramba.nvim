@@ -253,7 +253,7 @@ M._show_questions_window = function(lines, callback)
 end
 
 -- Interactive planning session
-function M.interactive_planning_session(task_description, context_info)
+function M.interactive_planning_session(task_description, context_info, callback)
   -- Step 1: Create initial plan
   vim.notify("AI Planner: Creating initial plan...", vim.log.levels.INFO)
   
@@ -273,7 +273,11 @@ function M.interactive_planning_session(task_description, context_info)
       vim.schedule(function()
         vim.notify("Failed to parse plan: " .. tostring(plan), vim.log.levels.ERROR)
         -- Show the raw response for debugging
-        M._show_result_window(plan_result, "Raw Plan Response (Failed to Parse)")
+        if callback then
+          callback(nil, nil, "Failed to parse plan: " .. plan_result)
+        else
+          M._show_result_window(plan_result, "Raw Plan Response (Failed to Parse)")
+        end
       end)
       return
     end
@@ -305,18 +309,18 @@ function M.interactive_planning_session(task_description, context_info)
             if input and input ~= "" then
               plan.user_clarifications = input
             end
-            M._continue_planning(task_description, plan)
+            M._continue_planning(task_description, plan, callback)
           end)
         end)
       else
-        M._continue_planning(task_description, plan)
+        M._continue_planning(task_description, plan, callback)
       end
     end)
   end)
 end
 
 -- Continue planning after questions
-function M._continue_planning(task_description, plan)
+function M._continue_planning(task_description, plan, callback)
   -- Step 3: Review plan
   vim.notify("AI Planner: Reviewing plan...", vim.log.levels.INFO)
   
@@ -324,8 +328,12 @@ function M._continue_planning(task_description, plan)
     if review_err then
       vim.schedule(function()
         vim.notify("Failed to review plan: " .. review_err, vim.log.levels.ERROR)
-        -- Show plan anyway
-        M._show_plan_window(plan, nil)
+        if callback then
+          callback(plan, nil, "Failed to review plan")
+        else
+          -- Show plan anyway
+          M._show_plan_window(plan, nil)
+        end
       end)
       return
     end
@@ -334,15 +342,23 @@ function M._continue_planning(task_description, plan)
     if not ok then
       vim.schedule(function()
         vim.notify("Failed to parse review: " .. tostring(review), vim.log.levels.WARN)
-        -- Show plan anyway
-        M._show_plan_window(plan, nil)
+        if callback then
+          callback(plan, nil, "Failed to parse review")
+        else
+          -- Show plan anyway
+          M._show_plan_window(plan, nil)
+        end
       end)
       return
     end
     
     vim.schedule(function()
-      -- Step 4: Show plan to user
-      M._show_plan_window(plan, review)
+      if callback then
+        callback(plan, review)
+      else
+        -- Step 4: Show plan to user
+        M._show_plan_window(plan, review)
+      end
     end)
   end)
 end
@@ -797,11 +813,11 @@ function M.setup_commands()
         prompt = "What would you like to plan? ",
       }, function(input)
         if input and input ~= "" then
-          M.interactive_planning_session(input)
+          M.interactive_planning_session(input, nil, nil)
         end
       end)
     else
-      M.interactive_planning_session(task)
+      M.interactive_planning_session(task, nil, nil)
     end
   end, {
     desc = 'Create an AI-powered implementation plan',

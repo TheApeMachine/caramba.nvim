@@ -77,6 +77,42 @@ M.providers.openai = {
   end,
 }
 
+-- Google Gemini provider (using OpenAI compatible endpoint)
+M.providers.google = {
+  prepare_request = function(prompt, opts)
+    local api_config = config.get().api.google
+    opts = vim.tbl_extend("force", {
+      model = api_config.model,
+      temperature = api_config.temperature,
+      max_tokens = api_config.max_tokens,
+    }, opts or {})
+    
+    local messages = type(prompt) == "string" 
+      and {{ role = "user", content = prompt }}
+      or prompt
+    
+    local body = {
+      model = opts.model,
+      messages = messages,
+      temperature = opts.temperature,
+      max_tokens = opts.max_tokens,
+      stream = false,
+    }
+    
+    return {
+      url = api_config.endpoint .. "/openai/chat/completions",
+      headers = {
+        ["Content-Type"] = "application/json",
+        ["Authorization"] = "Bearer " .. api_config.api_key,
+      },
+      body = vim.json.encode(body),
+    }
+  end,
+  
+  -- The response format is OpenAI-compatible
+  parse_response = M.providers.openai.parse_response,
+}
+
 -- Anthropic provider
 M.providers.anthropic = {
   prepare_request = function(prompt, opts)
@@ -253,6 +289,11 @@ M.request = function(messages, opts, callback)
   elseif provider == "anthropic" and not api_config.api_key then
     vim.schedule(function()
       callback(nil, "Anthropic API key not set. Please set ANTHROPIC_API_KEY environment variable.")
+    end)
+    return
+  elseif provider == "google" and not api_config.api_key then
+    vim.schedule(function()
+      callback(nil, "Google API key not set. Please set GOOGLE_API_KEY environment variable.")
     end)
     return
   end
@@ -522,10 +563,15 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       on_complete(nil, "Anthropic API key not set. Please set ANTHROPIC_API_KEY environment variable.")
     end)
     return
+  elseif provider == "google" and not api_config.api_key then
+    vim.schedule(function()
+      on_complete(nil, "Google API key not set. Please set GOOGLE_API_KEY environment variable.")
+    end)
+    return
   end
   
-  -- Only OpenAI supports streaming currently
-  if provider ~= "openai" then
+  -- Only OpenAI and Google (via compatibility layer) support streaming currently
+  if provider ~= "openai" and provider ~= "google" then
     -- Fall back to regular request
     M.request(messages, opts, function(result, err)
       if result then
@@ -728,6 +774,52 @@ M.request_conversation = function(messages, opts, callback)
       end
     end)
   end
+end
+
+-- Interactively select a provider and model
+M.select_model = function()
+  local providers = {}
+  for name, _ in pairs(config.get().api) do
+    table.insert(providers, name)
+  end
+  
+  vim.ui.select(providers, {
+    prompt = "Select AI Provider:",
+  }, function(provider)
+    if not provider then return end
+    
+    local models = config.get().api[provider].models or {}
+    if #models == 0 then
+      vim.notify("No models configured for provider: " .. provider, vim.log.levels.WARN)
+      return
+    end
+    
+    vim.ui.select(models, {
+      prompt = "Select Model for " .. provider .. ":",
+    }, function(model)
+      if not model then return end
+      
+      -- Update the config
+      config.update("provider", provider)
+      config.update("api." .. provider .. ".model", model)
+      
+      vim.notify(string.format("Set AI provider to %s and model to %s", provider, model), vim.log.levels.INFO)
+    end)
+  end)
+end
+
+M.setup_commands = function()
+  local commands = require('caramba.core.commands')
+  
+  commands.register('AISetModel', M.select_model, {
+    desc = 'Select the AI provider and model to use',
+  })
+
+  commands.register('AIShowConfig', function()
+    vim.notify(vim.inspect(config.get()), vim.log.levels.INFO)
+  end, {
+    desc = 'Show the current AI assistant configuration',
+  })
 end
 
 return M 

@@ -88,4 +88,42 @@ function M.debug()
   end
 end
 
+-- Centralized Command Registry
+
+M.commands = {}
+
+-- Register a new command
+M.register = function(name, func, opts)
+  opts = opts or {}
+  
+  M.commands[name] = {
+    func = func,
+    opts = {
+      desc = opts.desc,
+      nargs = opts.nargs,
+      range = opts.range,
+      complete = opts.complete,
+    }
+  }
+end
+
+-- Setup all registered commands
+M.setup = function()
+  for name, cmd in pairs(M.commands) do
+    vim.api.nvim_create_user_command(name, cmd.func, cmd.opts)
+  end
+end
+
+-- Function to load all command definitions
+M.load_all = function()
+  -- Core commands
+  require('caramba.llm').setup_commands()
+  require('caramba.chat').setup_commands()
+  require('caramba.refactor').setup_commands()
+  require('caramba.planner').setup_commands()
+  require('caramba.pair').setup_commands()
+  require('caramba.consistency').setup_commands()
+  -- Add other modules with commands here
+end
+
 return M 
