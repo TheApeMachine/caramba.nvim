@@ -470,8 +470,9 @@ function M.setup()
   -- Index management
   vim.api.nvim_create_user_command("AIIndexStats", function()
     local search = require("caramba.search")
-    local stats = search.get_stats()
-    local info = search.get_index_info()
+    local combined_data = search.get_combined_index_data()
+    local stats = combined_data.stats
+    local info = combined_data.info
     
     vim.notify("=== AI Index Statistics ===", vim.log.levels.INFO)
     vim.notify(string.format("Files indexed: %d", stats.files), vim.log.levels.INFO)
@@ -530,7 +531,6 @@ function M.setup()
   })
   
   vim.api.nvim_create_user_command("AIListIndexes", function()
-    local search = require("caramba.search")
     local files = search.list_index_files()
     local current_info = search.get_index_info()
     
@@ -573,8 +573,7 @@ function M.setup()
     local to_remove = {}
     
     for _, file_info in ipairs(files) do
-      if file_info.path ~= current_info.index_path and 
-         file_info.path ~= current_info.embeddings_path then
+      if not search.is_current_workspace_file(file_info.path) then
         table.insert(to_remove, file_info.path)
       end
     end
@@ -1363,6 +1362,24 @@ Provide specific, actionable feedback with examples where applicable.
     caramba.ast_transform.rename_across_languages()
   end, { desc = 'Rename symbol across different languages' })
   
+  -- Helper function to display file lists with truncation
+  local function notify_file_list(files, prefix, level, max_display)
+    max_display = max_display or 10
+    local total = #files
+    
+    if total > 0 then
+      vim.notify(string.format("%s %d files found:", prefix, total), level)
+      for i, filepath in ipairs(files) do
+        if i <= max_display then
+          vim.notify("  " .. vim.fn.fnamemodify(filepath, ":~:."), level)
+        end
+      end
+      if total > max_display then
+        vim.notify(string.format("  ... and %d more", total - max_display), level)
+      end
+    end
+  end
+  
   vim.api.nvim_create_user_command("AIRefreshIndex", function()
     local search = require("caramba.search")
     search.refresh_stale_files()
@@ -1380,27 +1397,11 @@ Provide specific, actionable feedback with examples where applicable.
       vim.notify("✓ Index is up to date", vim.log.levels.INFO)
     else
       if freshness.total_stale > 0 then
-        vim.notify(string.format("⚠️  %d stale files found:", freshness.total_stale), vim.log.levels.WARN)
-        for i, filepath in ipairs(freshness.stale) do
-          if i <= 10 then
-            vim.notify("  " .. vim.fn.fnamemodify(filepath, ":~:."), vim.log.levels.WARN)
-          end
-        end
-        if freshness.total_stale > 10 then
-          vim.notify(string.format("  ... and %d more", freshness.total_stale - 10), vim.log.levels.WARN)
-        end
+        notify_file_list(freshness.stale, "⚠️ ", vim.log.levels.WARN)
       end
       
       if freshness.total_missing > 0 then
-        vim.notify(string.format("❌ %d missing files found:", freshness.total_missing), vim.log.levels.ERROR)
-        for i, filepath in ipairs(freshness.missing) do
-          if i <= 10 then
-            vim.notify("  " .. vim.fn.fnamemodify(filepath, ":~:."), vim.log.levels.ERROR)
-          end
-        end
-        if freshness.total_missing > 10 then
-          vim.notify(string.format("  ... and %d more", freshness.total_missing - 10), vim.log.levels.ERROR)
-        end
+        notify_file_list(freshness.missing, "❌", vim.log.levels.ERROR)
       end
       
       vim.notify("\nRun :AIRefreshIndex to update the index", vim.log.levels.INFO)
