@@ -540,6 +540,123 @@ M._ext_to_filetype = function(ext)
   return map[ext] or ext
 end
 
+-- Get semantic context for code review
+M.get_semantic_context = function(file_path, code_content)
+  local context_parts = {}
+  
+  -- Extract symbols from the code
+  local symbols = {}
+  local symbol_pattern = {
+    -- Functions
+    "function%s+([%w_]+)",
+    "([%w_]+)%s*=%s*function",
+    "([%w_]+)%s*:%s*function",
+    -- Variables
+    "local%s+([%w_]+)",
+    "const%s+([%w_]+)",
+    "let%s+([%w_]+)",
+    "var%s+([%w_]+)",
+    -- Classes
+    "class%s+([%w_]+)",
+    -- Methods (simple pattern)
+    "%.([%w_]+)%s*%(",
+    ":([%w_]+)%s*%(",
+  }
+  
+  for _, pattern in ipairs(symbol_pattern) do
+    for symbol in code_content:gmatch(pattern) do
+      if not symbols[symbol] then
+        symbols[symbol] = true
+        -- Look up symbol in our database
+        local symbol_info = M.db.symbols[symbol]
+        if symbol_info and #symbol_info > 0 then
+          table.insert(context_parts, string.format("Symbol '%s' is defined in:", symbol))
+          for _, loc in ipairs(symbol_info) do
+            if loc.file ~= file_path then
+              table.insert(context_parts, string.format("  - %s:%d (%s)", 
+                vim.fn.fnamemodify(loc.file, ':~:.'), loc.line, loc.type))
+            end
+          end
+        end
+      end
+    end
+  end
+  
+  -- Check for potential dependencies
+  local deps = M.db.dependencies[file_path] or {}
+  if #deps > 0 then
+    table.insert(context_parts, "\nKnown dependencies:")
+    for _, dep in ipairs(deps) do
+      table.insert(context_parts, "  - " .. dep)
+      
+      -- Check if any symbols might come from this dependency
+      for symbol, _ in pairs(symbols) do
+        -- Simple heuristic: check if symbol name appears in dependency usage
+        local usage_in_dep = vim.fn.system(string.format(
+          "rg -l '\\b%s\\b' --type-add 'code:*.{js,ts,py,lua}' -t code | grep -E '%s'",
+          vim.fn.escape(symbol, '\\'), dep
+        ))
+        if vim.v.shell_error == 0 and usage_in_dep ~= "" then
+          table.insert(context_parts, string.format("    Symbol '%s' likely from this module", symbol))
+        end
+      end
+    end
+  end
+  
+  -- Analyze potential impact
+  local impact_symbols = {}
+  for symbol, _ in pairs(symbols) do
+    local impact = M.analyze_impact(file_path, 1) -- Simplified, checking from line 1
+    if #impact.direct > 0 then
+      impact_symbols[symbol] = impact
+    end
+  end
+  
+  if vim.tbl_count(impact_symbols) > 0 then
+    table.insert(context_parts, "\nPotential impact of changes:")
+    for symbol, impact in pairs(impact_symbols) do
+      if #impact.direct > 0 then
+        table.insert(context_parts, string.format("  Symbol '%s' is used by %d files", 
+          symbol, #impact.direct))
+      end
+      if #impact.critical > 0 then
+        table.insert(context_parts, "  Critical dependencies:")
+        for _, crit in ipairs(impact.critical) do
+          table.insert(context_parts, string.format("    - %s (%s)", 
+            vim.fn.fnamemodify(crit.file, ':~:.'), crit.reason))
+        end
+      end
+    end
+  end
+  
+  -- Check for common patterns or anti-patterns
+  local patterns_found = {}
+  local pattern_checks = {
+    { pattern = "console%.log", name = "Debug logging" },
+    { pattern = "TODO", name = "TODO comments" },
+    { pattern = "FIXME", name = "FIXME comments" },
+    { pattern = "any%s*[%),]", name = "TypeScript 'any' type" },
+    { pattern = "!important", name = "CSS !important" },
+    { pattern = "eval%s*%(", name = "eval() usage" },
+    { pattern = "innerHTML%s*=", name = "innerHTML assignment" },
+  }
+  
+  for _, check in ipairs(pattern_checks) do
+    if code_content:match(check.pattern) then
+      table.insert(patterns_found, check.name)
+    end
+  end
+  
+  if #patterns_found > 0 then
+    table.insert(context_parts, "\nPatterns detected:")
+    for _, pattern in ipairs(patterns_found) do
+      table.insert(context_parts, "  - " .. pattern)
+    end
+  end
+  
+  return #context_parts > 0 and table.concat(context_parts, "\n") or nil
+end
+
 -- Show intelligence report
 M.show_report = function()
   local buf = vim.api.nvim_create_buf(false, true)

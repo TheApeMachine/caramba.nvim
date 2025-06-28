@@ -496,16 +496,21 @@ M.review_code = function()
   local utils = require("caramba.utils")
   local context = require("caramba.context")
   local llm = require("caramba.llm")
+  local intelligence = require("caramba.intelligence")
   
   -- Get code to review
   local mode = vim.fn.mode()
   local code_to_review
   local review_type
+  local start_line = 1
   
   if mode == "v" or mode == "V" then
     -- Visual mode: review selection
     code_to_review = utils.get_visual_selection()
     review_type = "Selected code"
+    -- Get visual selection line numbers
+    local vstart = vim.fn.getpos("'<")
+    start_line = vstart[2]
   else
     -- Normal mode: review current file
     local bufnr = vim.api.nvim_get_current_buf()
@@ -519,30 +524,181 @@ M.review_code = function()
     return
   end
   
-  -- Get file context
+  -- Collect comprehensive context
   local ctx = context.collect()
   local language = ctx and ctx.language or vim.bo.filetype
   
+  -- Build context sections
+  local context_sections = {}
+  
+  -- Add project structure
+  if ctx and ctx.project_root then
+    table.insert(context_sections, "Project root: " .. ctx.project_root)
+  end
+  
+  -- Add imports/dependencies context
+  if ctx and ctx.imports then
+    local imports_str = "## Imports and Dependencies:\n"
+    for _, import in ipairs(ctx.imports) do
+      imports_str = imports_str .. "- " .. import .. "\n"
+    end
+    table.insert(context_sections, imports_str)
+  end
+  
+  -- Get semantic context using intelligence module
+  local semantic_context = ""
+  if intelligence and intelligence.get_semantic_context then
+    -- Get context for the current file
+    local file_path = vim.fn.expand('%:p')
+    local sem_ctx = intelligence.get_semantic_context(file_path, code_to_review)
+    if sem_ctx then
+      semantic_context = "\n## Semantic Context:\n" .. sem_ctx
+    end
+  end
+  
+  -- Get related files context
+  local related_files = ""
+  local related_content = {}
+  if ctx and ctx.related_files then
+    related_files = "\n## Related Files:\n"
+    for _, file in ipairs(ctx.related_files) do
+      related_files = related_files .. "- " .. file .. "\n"
+    end
+  else
+    -- Try to find related files based on naming patterns
+    local current_file = vim.fn.expand('%:t:r')
+    local current_ext = vim.fn.expand('%:e')
+    local current_dir = vim.fn.expand('%:h')
+    
+    -- Common patterns for related files
+    local patterns = {
+      current_file .. "_test." .. current_ext,
+      current_file .. ".test." .. current_ext,
+      current_file .. "_spec." .. current_ext,
+      current_file .. ".spec." .. current_ext,
+      "test_" .. current_file .. "." .. current_ext,
+      current_file .. ".d.ts", -- TypeScript definitions
+    }
+    
+    related_files = "\n## Potentially Related Files:\n"
+    for _, pattern in ipairs(patterns) do
+      local full_path = current_dir .. "/" .. pattern
+      if vim.fn.filereadable(full_path) == 1 then
+        related_files = related_files .. "- " .. pattern .. " (test file)\n"
+        -- Read first few lines to understand test structure
+        local test_lines = vim.fn.readfile(full_path, '', 20)
+        if #test_lines > 0 then
+          table.insert(related_content, "\nTest file structure (" .. pattern .. "):")
+          table.insert(related_content, "```")
+          for i, line in ipairs(test_lines) do
+            if i <= 10 and line:match("describe%s*%(") or line:match("test%s*%(") or line:match("it%s*%(") then
+              table.insert(related_content, line)
+            end
+          end
+          table.insert(related_content, "```")
+        end
+      end
+    end
+  end
+  
+  -- Get function/class definitions that are referenced
+  local references = ""
+  if ctx and ctx.symbols then
+    references = "\n## Available Symbols in Scope:\n"
+    for _, symbol in ipairs(ctx.symbols) do
+      if symbol.kind == "function" or symbol.kind == "class" then
+        references = references .. string.format("- %s %s\n", symbol.kind, symbol.name)
+      end
+    end
+  end
+  
+  -- Detect project conventions and patterns
+  local conventions = ""
+  local project_root = ctx and ctx.project_root or vim.fn.getcwd()
+  
+  -- Check for configuration files that indicate conventions
+  local config_files = {
+    { file = ".eslintrc", type = "ESLint configuration" },
+    { file = ".eslintrc.js", type = "ESLint configuration" },
+    { file = ".eslintrc.json", type = "ESLint configuration" },
+    { file = ".prettierrc", type = "Prettier configuration" },
+    { file = "tsconfig.json", type = "TypeScript configuration" },
+    { file = "jest.config.js", type = "Jest test configuration" },
+    { file = ".rubocop.yml", type = "RuboCop configuration" },
+    { file = "pyproject.toml", type = "Python project configuration" },
+    { file = ".flake8", type = "Flake8 configuration" },
+  }
+  
+  local found_configs = {}
+  for _, config in ipairs(config_files) do
+    local config_path = project_root .. "/" .. config.file
+    if vim.fn.filereadable(config_path) == 1 then
+      table.insert(found_configs, config.type)
+    end
+  end
+  
+  if #found_configs > 0 then
+    conventions = "\n## Project Configuration:\n"
+    for _, config in ipairs(found_configs) do
+      conventions = conventions .. "- " .. config .. " detected\n"
+    end
+  end
+  
+  -- Get git context if available
+  local git_context = ""
+  local git_status = vim.fn.system("git status --porcelain " .. vim.fn.expand('%:p'))
+  if vim.v.shell_error == 0 and git_status ~= "" then
+    git_context = "\n## Git Status:\nFile has uncommitted changes"
+  end
+  
+  -- Check recent commits affecting this file
+  local recent_commits = vim.fn.system("git log -3 --oneline " .. vim.fn.expand('%:p'))
+  if vim.v.shell_error == 0 and recent_commits ~= "" then
+    git_context = git_context .. "\n\n## Recent commits:\n" .. recent_commits
+  end
+  
+  -- Build comprehensive prompt
   local prompt = string.format([[
-Review the following %s code for:
-1. Code quality and best practices
-2. Potential bugs or issues
-3. Performance concerns
-4. Security vulnerabilities
-5. Suggestions for improvement
+Review the following %s code with full project context:
 
 Language: %s
 %s
 
-Code to review:
+%s
+%s%s%s%s%s%s%s%s
+
+Code to review (starting at line %d):
 ```%s
 %s
 ```
 
-Provide a structured review with specific line references where applicable.
-]], language, language, review_type, language, code_to_review)
+Please provide a comprehensive review covering:
+1. Code quality and adherence to %s best practices
+2. Potential bugs or logic errors
+3. Performance implications
+4. Security vulnerabilities
+5. Integration issues with imported dependencies
+6. Suggestions for improvement
+7. Consistency with project patterns
+8. Test coverage adequacy (if test files found)
+9. Documentation completeness
 
-  vim.notify("AI: Reviewing code...", vim.log.levels.INFO)
+Consider the semantic context and how this code interacts with:
+- Imported modules and their APIs
+- Related files in the project (especially tests)
+- Available symbols and their usage
+- Overall project architecture
+- Recent changes and git history
+
+Provide specific line references and actionable suggestions. If tests exist, comment on test coverage gaps.
+]], language, language, review_type, table.concat(context_sections, "\n"), semantic_context, related_files, 
+    table.concat(related_content, "\n"), references, conventions,
+    ctx and ctx.test_framework and ("\nTest Framework: " .. ctx.test_framework) or "",
+    git_context,
+    ctx and ctx.documentation and ("\n## Existing Documentation:\n" .. ctx.documentation) or "",
+    start_line, language, code_to_review)
+
+  vim.notify("AI: Analyzing code with full context...", vim.log.levels.INFO)
   
   llm.request(prompt, { temperature = 0.2 }, function(response)
     if response then
@@ -551,15 +707,24 @@ Provide a structured review with specific line references where applicable.
         local buf = vim.api.nvim_create_buf(false, true)
         
         local header = {
-          "# Code Review",
+          "# Code Review with Context",
           "",
           "**Reviewed:** " .. review_type,
           "**Language:** " .. language,
           "**Date:** " .. os.date("%Y-%m-%d %H:%M"),
-          "",
-          "---",
-          "",
         }
+        
+        -- Add context summary to header
+        if ctx and ctx.project_root then
+          table.insert(header, "**Project:** " .. vim.fn.fnamemodify(ctx.project_root, ':t'))
+        end
+        if ctx and ctx.imports and #ctx.imports > 0 then
+          table.insert(header, "**Dependencies:** " .. #ctx.imports .. " imports analyzed")
+        end
+        
+        table.insert(header, "")
+        table.insert(header, "---")
+        table.insert(header, "")
         
         local lines = {}
         vim.list_extend(lines, header)
@@ -581,7 +746,18 @@ Provide a structured review with specific line references where applicable.
           vim.notify("Review copied to clipboard", vim.log.levels.INFO)
         end, { buffer = buf, desc = "Copy review to clipboard" })
         
-        vim.notify("AI: Code review complete", vim.log.levels.INFO)
+        -- Add keymap to jump to specific line mentioned in review
+        vim.keymap.set('n', 'gd', function()
+          local line = vim.fn.getline('.')
+          local line_num = line:match("line (%d+)") or line:match("Line (%d+)")
+          if line_num then
+            vim.cmd('wincmd p') -- Go to previous window
+            vim.cmd(':' .. line_num)
+            vim.cmd('normal! zz') -- Center the line
+          end
+        end, { buffer = buf, desc = "Go to line mentioned in review" })
+        
+        vim.notify("AI: Context-aware code review complete", vim.log.levels.INFO)
       end)
     else
       vim.notify("AI: Failed to generate code review", vim.log.levels.ERROR)
