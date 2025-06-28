@@ -823,113 +823,38 @@ M.index_workspace_keyword = function(callback)
   M._index = {}
   
   local workspace_root = vim.fn.getcwd()
-  local files_indexed = 0
-  local files_scanned = 0
-  local files_excluded = 0
+  local config = require('caramba.config').get()
   
-  vim.notify("AI: Scanning directory: " .. workspace_root, vim.log.levels.INFO)
-  
-  -- Check if the directory exists
-  if vim.fn.isdirectory(workspace_root) == 0 then
-    vim.notify("AI: Error - workspace directory does not exist: " .. workspace_root, vim.log.levels.ERROR)
-    if callback then callback() end
-    return
-  end
-  
-  -- Use plenary's scandir for cross-platform file scanning
-  local ok, files = pcall(scan.scan_dir, workspace_root, {
+  -- Use plenary.scandir for robust file finding
+  local files_to_scan = scan.scan_dir(workspace_root, {
     hidden = false,
-    depth = 100,  -- Increased depth to ensure we go deep into subdirectories
-    add_dirs = false,
-    respect_gitignore = false, -- Changed to false to ensure we scan all files
-    silent = false,  -- Show errors if any
-    on_insert = function(path)
-      files_scanned = files_scanned + 1
-      
-      -- Debug first few files
-      if files_scanned <= 5 then
-        vim.notify("AI: Scanning file: " .. path, vim.log.levels.DEBUG)
-      end
-      
-      -- Check if we should process this file
-      if should_exclude(path) then
-        files_excluded = files_excluded + 1
-        if files_excluded <= 5 then
-          vim.notify("AI: Excluded: " .. path, vim.log.levels.DEBUG)
-        end
-        return false
-      end
-      if not should_include(path) then
-        if files_scanned <= 10 then
-          local ext = path:match("%.([^%.]+)$") or "no extension"
-          vim.notify("AI: Skipped (extension " .. ext .. "): " .. path, vim.log.levels.DEBUG)
-        end
-        return false
-      end
-      
-      -- Index the file
-      local file_data = M.index_file(path)
-      if file_data then
-        M._index[path] = file_data
-        files_indexed = files_indexed + 1
-        
-        -- Show progress every 100 files
-        if files_indexed % 100 == 0 then
-          vim.schedule(function()
-            vim.notify(string.format("AI Search: Indexed %d files...", files_indexed), vim.log.levels.INFO)
-          end)
-        end
-        
-        -- Debug: show every Go file found
-        if file_data and path:match("%.go$") and files_indexed <= 20 then
-          vim.schedule(function()
-            vim.notify("AI: Indexed Go file: " .. vim.fn.fnamemodify(path, ":~:."), vim.log.levels.INFO)
-          end)
-        end
-      end
-      
-      return true
-    end,
+    respect_gitignore = true,
+    exclude = config.search.exclude_patterns,
   })
-  
-  if not ok then
-    vim.notify("AI: Error scanning directory: " .. tostring(files), vim.log.levels.ERROR)
-    if callback then callback() end
-    return
+
+  -- Filter for included extensions
+  local files = {}
+  local include_map = {}
+  for _, ext in ipairs(config.search.include_extensions or {}) do
+    include_map[ext] = true
+  end
+
+  for _, file in ipairs(files_to_scan) do
+    if vim.fn.isdirectory(file) == 0 then
+      local ext = vim.fn.fnamemodify(file, ':e')
+      if include_map[ext] then
+        table.insert(files, file)
+      end
+    end
   end
   
-  -- If we didn't find many files, try using vim's globpath as fallback
-  if files_indexed < 10 and files_scanned < 100 then
-    vim.notify("AI: Few files found with plenary, trying vim.fn.globpath fallback...", vim.log.levels.WARN)
-    
-    -- Try to find files using globpath for each extension
-    for _, ext in ipairs(M.config.include_extensions) do
-      local pattern = "**/*." .. ext
-      local found_files = vim.fn.globpath(workspace_root, pattern, false, true)
-      
-      vim.notify(string.format("AI: Found %d .%s files", #found_files, ext), vim.log.levels.INFO)
-      
-      for _, filepath in ipairs(found_files) do
-        -- Make sure we haven't already indexed this file
-        if not M._index[filepath] then
-          files_scanned = files_scanned + 1
-          
-          -- Check exclusions
-          if not should_exclude(filepath) then
-            local file_data = M.index_file(filepath)
-            if file_data then
-              M._index[filepath] = file_data
-              files_indexed = files_indexed + 1
-              
-              -- Show progress
-              if files_indexed <= 10 or files_indexed % 50 == 0 then
-                vim.schedule(function()
-                  vim.notify(string.format("AI: Indexed %s", vim.fn.fnamemodify(filepath, ":~:.")), vim.log.levels.INFO)
-                end)
-              end
-            end
-          end
-        end
+  local files_indexed = 0
+  for _, filepath in ipairs(files) do
+    if M._should_index_file(filepath) then
+      local file_data = M.index_file(filepath)
+      if file_data then
+        M._index[filepath] = file_data
+        files_indexed = files_indexed + 1
       end
     end
   end
@@ -939,8 +864,8 @@ M.index_workspace_keyword = function(callback)
   
   vim.schedule(function()
     local stats = M.get_stats()
-    vim.notify(string.format("AI Search: Indexed %d symbols from %d files (scanned: %d, excluded: %d)", 
-      stats.symbols, files_indexed, files_scanned, files_excluded), vim.log.levels.INFO)
+    vim.notify(string.format("AI Search: Indexed %d symbols from %d files.", 
+      stats.symbols, stats.files), vim.log.levels.INFO)
     M._last_indexed = os.time()
     if callback then callback() end
   end)
