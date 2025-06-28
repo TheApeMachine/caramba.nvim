@@ -573,62 +573,41 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   -- Use vim's jobstart for better streaming support
   local job_id = vim.fn.jobstart(curl_cmd, {
     on_stdout = function(_, data, _)
-      -- data is an array of lines
-      if not data or #data == 0 then return end
+      if not data or not M._active_requests[request_id] then return end
       
-      -- Join lines and add to buffer
       for _, line in ipairs(data) do
-        if line and line ~= "" then
-          buffer = buffer .. line .. "\n"
-        end
-      end
-      
-      -- Process SSE events - they are separated by double newlines
-      while true do
-        -- Find the next complete event (ends with \n\n)
-        local event_end = buffer:find("\n\n", 1, true)
-        if not event_end then
-          -- No complete event yet
-          break
-        end
-        
-        -- Extract the event
-        local event = buffer:sub(1, event_end - 1)
-        buffer = buffer:sub(event_end + 2) -- Skip the \n\n
-        
-        -- Process each line in the event
-        for line in event:gmatch("[^\n]+") do
-          if line:match("^data: ") then
-            local data_content = line:sub(7) -- Remove "data: " prefix
-            
-            if data_content == "[DONE]" then
+        if line and line:match("^data: ") then
+          local data_content = line:sub(7)
+          
+          if data_content == "[DONE]" then
+            if M._active_requests[request_id] then
+              M._active_requests[request_id] = nil
               vim.schedule(function()
                 on_complete(accumulated_content, nil)
               end)
-            else
-              -- Parse the JSON data
-              local ok, chunk_data = pcall(vim.json.decode, data_content)
-              if ok and chunk_data then
-                if chunk_data.choices and chunk_data.choices[1] then
-                  local delta = chunk_data.choices[1].delta
-                  if delta and delta.content then
-                    accumulated_content = accumulated_content .. delta.content
-                    vim.schedule(function()
-                      on_chunk(delta.content)
-                    end)
-                  end
-                elseif chunk_data.error then
-                  -- Handle API errors
-                  vim.schedule(function()
-                    on_complete(nil, chunk_data.error.message or "Unknown API error")
-                  end)
-                  return
-                end
-              elseif not ok and config.get().debug then
+              -- Stop the job as we are done.
+              pcall(vim.fn.jobstop, job_id)
+            end
+            return
+          end
+          
+          local ok, chunk_data = pcall(vim.json.decode, data_content)
+          if ok and chunk_data then
+            if chunk_data.choices and chunk_data.choices[1] and chunk_data.choices[1].delta and chunk_data.choices[1].delta.content then
+              local delta_content = chunk_data.choices[1].delta.content
+              accumulated_content = accumulated_content .. delta_content
+              vim.schedule(function()
+                on_chunk(delta_content)
+              end)
+            elseif chunk_data.error then
+              if M._active_requests[request_id] then
+                M._active_requests[request_id] = nil
                 vim.schedule(function()
-                  vim.notify("AI: Failed to parse chunk: " .. vim.inspect(data_content), vim.log.levels.WARN)
+                  on_complete(nil, chunk_data.error.message or "Unknown API error in stream")
                 end)
+                pcall(vim.fn.jobstop, job_id)
               end
+              return
             end
           end
         end
@@ -637,15 +616,20 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     on_stderr = function(_, data, _)
       if data and #data > 0 then
         local error_text = table.concat(data, "\n")
-        if error_text ~= "" then
+        if error_text ~= "" and M._active_requests[request_id] and config.get().debug then
           vim.schedule(function()
-            vim.notify("AI: Curl error: " .. error_text, vim.log.levels.ERROR)
+            vim.notify("AI: Curl stderr: " .. error_text, vim.log.levels.ERROR)
           end)
         end
       end
     end,
     on_exit = function(_, return_val, _)
-      -- Clean up tracking
+      -- Clean up tracking, only if the request is still considered active
+      if not M._active_requests[request_id] then
+        process_queue()
+        return
+      end
+      
       M._active_requests[request_id] = nil
       M._active_jobs[request_id] = nil
       
@@ -657,7 +641,8 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
         end)
       end
       
-      if return_val and return_val ~= 0 then
+      if return_val and return_val ~= 0 and return_val ~= -15 -- -15 is SIGTERM from jobstop
+      then
         vim.schedule(function()
           local error_msg = "Stream failed with code: " .. tostring(return_val)
           if return_val == 28 then
@@ -672,6 +657,11 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
         vim.schedule(function()
           vim.notify("AI: Stream completed but no content was received", vim.log.levels.WARN)
           on_complete(nil, "No response received from API")
+        end)
+      elseif accumulated_content ~= "" then
+        -- The stream ended without a [DONE] message, but we have content
+        vim.schedule(function()
+          on_complete(accumulated_content, nil)
         end)
       end
       
