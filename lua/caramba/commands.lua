@@ -170,30 +170,6 @@ function M.setup_commands()
     end,
   })
   
-  commands.register("SetModel", function(args)
-    local model = args.args
-    if model == "" then
-      vim.notify("Please specify a model name", vim.log.levels.ERROR)
-      return
-    end
-    
-    local cfg = config.get()
-    local provider = cfg.provider
-    
-    if provider == "openai" then
-      cfg.api.openai.model = model
-    elseif provider == "anthropic" then
-      cfg.api.anthropic.model = model
-    elseif provider == "ollama" then
-      cfg.api.ollama.model = model
-    end
-    
-    vim.notify("AI: Model set to " .. model .. " for " .. provider, vim.log.levels.INFO)
-  end, {
-    desc = "AI: Set model for current provider",
-    nargs = 1,
-  })
-  
   -- Cache management
   commands.register("ClearCache", function()
     llm.clear_cache()
