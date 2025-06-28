@@ -67,7 +67,7 @@ M.generate_embedding_openai = function(text, callback)
     command = "curl",
     args = {
       "-sS",
-      "https://api.opencaramba.com/v1/embeddings",
+      "https://api.openai.com/v1/embeddings",
       "-X", "POST",
       "-H", "Content-Type: application/json",
       "-H", "Authorization: Bearer " .. api_config.api_key,

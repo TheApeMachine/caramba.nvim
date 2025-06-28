@@ -10,7 +10,7 @@ M.defaults = {
   -- API settings
   api = {
     openai = {
-      endpoint = "https://api.opencaramba.com/v1/chat/completions",
+      endpoint = "https://api.openai.com/v1/chat/completions",
       model = "gpt-4o-mini",
       temperature = 0.3,
       max_tokens = 4096,
@@ -132,7 +132,7 @@ end
 function M._validate()
   -- Check API keys
   local provider = M.options.provider
-  if provider == "openai" and not M.options.api.opencaramba.api_key then
+  if provider == "openai" and not M.options.api.openai.api_key then
     vim.notify("AI: OpenAI API key not found. Set OPENAI_API_KEY environment variable.", vim.log.levels.WARN)
   elseif provider == "anthropic" and not M.options.api.anthropic.api_key then
     vim.notify("AI: Anthropic API key not found. Set ANTHROPIC_API_KEY environment variable.", vim.log.levels.WARN)

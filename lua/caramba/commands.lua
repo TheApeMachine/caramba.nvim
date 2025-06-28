@@ -452,7 +452,7 @@ function M.setup()
     local provider = config.get().provider
     local api_key = nil
     if provider == "openai" then
-      api_key = config.get().api.opencaramba.api_key
+      api_key = config.get().api.openai.api_key
     elseif provider == "anthropic" then
       api_key = config.get().api.anthropic.api_key
     end
