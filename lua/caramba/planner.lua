@@ -785,4 +785,70 @@ function M.setup()
   })
 end
 
+-- Setup commands for this module
+function M.setup_commands()
+  local commands = require('caramba.core.commands')
+  
+  -- Main planning command
+  commands.register('Plan', function(opts)
+    local task = opts.args
+    if task == "" then
+      vim.ui.input({
+        prompt = "What would you like to plan? ",
+      }, function(input)
+        if input and input ~= "" then
+          M.interactive_planning_session(input)
+        end
+      end)
+    else
+      M.interactive_planning_session(task)
+    end
+  end, {
+    desc = 'Create an AI-powered implementation plan',
+    nargs = '?',
+  })
+  
+  -- Analyze project structure
+  commands.register('AnalyzeProject', function()
+    M.analyze_project_structure(function(analysis)
+      if analysis then
+        vim.schedule(function()
+          M._show_result_window(analysis, "Project Analysis")
+        end)
+      end
+    end)
+  end, {
+    desc = 'Analyze project structure and architecture',
+  })
+  
+  -- Learn patterns from codebase
+  commands.register('LearnPatterns', M.learn_from_codebase, {
+    desc = 'Learn coding patterns from the codebase',
+  })
+  
+  -- Execute current plan
+  commands.register('ExecutePlan', function()
+    M.execute_plan()
+  end, {
+    desc = 'Execute the current implementation plan',
+  })
+  
+  -- Show current plan
+  commands.register('ShowPlan', function()
+    local plan = M.get_current_plan()
+    if plan then
+      M._show_plan_window(plan, nil)
+    else
+      vim.notify("No active plan", vim.log.levels.INFO)
+    end
+  end, {
+    desc = 'Show the current implementation plan',
+  })
+  
+  -- Mark plan as complete
+  commands.register('MarkPlanComplete', M.mark_complete, {
+    desc = 'Mark the current plan as complete',
+  })
+end
+
 return M 

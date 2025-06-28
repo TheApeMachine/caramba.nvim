@@ -95,7 +95,7 @@ end
 
 -- Get the current buffer's parser
 function M.get_parser(bufnr)
-  bufnr = bufnr or 0
+  bufnr = tonumber(bufnr) or 0
   local lang = vim.bo[bufnr].filetype
   
   -- Try to auto-install if missing
@@ -175,7 +175,7 @@ end
 function M.get_node_text(node, bufnr)
   if not node then return "" end
   
-  bufnr = bufnr or 0
+  bufnr = tonumber(bufnr) or 0
   
   -- Check if node has the range method
   if not node.range then return "" end
@@ -202,7 +202,7 @@ end
 
 -- Extract imports from the buffer
 function M.extract_imports(bufnr, max_lines)
-  bufnr = bufnr or 0
+  bufnr = tonumber(bufnr) or 0
   max_lines = max_lines or 50
   
   local parser = M.get_parser(bufnr)
@@ -278,7 +278,7 @@ end
 function M.extract_documentation(node, bufnr)
   if not node then return nil end
   
-  bufnr = bufnr or 0
+  bufnr = tonumber(bufnr) or 0
   local start_row = node:start()
   
   -- Look for comments immediately before the node
@@ -309,7 +309,7 @@ end
 
 -- Clear cache for a buffer
 local function clear_buffer_cache(bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  bufnr = tonumber(bufnr) or vim.api.nvim_get_current_buf()
   -- Clear all cache entries for this buffer
   for key, _ in pairs(M._cache) do
     if key:match("^" .. bufnr .. ":") then
@@ -332,6 +332,8 @@ vim.api.nvim_create_autocmd({"TextChanged", "TextChangedI", "TextChangedP"}, {
 M.collect = function(opts)
   opts = opts or {}
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
+  -- Ensure bufnr is a number
+  bufnr = tonumber(bufnr) or vim.api.nvim_get_current_buf()
   local parser = parsers.get_parser(bufnr)
   
   if not parser then
@@ -351,7 +353,7 @@ M.collect = function(opts)
   end
   
   -- Generate cache key based on buffer, node ID, and whether we want full context
-              local cache_key = string.format("%d:%s:%s", bufnr, tostring(node:id()), opts.full and "full" or "partial")
+  local cache_key = string.format("%d:%s:%s", bufnr, tostring(node:id()), opts.full and "full" or "partial")
   
   -- Check cache unless forced refresh
   if not opts.force and M._cache[cache_key] then
@@ -570,6 +572,8 @@ end
 function M.build_completion_context(opts)
   opts = opts or {}
   local bufnr = opts.bufnr or 0
+  -- Ensure bufnr is a number
+  bufnr = tonumber(bufnr) or 0
   
   -- Get cursor position
   local cursor = vim.api.nvim_win_get_cursor(0)

@@ -1255,4 +1255,340 @@ M.get_combined_index_data = function()
   return result
 end
 
+-- Setup commands for this module
+function M.setup_commands()
+  local commands = require('caramba.core.commands')
+  local utils = require('caramba.utils')
+  local config = require('caramba.config')
+  
+  -- Main search command
+  commands.register("Search", function(args)
+    local query = args.args
+    
+    if query == "" then
+      vim.ui.input({
+        prompt = "Search query: ",
+      }, function(input)
+        if input and input ~= "" then
+          M._do_search(input)
+        end
+      end)
+    else
+      M._do_search(query)
+    end
+  end, {
+    desc = "AI: Search codebase",
+    nargs = "?",
+  })
+  
+  -- Helper function for search
+  function M._do_search(query)
+    local cfg = config.get()
+    local results
+    
+    if cfg.search.use_embeddings and cfg.provider == "openai" then
+      results = M.semantic_search(query)
+    else
+      results = M.keyword_search(query)
+    end
+    
+    if results and #results > 0 then
+      utils.show_search_results(results, "Search: " .. query)
+    else
+      vim.notify("No results found for: " .. query, vim.log.levels.INFO)
+    end
+  end
+  
+  -- Find definition
+  commands.register("FindDefinition", function(args)
+    local symbol = args.args
+    if symbol == "" then
+      -- Get symbol under cursor
+      local node = require("nvim-treesitter.ts_utils").get_node_at_cursor()
+      if node and node:type() == "identifier" then
+        local context = require("caramba.context")
+        symbol = context.get_node_text(node)
+      end
+    end
+    
+    if symbol == "" then
+      vim.notify("No symbol specified", vim.log.levels.WARN)
+      return
+    end
+    
+    local definition = M.find_definition(symbol)
+    if definition then
+      utils.jump_to_location(definition)
+    else
+      vim.notify("Definition not found for: " .. symbol, vim.log.levels.WARN)
+    end
+  end, {
+    desc = "AI: Find definition",
+    nargs = "?",
+  })
+  
+  -- Find references
+  commands.register("FindReferences", function(args)
+    local symbol = args.args
+    if symbol == "" then
+      -- Get symbol under cursor
+      local node = require("nvim-treesitter.ts_utils").get_node_at_cursor()
+      if node and node:type() == "identifier" then
+        local context = require("caramba.context")
+        symbol = context.get_node_text(node)
+      end
+    end
+    
+    if symbol == "" then
+      vim.notify("No symbol specified", vim.log.levels.WARN)
+      return
+    end
+    
+    local references = M.find_references(symbol)
+    utils.show_search_results(references, "References to: " .. symbol)
+  end, {
+    desc = "AI: Find references",
+    nargs = "?",
+  })
+  
+  -- Index workspace
+  commands.register("IndexWorkspace", function()
+    M.index_workspace(function()
+      vim.notify("AI: Workspace indexing complete", vim.log.levels.INFO)
+    end)
+  end, {
+    desc = "AI: Index workspace for search",
+  })
+  
+  -- Index stats
+  commands.register("IndexStats", function()
+    local combined_data = M.get_combined_index_data()
+    local stats = combined_data.stats
+    local info = combined_data.info
+    
+    local lines = {
+      "=== AI Index Statistics ===",
+      "",
+      string.format("Files indexed: %d", stats.files),
+      string.format("Symbols found: %d", stats.symbols),
+      "",
+    }
+    
+    if stats.last_indexed then
+      local age = os.time() - stats.last_indexed
+      local age_str = string.format("%d seconds ago", age)
+      if age > 3600 then
+        age_str = string.format("%.1f hours ago", age / 3600)
+      elseif age > 60 then
+        age_str = string.format("%.1f minutes ago", age / 60)
+      end
+      table.insert(lines, string.format("Last indexed: %s", age_str))
+    else
+      table.insert(lines, "Last indexed: Never")
+    end
+    
+    table.insert(lines, string.format("Current directory: %s", vim.fn.getcwd()))
+    table.insert(lines, "")
+    table.insert(lines, "=== Index Files ===")
+    table.insert(lines, string.format("Index path: %s", vim.fn.fnamemodify(info.index_path, ":~")))
+    
+    if info.index_exists then
+      table.insert(lines, string.format("  Size: %.2f KB", (info.index_size or 0) / 1024))
+    else
+      table.insert(lines, "  Not found")
+    end
+    
+    if config.get().search.use_embeddings then
+      table.insert(lines, string.format("Embeddings path: %s", vim.fn.fnamemodify(info.embeddings_path, ":~")))
+      if info.embeddings_exist then
+        table.insert(lines, string.format("  Size: %.2f KB", (info.embeddings_size or 0) / 1024))
+      else
+        table.insert(lines, "  Not found")
+      end
+    end
+    
+    utils.show_result_window(table.concat(lines, "\n"), "Index Statistics")
+  end, {
+    desc = "AI: Show index statistics",
+  })
+  
+  -- List all index files
+  commands.register("ListIndexes", function()
+    local all_files = M.list_index_files()
+    local lines = {"=== AI Index Files ===", ""}
+    
+    local current_paths = get_workspace_paths()
+    
+    for _, file_info in ipairs(all_files) do
+      local is_current = M.is_current_workspace_file(file_info.path)
+      local marker = is_current and " (current)" or ""
+      local size = ""
+      
+      local stat = vim.loop.fs_stat(file_info.path)
+      if stat then
+        size = string.format(" [%.2f KB]", stat.size / 1024)
+      end
+      
+      table.insert(lines, string.format("%s: %s%s%s", 
+        file_info.type,
+        vim.fn.fnamemodify(file_info.path, ":~"),
+        size,
+        marker
+      ))
+    end
+    
+    if #all_files == 0 then
+      table.insert(lines, "No index files found")
+    end
+    
+    utils.show_result_window(table.concat(lines, "\n"), "Index Files")
+  end, {
+    desc = "AI: List all index files",
+  })
+  
+  -- Cleanup old indexes
+  commands.register("CleanupIndexes", function()
+    local removed = M.cleanup_old_indexes()
+    vim.notify(string.format("AI: Cleaned up %d old index files", removed), vim.log.levels.INFO)
+  end, {
+    desc = "AI: Clean up old index files",
+  })
+  
+  -- Refresh stale files
+  commands.register("RefreshIndex", function()
+    M.refresh_stale_files(function()
+      vim.notify("AI: Index refresh complete", vim.log.levels.INFO)
+    end)
+  end, {
+    desc = "AI: Refresh stale files in index",
+  })
+  
+  -- Check index freshness
+  commands.register("CheckIndex", function()
+    local freshness = M.check_index_freshness()
+    local lines = {"=== Index Freshness Check ===", ""}
+    
+    if freshness.total_stale > 0 then
+      table.insert(lines, string.format("Stale files: %d", freshness.total_stale))
+      for i, file in ipairs(freshness.stale) do
+        if i <= 10 then
+          table.insert(lines, "  " .. vim.fn.fnamemodify(file, ":~:."))
+        end
+      end
+      if freshness.total_stale > 10 then
+        table.insert(lines, string.format("  ... and %d more", freshness.total_stale - 10))
+      end
+      table.insert(lines, "")
+    end
+    
+    if freshness.total_missing > 0 then
+      table.insert(lines, string.format("Missing files: %d", freshness.total_missing))
+      for i, file in ipairs(freshness.missing) do
+        if i <= 10 then
+          table.insert(lines, "  " .. vim.fn.fnamemodify(file, ":~:."))
+        end
+      end
+      if freshness.total_missing > 10 then
+        table.insert(lines, string.format("  ... and %d more", freshness.total_missing - 10))
+      end
+    end
+    
+    if freshness.total_stale == 0 and freshness.total_missing == 0 then
+      table.insert(lines, "Index is up to date!")
+    else
+      table.insert(lines, "")
+      table.insert(lines, "Run :AIRefreshIndex to update")
+    end
+    
+    utils.show_result_window(table.concat(lines, "\n"), "Index Freshness")
+  end, {
+    desc = "AI: Check index freshness",
+  })
+  
+  -- Toggle auto-indexing
+  commands.register("ToggleAutoIndex", function()
+    local cfg = config.get()
+    cfg.search.enable_index = not cfg.search.enable_index
+    
+    if cfg.search.enable_index then
+      M.setup_file_watchers()
+      vim.notify("AI: Auto-indexing enabled", vim.log.levels.INFO)
+    else
+      vim.notify("AI: Auto-indexing disabled", vim.log.levels.INFO)
+    end
+  end, {
+    desc = "AI: Toggle automatic index updates",
+  })
+  
+  -- Enable/disable embeddings
+  commands.register("EnableEmbeddings", function()
+    local cfg = config.get()
+    cfg.search.use_embeddings = true
+    vim.notify("AI: Embeddings-based search enabled. Re-index to generate embeddings.", vim.log.levels.INFO)
+  end, {
+    desc = "AI: Enable embeddings-based search",
+  })
+  
+  commands.register("DisableEmbeddings", function()
+    local cfg = config.get()
+    cfg.search.use_embeddings = false
+    vim.notify("AI: Embeddings-based search disabled. Using keyword search.", vim.log.levels.INFO)
+  end, {
+    desc = "AI: Disable embeddings-based search",
+  })
+  
+  -- Set embedding dimensions
+  commands.register("SetEmbeddingDimensions", function(args)
+    local dimensions = tonumber(args.args)
+    
+    if not dimensions then
+      vim.notify("AI: Invalid dimensions. Usage: :AISetEmbeddingDimensions <number>", vim.log.levels.ERROR)
+      return
+    end
+    
+    local cfg = config.get()
+    local model = cfg.search.embedding_model
+    local max_dims = model == "text-embedding-3-large" and 3072 or 1536
+    
+    if dimensions < 256 or dimensions > max_dims then
+      vim.notify(string.format("AI: Dimensions must be between 256 and %d for model %s", max_dims, model), vim.log.levels.ERROR)
+      return
+    end
+    
+    cfg.search.embedding_dimensions = dimensions
+    vim.notify(string.format("AI: Embedding dimensions set to %d. Re-index to apply changes.", dimensions), vim.log.levels.INFO)
+  end, {
+    desc = "AI: Set embedding dimensions",
+    nargs = 1,
+  })
+  
+  -- Set embedding model
+  commands.register("SetEmbeddingModel", function(args)
+    local model = args.args
+    
+    if model ~= "text-embedding-3-small" and model ~= "text-embedding-3-large" then
+      vim.notify("AI: Invalid model. Use 'text-embedding-3-small' or 'text-embedding-3-large'", vim.log.levels.ERROR)
+      return
+    end
+    
+    local cfg = config.get()
+    cfg.search.embedding_model = model
+    
+    -- Adjust dimensions if needed
+    local max_dims = model == "text-embedding-3-large" and 3072 or 1536
+    if cfg.search.embedding_dimensions > max_dims then
+      cfg.search.embedding_dimensions = max_dims
+      vim.notify(string.format("AI: Model set to %s, dimensions adjusted to %d", model, max_dims), vim.log.levels.INFO)
+    else
+      vim.notify(string.format("AI: Model set to %s. Re-index to apply changes.", model), vim.log.levels.INFO)
+    end
+  end, {
+    desc = "AI: Set embedding model",
+    nargs = 1,
+    complete = function()
+      return { "text-embedding-3-small", "text-embedding-3-large" }
+    end,
+  })
+end
+
 return M 
