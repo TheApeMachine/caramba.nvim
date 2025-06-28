@@ -356,7 +356,7 @@ M.collect = function(opts)
   end
   
   -- Generate cache key based on buffer, node ID, and whether we want full context
-  local cache_key = string.format("%d:%s:%s", bufnr, tostring(node:id()), opts.full and "full" or "partial")
+  local cache_key = string.format("%s:%s:%s", tostring(bufnr), tostring(node:id()), opts.full and "full" or "partial")
   
   -- Check cache unless forced refresh
   if not opts.force and M._cache[cache_key] then
@@ -379,6 +379,9 @@ M.collect = function(opts)
   if not context_node then
     return context
   end
+  
+  -- Get the name of the context node
+  context.name = M.get_node_name(context_node, bufnr)
   
   -- Extract imports
   context.imports = M.extract_imports(bufnr) or {}
@@ -574,7 +577,7 @@ end
 -- Build context specifically for code completion
 function M.build_completion_context(opts)
   opts = opts or {}
-  local bufnr = tonumber(opts.bufnr) or 0
+  local bufnr = tonumber(opts.bufnr) or vim.api.nvim_get_current_buf()
   
   -- Get cursor position
   local cursor = vim.api.nvim_win_get_cursor(0)
