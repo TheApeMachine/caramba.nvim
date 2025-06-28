@@ -1013,6 +1013,20 @@ M.get_index_info = function()
   return info
 end
 
+-- Remove all embeddings for a file
+local function remove_file_embeddings(filepath)
+  local i = 1
+  while true do
+    local chunk_id = filepath .. ":" .. i
+    if M._embeddings[chunk_id] then
+      M._embeddings[chunk_id] = nil
+      i = i + 1
+    else
+      break
+    end
+  end
+end
+
 -- Move embeddings from one file to another
 local function move_file_embeddings(old_path, new_path)
   local i = 1
@@ -1239,20 +1253,6 @@ M.get_combined_index_data = function()
   end
   
   return result
-end
-
--- Remove all embeddings for a file
-local function remove_file_embeddings(filepath)
-  local i = 1
-  while true do
-    local chunk_id = filepath .. ":" .. i
-    if M._embeddings[chunk_id] then
-      M._embeddings[chunk_id] = nil
-      i = i + 1
-    else
-      break
-    end
-  end
 end
 
 return M 
