@@ -810,7 +810,14 @@ function M.setup_commands()
   
   -- Analyze project structure
   commands.register('AnalyzeProject', function()
-    M.analyze_project_structure(function(analysis)
+    M.analyze_project_structure(function(analysis, err)
+      if err then
+        vim.schedule(function()
+          vim.notify("Failed to analyze project: " .. tostring(err), vim.log.levels.ERROR)
+        end)
+        return
+      end
+      
       if analysis then
         vim.schedule(function()
           M._show_result_window(analysis, "Project Analysis")

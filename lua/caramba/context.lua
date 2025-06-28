@@ -331,9 +331,12 @@ vim.api.nvim_create_autocmd({"TextChanged", "TextChangedI", "TextChangedP"}, {
 -- Collect context information around cursor
 M.collect = function(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
-  -- Ensure bufnr is a number
-  bufnr = tonumber(bufnr) or vim.api.nvim_get_current_buf()
+  local bufnr = tonumber(opts.bufnr) or vim.api.nvim_get_current_buf()
+  
+  -- Get buffer info
+  local filetype = vim.api.nvim_buf_get_option(bufnr, "filetype")
+  local filename = vim.api.nvim_buf_get_name(bufnr)
+  
   local parser = parsers.get_parser(bufnr)
   
   if not parser then
@@ -568,12 +571,10 @@ function M.build_context_string(context)
   return table.concat(parts, "\n")
 end
 
--- Build context for completion at cursor
+-- Build context specifically for code completion
 function M.build_completion_context(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr or 0
-  -- Ensure bufnr is a number
-  bufnr = tonumber(bufnr) or 0
+  local bufnr = tonumber(opts.bufnr) or 0
   
   -- Get cursor position
   local cursor = vim.api.nvim_win_get_cursor(0)

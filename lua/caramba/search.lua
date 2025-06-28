@@ -1448,8 +1448,34 @@ function M.setup_commands()
   
   -- Cleanup old indexes
   commands.register("CleanupIndexes", function()
-    local removed = M.cleanup_old_indexes()
-    vim.notify(string.format("AI: Cleaned up %d old index files", removed), vim.log.levels.INFO)
+    -- First show what will be removed
+    local to_remove = {}
+    for _, file_info in ipairs(M.list_index_files()) do
+      if not M.is_current_workspace_file(file_info.path) then
+        table.insert(to_remove, file_info.path)
+      end
+    end
+    
+    if #to_remove == 0 then
+      vim.notify("No old index files to remove", vim.log.levels.INFO)
+      return
+    end
+    
+    vim.notify("Files to be removed:", vim.log.levels.WARN)
+    for _, path in ipairs(to_remove) do
+      vim.notify("  " .. vim.fn.fnamemodify(path, ":t"), vim.log.levels.WARN)
+    end
+    
+    vim.ui.input({
+      prompt = "Remove " .. #to_remove .. " old index files? (y/n): ",
+    }, function(input)
+      if input and input:lower() == "y" then
+        local removed = M.cleanup_old_indexes()
+        vim.notify(string.format("AI: Cleaned up %d old index files", removed), vim.log.levels.INFO)
+      else
+        vim.notify("Cleanup cancelled", vim.log.levels.INFO)
+      end
+    end)
   end, {
     desc = "AI: Clean up old index files",
   })
@@ -1514,6 +1540,7 @@ function M.setup_commands()
       M.setup_file_watchers()
       vim.notify("AI: Auto-indexing enabled", vim.log.levels.INFO)
     else
+      vim.api.nvim_clear_autocmds({ group = "AISearchIndexUpdate" })
       vim.notify("AI: Auto-indexing disabled", vim.log.levels.INFO)
     end
   end, {

@@ -3,6 +3,9 @@
 
 local M = {}
 
+-- Keywords that indicate a complex task requiring planning
+local COMPLEX_KEYWORDS = {"implement", "create", "build", "design", "refactor", "migrate", "convert"}
+
 -- Core completion functionality
 function M._do_completion(instruction)
   local context = require("caramba.context")
@@ -12,10 +15,9 @@ function M._do_completion(instruction)
   
   -- Check if this is a complex task that needs planning
   local lower_instruction = instruction:lower()
-  local complex_keywords = {"implement", "create", "build", "design", "refactor", "migrate", "convert"}
   local is_complex = false
   
-  for _, keyword in ipairs(complex_keywords) do
+  for _, keyword in ipairs(COMPLEX_KEYWORDS) do
     if lower_instruction:match("^%s*" .. keyword) then
       is_complex = true
       break
@@ -195,9 +197,10 @@ function M.setup()
   -- Cache management
   commands.register("ClearCache", function()
     llm.clear_cache()
-    vim.notify("AI: Cache cleared", vim.log.levels.INFO)
+    context.clear_cache()
+    vim.notify("AI: All caches cleared", vim.log.levels.INFO)
   end, {
-    desc = "AI: Clear LLM response cache",
+    desc = "AI: Clear all caches",
   })
   
   -- Debug commands

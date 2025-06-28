@@ -55,6 +55,9 @@ end
 ---@param ext string File extension
 ---@return string? Language name
 function M.ext_to_lang(ext)
+  -- Remove leading dot if present
+  ext = ext:gsub("^%.", "")
+  
   local mappings = {
     js = "javascript",
     jsx = "javascript",
@@ -174,7 +177,7 @@ function M.show_search_results(results, title, use_loclist)
   local qf_list = {}
   for _, result in ipairs(results) do
     table.insert(qf_list, {
-      filename = result.file,
+      filename = result.file or result.filepath,  -- Handle both file and filepath keys
       lnum = result.line or 1,
       col = result.col or 1,
       text = result.text or result.content or "",
