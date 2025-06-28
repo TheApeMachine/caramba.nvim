@@ -322,4 +322,50 @@ function M.deep_copy(orig)
   return copy
 end
 
+--- Extract text from a Tree-sitter node with bounds checking.
+---@param node userdata The Tree-sitter node.
+---@param bufnr number The buffer number.
+---@return string The text content of the node.
+function M.get_node_text(node, bufnr)
+  if not node then
+    return ""
+  end
+
+  bufnr = tonumber(bufnr) or 0
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
+  -- Check if node has the range method
+  if not node.range then
+    return ""
+  end
+
+  local start_row, start_col, end_row, end_col = node:range()
+
+  -- Get lines
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
+  if #lines == 0 then
+    return ""
+  end
+
+  -- Handle single line
+  if start_row == end_row then
+    -- Ensure indices are within string bounds
+    if start_col < end_col then
+      return string.sub(lines[1], start_col + 1, end_col)
+    else
+      return ""
+    end
+  else
+    -- Handle multi-line
+    lines[1] = string.sub(lines[1], start_col + 1)
+    if #lines > 1 then
+      lines[#lines] = string.sub(lines[#lines], 1, end_col)
+    end
+  end
+
+  return table.concat(lines, "\n")
+end
+
 return M 

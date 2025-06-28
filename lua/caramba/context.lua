@@ -6,6 +6,7 @@ local ts = vim.treesitter
 local ts_utils = require('nvim-treesitter.ts_utils')
 local ts_query = vim.treesitter.query
 local parsers = require('nvim-treesitter.parsers')
+local utils = require('caramba.utils')
 
 -- Cache for parsed contexts
 M._cache = {}
@@ -171,35 +172,6 @@ function M.find_parent_node(node, node_types)
   return nil
 end
 
--- Extract text from a node with bounds checking
-function M.get_node_text(node, bufnr)
-  if not node then return "" end
-  
-  bufnr = tonumber(bufnr) or 0
-  
-  -- Check if node has the range method
-  if not node.range then return "" end
-  
-  local start_row, start_col, end_row, end_col = node:range()
-  
-  -- Get lines
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
-  if #lines == 0 then return "" end
-  
-  -- Handle single line
-  if start_row == end_row then
-    lines[1] = string.sub(lines[1], start_col + 1, end_col)
-  else
-    -- Handle multi-line
-    lines[1] = string.sub(lines[1], start_col + 1)
-    if #lines > 1 then
-      lines[#lines] = string.sub(lines[#lines], 1, end_col)
-    end
-  end
-  
-  return table.concat(lines, "\n")
-end
-
 -- Extract imports from the buffer
 function M.extract_imports(bufnr, max_lines)
   bufnr = tonumber(bufnr) or 0
@@ -248,7 +220,7 @@ function M.extract_imports(bufnr, max_lines)
       
       for _, import_type in ipairs(M.node_types.import_like) do
         if child:type() == import_type then
-          table.insert(imports, M.get_node_text(child, bufnr))
+          table.insert(imports, utils.get_node_text(child, bufnr))
           break
         end
       end
@@ -262,7 +234,7 @@ function M.extract_imports(bufnr, max_lines)
     for _, match, _ in query:iter_matches(root, bufnr, 0, max_lines) do
       for _, node in pairs(match) do
         if node then
-          local text = M.get_node_text(node, bufnr)
+          local text = utils.get_node_text(node, bufnr)
           if text and text ~= "" then
             table.insert(imports, text)
           end
@@ -421,9 +393,9 @@ M.collect = function(opts)
   local parent = context_node:parent()
   while parent do
     if vim.tbl_contains(M.node_types.function_like, parent:type()) and not context.current_function then
-      context.current_function = M.get_node_text(parent, bufnr):match("^[^\n]+")
+      context.current_function = utils.get_node_text(parent, bufnr):match("^[^\n]+")
     elseif vim.tbl_contains(M.node_types.class_like, parent:type()) and not context.current_class then
-      context.current_class = M.get_node_text(parent, bufnr):match("^[^\n]+")
+      context.current_class = utils.get_node_text(parent, bufnr):match("^[^\n]+")
     end
     parent = parent:parent()
   end
@@ -460,12 +432,12 @@ function M.get_node_name(node, bufnr)
   -- Look for identifier child nodes
   for child in node:iter_children() do
     if child:type() == "identifier" or child:type() == "name" then
-      return M.get_node_text(child, bufnr)
+      return utils.get_node_text(child, bufnr)
     end
   end
   
   -- Fallback: get first line and try to extract name
-  local text = M.get_node_text(node, bufnr)
+  local text = utils.get_node_text(node, bufnr)
   local first_line = vim.split(text, "\n")[1]
   
   -- Common patterns

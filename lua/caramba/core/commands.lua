@@ -1,91 +1,97 @@
 -- Core command registration utility
--- Provides a centralized way to register commands and prevent duplicates
+-- Provides a centralized way to register commands and prevent duplicates.
 
 local M = {}
 
--- Track registered commands to prevent duplicates
-M.registered_commands = {}
+M.commands = {}
 
---- Register a user command with duplicate prevention
----@param name string The command name (without "AI" prefix)
----@param handler function The function to call when the command is executed
----@param opts table? Optional vim.api.nvim_create_user_command options
-function M.register(name, handler, opts)
+--- Register a new command definition.
+-- This function now just adds to a table, to be set up later.
+-- @param name string The command name (e.g., "Chat", which becomes "AIChat").
+-- @param func function The function to execute.
+-- @param opts table? Optional vim.api.nvim_create_user_command options.
+function M.register(name, func, opts)
+  opts = opts or {}
+
   -- Ensure command starts with "AI"
   if not name:match("^AI") then
     name = "AI" .. name
   end
-  
-  -- Check if command is already registered
-  if M.registered_commands[name] then
-    vim.notify(string.format("Command %s is already registered, skipping duplicate registration", name), vim.log.levels.WARN)
-    return false
+
+  if M.commands[name] then
+    vim.notify(
+      string.format("Command %s is already defined, overwriting. Original source: %s", name, M.commands[name].source),
+      vim.log.levels.WARN
+    )
   end
-  
-  -- Default options
-  opts = opts or {}
-  
-  -- Register the command
-  local ok, err = pcall(vim.api.nvim_create_user_command, name, handler, opts)
-  if ok then
-    M.registered_commands[name] = {
-      handler = handler,
-      opts = opts,
-      source = debug.getinfo(2, "S").source
-    }
-    return true
-  else
-    vim.notify(string.format("Failed to register command %s: %s", name, err), vim.log.levels.ERROR)
-    return false
-  end
+
+  M.commands[name] = {
+    func = func,
+    opts = opts,
+    source = debug.getinfo(2, "S").source,
+  }
 end
 
---- Unregister a command
----@param name string The command name
+--- Unregister a command by removing it from the registry and deleting the user command.
+--- @param name string The command name (e.g., "AIChat").
 function M.unregister(name)
   if not name:match("^AI") then
     name = "AI" .. name
   end
-  
-  if M.registered_commands[name] then
+
+  if M.commands[name] then
     pcall(vim.api.nvim_del_user_command, name)
-    M.registered_commands[name] = nil
+    M.commands[name] = nil
     return true
   end
   return false
 end
 
---- Get list of all registered commands
----@return table
+--- Setup all registered commands.
+-- This should be called once during plugin initialization.
+M.setup = function()
+  for name, cmd in pairs(M.commands) do
+    vim.api.nvim_create_user_command(name, cmd.func, cmd.opts or {})
+  end
+end
+
+--- Get a list of all registered command definitions.
+--- @return table
 function M.list()
-  local commands = {}
-  for name, info in pairs(M.registered_commands) do
-    table.insert(commands, {
+  local command_list = {}
+  for name, info in pairs(M.commands) do
+    table.insert(command_list, {
       name = name,
-      desc = info.opts.desc or "No description",
-      source = info.source
+      desc = (info.opts and info.opts.desc) or "No description",
+      source = info.source,
     })
   end
-  table.sort(commands, function(a, b) return a.name < b.name end)
-  return commands
+  table.sort(command_list, function(a, b)
+    return a.name < b.name
+  end)
+  return command_list
 end
 
---- Clear all registered commands (useful for testing)
+--- Clear all registered commands.
+-- Deletes the user commands and clears the internal registry.
+-- Useful for hot-reloading and testing.
 function M.clear()
-  for name, _ in pairs(M.registered_commands) do
+  for name, _ in pairs(M.commands) do
     pcall(vim.api.nvim_del_user_command, name)
   end
-  M.registered_commands = {}
+  M.commands = {}
 end
 
---- Debug: Show all registered commands
+--- Print a formatted list of all registered commands for debugging.
 function M.debug()
-  local commands = M.list()
-  print(string.format("=== Registered AI Commands (%d) ===", #commands))
-  for _, cmd in ipairs(commands) do
-    print(string.format("%-30s %s", cmd.name, cmd.desc))
-    print(string.format("  Source: %s", cmd.source))
+  local command_list = M.list()
+  vim.notify(string.format("=== Registered AI Commands (%d) ===", #command_list))
+  local lines = {}
+  for _, cmd in ipairs(command_list) do
+    table.insert(lines, string.format("%-30s %s", cmd.name, cmd.desc))
+    table.insert(lines, string.format("  Source: %s", cmd.source))
   end
+  print(table.concat(lines, "\n"))
 end
 
-return M 
+return M

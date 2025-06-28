@@ -6,6 +6,7 @@ local M = {}
 local parsers = require('nvim-treesitter.parsers')
 local ts_utils = require('nvim-treesitter.ts_utils')
 local Path = require('plenary.path')
+local utils = require('caramba.utils')
 
 -- Initialize the intelligence database
 M.db = {
@@ -82,7 +83,7 @@ M.extract_symbols = function(bufnr)
   -- Extract symbols
   for pattern, match, metadata in query:iter_matches(root, bufnr) do
     for id, node in pairs(match) do
-      local name = vim.treesitter.get_node_text(node, bufnr)
+      local name = utils.get_node_text(node, bufnr)
       local capture_name = query.captures[id]
       local symbol_type = capture_name:match("^(%w+)")
       
@@ -127,7 +128,7 @@ M.index_project = function(opts)
       
       -- Set filetype for proper parsing
       local ext = vim.fn.fnamemodify(file, ':e')
-      local ft = M._ext_to_filetype(ext)
+      local ft = utils.ext_to_lang(ext) or ext
       vim.api.nvim_buf_set_option(buf, 'filetype', ft)
       
       -- Extract symbols
@@ -525,19 +526,6 @@ M.generate_api_docs = function(symbol_name)
   end
   
   return table.concat(doc, "\n")
-end
-
--- Helper to map file extensions to filetypes
-M._ext_to_filetype = function(ext)
-  local map = {
-    js = "javascript",
-    ts = "typescript",
-    jsx = "javascriptreact",
-    tsx = "typescriptreact",
-    py = "python",
-    lua = "lua",
-  }
-  return map[ext] or ext
 end
 
 -- Helper: Extract symbols from code
