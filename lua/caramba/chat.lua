@@ -426,6 +426,11 @@ end
 
 -- Render chat history
 M._render_chat = function()
+  -- Debug logging
+  if config.get().debug then
+    vim.notify("AI: Rendering chat with " .. #M._chat_state.history .. " messages", vim.log.levels.INFO)
+  end
+  
   if not M._chat_state.bufnr or not vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
     return
   end
