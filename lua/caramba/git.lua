@@ -491,6 +491,104 @@ Provide a brief review with any concerns or suggestions.
   end)
 end
 
+-- Review current code for quality, bugs, and improvements
+M.review_code = function()
+  local utils = require("caramba.utils")
+  local context = require("caramba.context")
+  local llm = require("caramba.llm")
+  
+  -- Get code to review
+  local mode = vim.fn.mode()
+  local code_to_review
+  local review_type
+  
+  if mode == "v" or mode == "V" then
+    -- Visual mode: review selection
+    code_to_review = utils.get_visual_selection()
+    review_type = "Selected code"
+  else
+    -- Normal mode: review current file
+    local bufnr = vim.api.nvim_get_current_buf()
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    code_to_review = table.concat(lines, '\n')
+    review_type = "File: " .. vim.fn.expand('%:t')
+  end
+  
+  if not code_to_review or code_to_review == "" then
+    vim.notify("No code to review", vim.log.levels.WARN)
+    return
+  end
+  
+  -- Get file context
+  local ctx = context.collect()
+  local language = ctx and ctx.language or vim.bo.filetype
+  
+  local prompt = string.format([[
+Review the following %s code for:
+1. Code quality and best practices
+2. Potential bugs or issues
+3. Performance concerns
+4. Security vulnerabilities
+5. Suggestions for improvement
+
+Language: %s
+%s
+
+Code to review:
+```%s
+%s
+```
+
+Provide a structured review with specific line references where applicable.
+]], language, language, review_type, language, code_to_review)
+
+  vim.notify("AI: Reviewing code...", vim.log.levels.INFO)
+  
+  llm.request(prompt, { temperature = 0.2 }, function(response)
+    if response then
+      vim.schedule(function()
+        -- Show review in a buffer
+        local buf = vim.api.nvim_create_buf(false, true)
+        
+        local header = {
+          "# Code Review",
+          "",
+          "**Reviewed:** " .. review_type,
+          "**Language:** " .. language,
+          "**Date:** " .. os.date("%Y-%m-%d %H:%M"),
+          "",
+          "---",
+          "",
+        }
+        
+        local lines = {}
+        vim.list_extend(lines, header)
+        vim.list_extend(lines, vim.split(response, '\n'))
+        
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+        vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+        vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+        
+        -- Open in a new split
+        vim.cmd('vsplit')
+        vim.api.nvim_set_current_buf(buf)
+        
+        -- Add keymaps
+        vim.keymap.set('n', 'q', ':close<CR>', { buffer = buf, desc = "Close review" })
+        vim.keymap.set('n', 'y', function()
+          local content = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n')
+          vim.fn.setreg('+', content)
+          vim.notify("Review copied to clipboard", vim.log.levels.INFO)
+        end, { buffer = buf, desc = "Copy review to clipboard" })
+        
+        vim.notify("AI: Code review complete", vim.log.levels.INFO)
+      end)
+    else
+      vim.notify("AI: Failed to generate code review", vim.log.levels.ERROR)
+    end
+  end)
+end
+
 -- Setup commands for this module
 function M.setup_commands()
   local commands = require('caramba.core.commands')
@@ -523,6 +621,11 @@ function M.setup_commands()
   -- Pre-push review
   commands.register('PrePushReview', M.pre_push_review, {
     desc = 'Review commits before pushing',
+  })
+  
+  -- Review current code for quality, bugs, and improvements
+  commands.register('ReviewCode', M.review_code, {
+    desc = 'Review current code for quality, bugs, and improvements',
   })
 end
 
