@@ -1,4 +1,4 @@
-# AI.nvim
+# caramba.nvim
 
 An advanced AI-powered coding assistant that transforms Neovim into an AI-native development environment.
 Features include intelligent code completion, refactoring, test generation, and much more.
