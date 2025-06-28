@@ -1,6 +1,7 @@
 # AI.nvim
 
-A revolutionary AI-powered coding assistant that transforms Neovim into an AI-native development environment. Features include intelligent code completion, refactoring, test generation, and much more.
+An advanced AI-powered coding assistant that transforms Neovim into an AI-native development environment.
+Features include intelligent code completion, refactoring, test generation, and much more.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Neovim-0.9+-green.svg" alt="Neovim 0.9+"/>
@@ -11,6 +12,7 @@ A revolutionary AI-powered coding assistant that transforms Neovim into an AI-na
 ## ✨ Features
 
 ### 🚀 Core Features
+
 - **Smart Code Completion** - Context-aware suggestions using LLMs
 - **Intelligent Refactoring** - Automated code improvements
 - **Semantic Code Search** - Find code by meaning, not just text
@@ -20,6 +22,7 @@ A revolutionary AI-powered coding assistant that transforms Neovim into an AI-na
 - **Interactive Chat** - ChatGPT-style interface within Neovim
 
 ### 🔥 Advanced Features
+
 - **AST-Based Transformations** - Language-aware code transformations
 - **Local Code Intelligence** - Fast, offline code analysis
 - **AI Pair Programming** - Real-time coding assistance
@@ -181,16 +184,16 @@ vim.env.ANTHROPIC_API_KEY = "your-anthropic-api-key"
 
 ### Essential Commands
 
-| Command | Description |
-|---------|-------------|
-| `:AIComplete` | Complete code at cursor |
-| `:AIExplain` | Explain selected code |
-| `:AIRefactor` | Refactor code |
-| `:AISearch` | Search codebase semantically |
-| `:AIChat` | Open interactive chat |
-| `:AIGenerateTests` | Generate tests |
-| `:AIDebugError` | Analyze error |
-| `:AICommitMessage` | Generate commit message |
+| Command            | Description                  |
+|--------------------|------------------------------|
+| `:AIComplete`      | Complete code at cursor      |
+| `:AIExplain`       | Explain selected code        |
+| `:AIRefactor`      | Refactor code                |
+| `:AISearch`        | Search codebase semantically |
+| `:AIChat`          | Open interactive chat        |
+| `:AIGenerateTests` | Generate tests               |
+| `:AIDebugError`    | Analyze error                |
+| `:AICommitMessage` | Generate commit message      |
 
 ### All Commands
 
@@ -198,6 +201,7 @@ vim.env.ANTHROPIC_API_KEY = "your-anthropic-api-key"
 <summary>Click to expand full command list</summary>
 
 #### Core
+
 - `:AIComplete [instruction]` - Complete code with optional instruction
 - `:AIExplain [question]` - Explain code with optional question
 - `:AIRefactor <instruction>` - Refactor with instruction
@@ -206,12 +210,14 @@ vim.env.ANTHROPIC_API_KEY = "your-anthropic-api-key"
 - `:AICancel` - Cancel active operations
 
 #### Planning & Architecture
+
 - `:AIPlan [task]` - Create implementation plan
 - `:AIShowPlan` - Show current plan
 - `:AIAnalyzeProject` - Analyze project structure
 - `:AILearnPatterns` - Learn coding patterns
 
 #### Testing & Debugging
+
 - `:AIGenerateTests [framework]` - Generate tests
 - `:AIUpdateTests` - Update existing tests
 - `:AIDebugError [error]` - Analyze error
@@ -219,28 +225,33 @@ vim.env.ANTHROPIC_API_KEY = "your-anthropic-api-key"
 - `:AIWatchTests` - Watch tests for failures
 
 #### Multi-File & Refactoring
+
 - `:AIRenameSymbol [new_name]` - Rename across project
 - `:AIExtractModule [name]` - Extract to new module
 - `:AITransform [type]` - Apply AST transformation
 
 #### Git Integration
+
 - `:AICommitMessage` - Generate commit message
 - `:AIReviewCode` - Review current code
 - `:AIReviewPR` - Review pull request
 - `:AIResolveConflict` - Resolve merge conflicts
 
 #### Code Intelligence
+
 - `:AIIndexProject` - Index for navigation
 - `:AIFindDefinition` - Find symbol definition
 - `:AIFindReferences` - Find references
 - `:AICallHierarchy` - Show call hierarchy
 
 #### Consistency & Quality
+
 - `:AICheckConsistency` - Check file consistency
 - `:AILearnPatterns` - Learn project patterns
 - `:AIEnableConsistencyCheck` - Auto-check on save
 
 #### Web & Research
+
 - `:AIWebSearch <query>` - Search the web
 - `:AIResearch <topic>` - Deep research
 - `:AIQuery <question>` - Query with tools
@@ -306,8 +317,8 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 ### Development Setup
 
 ```bash
-git clone https://github.com/your-username/ai.nvim
-cd ai.nvim
+git clone https://github.com/your-username/caramba.nvim
+cd caramba.nvim
 
 # Run tests
 make test
@@ -332,21 +343,27 @@ MIT License - see [LICENSE](LICENSE) for details.
 <summary>Common Issues</summary>
 
 ### No API Key Error
-```
+
+```bash
 Error: No API key found for openai
 ```
+
 **Solution**: Set your API key in environment or config
 
 ### Timeout Errors
-```
+
+```bash
 Error: Request timeout
 ```
+
 **Solution**: Increase timeout in config or check internet connection
 
 ### Parser Not Found
-```
+
+```bash
 Error: No Tree-sitter parser for language
 ```
+
 **Solution**: Install parser with `:TSInstall <language>`
 
 </details>
@@ -362,4 +379,4 @@ Error: No Tree-sitter parser for language
 
 <p align="center">
 Made with ❤️ for the Neovim community
-</p> 
+</p>
