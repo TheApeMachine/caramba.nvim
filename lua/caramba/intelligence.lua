@@ -131,7 +131,7 @@ M.index_project = function(opts)
 
   for _, file in ipairs(files_to_scan) do
     if vim.fn.isdirectory(file) == 0 then
-      local ext = vim.fn.fnamemodify(file, ':e')
+      local ext = vim.fn.fnamemodify(file, ':e'):gsub('^%.', '')
       if include_map[ext] then
         table.insert(files, file)
       end
