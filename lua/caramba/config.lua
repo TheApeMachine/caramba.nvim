@@ -102,6 +102,7 @@ M.defaults = {
   ui = {
     diff_highlights = true,
     progress_notifications = true,
+    stream_window = true,
     floating_window_border = "rounded",
     preview_window_width = 0.6,
     preview_window_height = 0.8,

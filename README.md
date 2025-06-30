@@ -23,6 +23,7 @@ Features include intelligent code completion, refactoring, test generation, and 
 - **AI-Powered Testing** - Generate comprehensive test suites
 - **Advanced Debugging** - AI-assisted error analysis
 - **Interactive Chat** - ChatGPT-style interface within Neovim
+- **Live Streaming Responses** - Output streams in a floating window
 
 ### 🔥 Advanced Features
 
@@ -292,6 +293,7 @@ vim.keymap.set('v', '<C-k>', ':AIExplain<CR>', { desc = 'AI Explain' })
 2. Set your OpenAI API key: `export OPENAI_API_KEY="sk-..."`
 3. Add to your config: `require('ai').setup({})`
 4. Open a file and try `:AIComplete` or `<leader>ac`
+5. Results appear in a floating window as they stream back
 
 ## 📋 Requirements
 

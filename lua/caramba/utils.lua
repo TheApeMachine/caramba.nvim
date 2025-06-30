@@ -51,6 +51,58 @@ function M.show_result_window(content, title)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
 end
 
+--- Create a window for streaming output
+---@param title string? Optional title for the window
+---@return table # {bufnr, winid, append, close}
+function M.create_stream_window(title)
+  title = title or "AI Response"
+
+  -- Create buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+
+  -- Window size
+  local width = math.min(80, math.max(40, vim.o.columns - 20))
+  local height = math.min(20, math.max(10, 5))
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    row = row,
+    col = col,
+    width = width,
+    height = height,
+    style = "minimal",
+    border = "rounded",
+    title = title,
+    title_pos = "center",
+  })
+
+  vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
+  vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe")
+  vim.api.nvim_buf_set_option(buf, "modifiable", true)
+  vim.api.nvim_win_set_option(win, "wrap", true)
+  vim.api.nvim_win_set_option(win, "linebreak", true)
+
+  vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>close<cr>", { noremap = true, silent = true })
+  vim.api.nvim_buf_set_keymap(buf, "n", "<esc>", "<cmd>close<cr>", { noremap = true, silent = true })
+
+  local function append(text)
+    local lines = vim.split(text, "\n")
+    local line_count = vim.api.nvim_buf_line_count(buf)
+    vim.api.nvim_buf_set_lines(buf, line_count, line_count, false, lines)
+    vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+  end
+
+  local function close()
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
+
+  return { bufnr = buf, winid = win, append = append, close = close }
+end
+
 --- Get file extension to language mapping
 ---@param ext string File extension
 ---@return string? Language name
