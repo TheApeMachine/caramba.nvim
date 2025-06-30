@@ -269,7 +269,7 @@ end
 M.query_with_tools = function(query)
   vim.notify("Processing query with tools...", vim.log.levels.INFO)
   
-  M.request_with_tools(query, { temperature = 0.3 }, function(response, err)
+  M.request_with_tools(query, { temperature = 1 }, function(response, err)
     if err then
       vim.notify("Error: " .. err, vim.log.levels.ERROR)
       return

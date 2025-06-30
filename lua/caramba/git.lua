@@ -37,7 +37,7 @@ Diff:
 Generate only the commit message, nothing else.
 ]]
 
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         -- If in git commit buffer, insert message
@@ -238,7 +238,7 @@ Generate a PR description with:
 Be specific and helpful for reviewers.
 ]], current_branch, base_branch, commits, diff_stat)
 
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         -- Show in buffer

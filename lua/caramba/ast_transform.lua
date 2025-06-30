@@ -82,7 +82,7 @@ Rules:
 5. Return the transformed code only
 ]], text)
     
-    return llm.request_sync(prompt, { temperature = 0.1 })
+    return llm.request_sync(prompt, { temperature = 1 })
   end,
 }
 
@@ -125,7 +125,7 @@ Rules:
 6. Return only the transformed code
 ]], text)
     
-    return llm.request_sync(prompt, { temperature = 0.1 })
+    return llm.request_sync(prompt, { temperature = 1 })
   end,
 }
 
@@ -171,7 +171,7 @@ Rules:
 6. Return only the transformed code
 ]]
     
-    return llm.request_sync(prompt, { temperature = 0.1 })
+    return llm.request_sync(prompt, { temperature = 1 })
   end,
 }
 
@@ -212,7 +212,7 @@ Changes to make:
 8. Return only the transformed code
 ]]
     
-    return llm.request_sync(prompt, { temperature = 0.1 })
+    return llm.request_sync(prompt, { temperature = 1 })
   end,
 }
 
@@ -305,7 +305,7 @@ Instructions:
 
 ]], base, ours, theirs)
   
-  return llm.request_sync(prompt, { temperature = 0.1 })
+  return llm.request_sync(prompt, { temperature = 1 })
 end
 
 -- Cross-language refactoring

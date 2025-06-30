@@ -153,7 +153,7 @@ Please provide:
 Be specific and provide actual code that can be applied.
 ]]
 
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if not response then
       vim.notify("Failed to analyze error", vim.log.levels.ERROR)
       return
@@ -334,7 +334,7 @@ Current debugging context:
 Please provide specific debugging guidance.
 ]], cmd, args, vim.fn.expand("%:p"), vim.fn.line("."), vim.bo.filetype)
     
-    llm.request(prompt, { temperature = 0.3 }, function(response)
+    llm.request(prompt, { temperature = 1 }, function(response)
       if response then
         vim.schedule(function()
           -- Append response to debug buffer
@@ -401,7 +401,7 @@ Please provide:
 Focus on practical, implementable solutions.
 ]]
 
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         -- Show analysis

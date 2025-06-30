@@ -434,7 +434,7 @@ Format your response clearly with sections as appropriate.
 ]], query, formatted_results)
       
       -- Get AI summary
-      llm.request(prompt, { temperature = 0.3 }, function(summary)
+      llm.request(prompt, { temperature = 1 }, function(summary)
         if summary then
           vim.schedule(function()
             -- Show summary
@@ -481,7 +481,7 @@ Consider different angles:
 Output only the search queries, one per line.
 ]], topic)
   
-  llm.request(search_prompt, { temperature = 0.5 }, function(response)
+  llm.request(search_prompt, { temperature = 1 }, function(response)
     if not response then
       vim.notify("Failed to generate search queries", vim.log.levels.ERROR)
       return
@@ -545,7 +545,7 @@ Please create a comprehensive research summary that:
 Format as a well-structured technical document.
 ]]
 
-  llm.request(prompt, { temperature = 0.2 }, function(summary)
+  llm.request(prompt, { temperature = 1 }, function(summary)
     if summary then
       vim.schedule(function()
         -- Create research document

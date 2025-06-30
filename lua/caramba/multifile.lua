@@ -525,7 +525,7 @@ Be precise and include all necessary changes.
   end
   
   -- Request AI assistance
-  llm.request(prompt, { temperature = 0.1 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if not response then
       vim.notify("Failed to get AI response", vim.log.levels.ERROR)
       return

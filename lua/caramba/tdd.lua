@@ -180,7 +180,7 @@ Return only the code to be added/modified, no explanations.
     test_info.language, spec.body,
     M._format_requirements(analysis))
   
-  llm.request(prompt, { temperature = 0.1 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         M._apply_implementation(impl_file, response, spec)
@@ -392,7 +392,7 @@ Create tests that:
 Generate comprehensive property-based tests.
 ]], vim.bo.filetype, ctx.current_function_text)
   
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         -- Show in new buffer
@@ -511,7 +511,7 @@ Focus on fixing the actual issues, not just making tests pass artificially.
 Provide the specific code changes needed.
 ]], file, table.concat(failure_desc, '\n'), content)
   
-  llm.request(prompt, { temperature = 0.1 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         -- Show suggestions

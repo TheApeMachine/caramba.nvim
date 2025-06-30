@@ -751,7 +751,7 @@ Please provide the code changes needed for this step.
         }
       }
       
-      llm.request(prompt, { temperature = 0.1 }, function(response)
+      llm.request(prompt, { temperature = 1 }, function(response)
         if response then
           vim.schedule(function()
             -- Apply the changes

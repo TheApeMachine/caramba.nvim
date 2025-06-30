@@ -748,7 +748,7 @@ Current code:
 Fix all issues while preserving functionality. Return only the fixed code.
 ]], file, table.concat(issue_desc, '\n'), content)
   
-  llm.request(prompt, { temperature = 0.1 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
         -- Show preview

@@ -225,7 +225,7 @@ Respond with the complete test file content.
   end
   
   -- Request test generation
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if not response then
       vim.notify("Failed to generate tests", vim.log.levels.ERROR)
       return
@@ -435,7 +435,7 @@ For each failure:
 Provide actionable fixes that can be applied to the code.
 ]]
 
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if not response then
       vim.notify("Failed to analyze test failures", vim.log.levels.ERROR)
       return

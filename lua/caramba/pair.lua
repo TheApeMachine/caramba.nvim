@@ -281,7 +281,7 @@ Suggest function names that follow the project's naming conventions.
 Return only the function names, one per line.
 ]], ctx.filename or "unknown", ctx.current_class or "global", ctx.before)
   
-  llm.request(prompt, { temperature = 0.3 }, function(response)
+  llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       local names = vim.split(response, '\n')
       for _, name in ipairs(names) do
