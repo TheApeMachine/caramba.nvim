@@ -4,6 +4,7 @@
 local M = {}
 local Job = require("plenary.job")
 local config = require("caramba.config")
+local utils = require("caramba.utils")
 
 -- Response cache
 M._cache = {}
@@ -278,6 +279,57 @@ end
 M.request = function(messages, opts, callback)
   opts = opts or {}
   local provider = opts.provider or config.get().provider
+
+  -- Default to streaming for faster feedback
+  local use_streaming = opts.stream ~= false
+  if use_streaming then
+    local stream_ui
+    if config.get().ui.stream_window then
+      stream_ui = utils.create_stream_window("AI Response")
+      if not stream_ui or not stream_ui.append then
+        vim.schedule(function()
+          vim.notify("Failed to create stream window", vim.log.levels.WARN)
+        end)
+        stream_ui = nil
+      end
+    end
+
+    if config.get().ui.progress_notifications then
+      vim.schedule(function()
+        vim.notify("AI: Streaming response...", vim.log.levels.INFO)
+      end)
+    end
+
+    local parts = {}
+    local function on_chunk(chunk)
+      if chunk then
+        table.insert(parts, chunk)
+        if stream_ui then
+          vim.schedule(function()
+            stream_ui.append(chunk)
+          end)
+        end
+      end
+    end
+    local function on_complete(_, err)
+      if stream_ui then
+        vim.schedule(function()
+          stream_ui.close()
+          if err then
+            stream_ui.lock()
+          end
+        end)
+      end
+
+      if err then
+        callback(nil, err)
+      else
+        callback(table.concat(parts, ""), err)
+      end
+    end
+
+    return M.request_stream(messages, opts, on_chunk, on_complete)
+  end
   
   -- Validate API key for providers that need it
   local api_config = config.get().api[provider]
