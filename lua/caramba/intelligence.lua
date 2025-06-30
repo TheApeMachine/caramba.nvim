@@ -118,11 +118,9 @@ M.index_project = function(opts)
   -- Use plenary.scandir for robust file finding
   local files_to_scan = scandir.scan_dir(root, {
     hidden = false,
-    respect_gitignore = true,
-    exclude = config.search.exclude_patterns,
+    respect_gitignore = false, -- Temporarily disabled for debugging
+    -- exclude = config.search.exclude_patterns,
   })
-
-  vim.notify("[Debug] scandir found " .. #files_to_scan .. " files and directories.", vim.log.levels.INFO)
 
   -- Filter for included extensions
   local files = {}
@@ -139,8 +137,6 @@ M.index_project = function(opts)
       end
     end
   end
-  
-  vim.notify("[Debug] Found " .. #files .. " files to index after filtering.", vim.log.levels.INFO)
   
   local total = #files
   local processed = 0
