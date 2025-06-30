@@ -122,6 +122,8 @@ M.index_project = function(opts)
     exclude = config.search.exclude_patterns,
   })
 
+  vim.notify("[Debug] scandir found " .. #files_to_scan .. " files and directories.", vim.log.levels.INFO)
+
   -- Filter for included extensions
   local files = {}
   local include_map = {}
@@ -137,6 +139,8 @@ M.index_project = function(opts)
       end
     end
   end
+  
+  vim.notify("[Debug] Found " .. #files .. " files to index after filtering.", vim.log.levels.INFO)
   
   local total = #files
   local processed = 0
