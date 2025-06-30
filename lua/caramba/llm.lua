@@ -281,12 +281,17 @@ M.request = function(messages, opts, callback)
   local provider = opts.provider or config.get().provider
 
   -- Default to streaming for faster feedback
-  if opts.stream ~= false then
-    opts.stream = true
-
+  local use_streaming = opts.stream ~= false
+  if use_streaming then
     local stream_ui
     if config.get().ui.stream_window then
       stream_ui = utils.create_stream_window("AI Response")
+      if not stream_ui or not stream_ui.append then
+        vim.schedule(function()
+          vim.notify("Failed to create stream window", vim.log.levels.WARN)
+        end)
+        stream_ui = nil
+      end
     end
 
     if config.get().ui.progress_notifications then
@@ -310,9 +315,17 @@ M.request = function(messages, opts, callback)
       if stream_ui then
         vim.schedule(function()
           stream_ui.close()
+          if err then
+            stream_ui.lock()
+          end
         end)
       end
-      callback(table.concat(parts, ""), err)
+
+      if err then
+        callback(nil, err)
+      else
+        callback(table.concat(parts, ""), err)
+      end
     end
 
     return M.request_stream(messages, opts, on_chunk, on_complete)

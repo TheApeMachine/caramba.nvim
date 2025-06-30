@@ -53,7 +53,7 @@ end
 
 --- Create a window for streaming output
 ---@param title string? Optional title for the window
----@return table # {bufnr, winid, append, close}
+---@return table # {bufnr, winid, append, close, lock}
 function M.create_stream_window(title)
   title = title or "AI Response"
 
@@ -62,7 +62,7 @@ function M.create_stream_window(title)
 
   -- Window size
   local width = math.min(80, math.max(40, vim.o.columns - 20))
-  local height = math.min(20, math.max(10, 5))
+  local height = math.min(20, math.max(10, math.floor(vim.o.lines * 0.3)))
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
 
@@ -87,10 +87,27 @@ function M.create_stream_window(title)
   vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>close<cr>", { noremap = true, silent = true })
   vim.api.nvim_buf_set_keymap(buf, "n", "<esc>", "<cmd>close<cr>", { noremap = true, silent = true })
 
+  local function list_slice(tbl, first, last, step)
+    local sliced = {}
+    for i = first or 1, last or #tbl, step or 1 do
+      sliced[#sliced+1] = tbl[i]
+    end
+    return sliced
+  end
+  
   local function append(text)
     local lines = vim.split(text, "\n")
     local line_count = vim.api.nvim_buf_line_count(buf)
-    vim.api.nvim_buf_set_lines(buf, line_count, line_count, false, lines)
+    if line_count == 0 then
+      vim.api.nvim_buf_set_lines(buf, 0, 0, false, lines)
+    else
+      local last_line = vim.api.nvim_buf_get_lines(buf, line_count - 1, line_count, false)[1]
+      lines[1] = last_line .. (lines[1] or "")
+      vim.api.nvim_buf_set_lines(buf, line_count - 1, line_count, false, { lines[1] })
+      if #lines > 1 then
+        vim.api.nvim_buf_set_lines(buf, line_count, line_count, false, list_slice(lines, 2))
+      end
+    end
     vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
   end
 
@@ -100,7 +117,11 @@ function M.create_stream_window(title)
     end
   end
 
-  return { bufnr = buf, winid = win, append = append, close = close }
+  local function lock()
+    vim.api.nvim_buf_set_option(buf, "modifiable", false)
+  end
+
+  return { bufnr = buf, winid = win, append = append, close = close, lock = lock }
 end
 
 --- Get file extension to language mapping
