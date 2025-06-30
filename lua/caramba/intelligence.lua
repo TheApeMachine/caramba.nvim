@@ -86,12 +86,13 @@ M.extract_symbols = function(bufnr)
   
   local query = vim.treesitter.query.parse(lang, query_string)
   local tree = parser:parse()[1]
+  if not tree then return symbols end
   local root = tree:root()
   
-  -- Extract symbols
-  for pattern, match, metadata in query:iter_matches(root, bufnr) do
-    for id, node in pairs(match) do
-      local name = utils.get_node_text(node, bufnr)
+  -- Use iter_captures for a more robust way of getting nodes
+  for id, node, metadata in query:iter_captures(root, bufnr) do
+    local name = utils.get_node_text(node, bufnr)
+    if name ~= "" then
       local capture_name = query.captures[id]
       local symbol_type = capture_name:match("^(%w+)")
       
