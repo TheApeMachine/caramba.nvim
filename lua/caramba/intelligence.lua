@@ -118,19 +118,22 @@ end
 M.index_project = function(opts)
   opts = opts or {}
   local root = opts.root or vim.fn.getcwd()
-  local scandir = require('plenary.scandir')
   local config = require('caramba.config').get()
   
   M.db.symbols = {}
   
-  -- Use plenary.scandir for robust file finding
-  local files_to_scan = scandir.scan_dir(root, {
-    hidden = false,
-    respect_gitignore = true,
-    exclude = config.search.exclude_patterns,
-  })
+  -- Use system `find` command for more robust file searching, as scandir is proving unreliable.
+  local find_cmd = "find " .. vim.fn.escape(root, " ") .. " -type f"
+  local files_to_scan
+  local ok, result = pcall(vim.fn.systemlist, find_cmd)
 
-  -- Filter for included extensions
+  if not ok or not result then
+    vim.notify("Error: Failed to execute 'find' command to scan for files. Is `find` in your PATH?", vim.log.levels.ERROR)
+    return
+  end
+  files_to_scan = result
+
+  -- Filter for included extensions and exclude patterns
   local files = {}
   local include_map = {}
   for _, ext in ipairs(config.search.include_extensions or {}) do
@@ -138,10 +141,20 @@ M.index_project = function(opts)
   end
 
   for _, file in ipairs(files_to_scan) do
-    if vim.fn.isdirectory(file) == 0 then
-      local ext = vim.fn.fnamemodify(file, ':e'):gsub('^%.', '')
-      if include_map[ext] then
-        table.insert(files, file)
+    local excluded = false
+    for _, pattern in ipairs(config.search.exclude_patterns or {}) do
+      if file:match(pattern) then
+        excluded = true
+        break
+      end
+    end
+
+    if not excluded then
+      if vim.fn.isdirectory(file) == 0 then
+        local ext = vim.fn.fnamemodify(file, ':e'):gsub('^%.', '')
+        if include_map[ext] then
+          table.insert(files, file)
+        end
       end
     end
   end
