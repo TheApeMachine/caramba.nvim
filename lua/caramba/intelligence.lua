@@ -71,6 +71,14 @@ M.extract_symbols = function(bufnr)
         (variable_list name: (identifier) @variable.name)
         (expression_list value: (function_definition)))
     ]],
+    
+    go = [[
+      (function_declaration name: (identifier) @function.name)
+      (method_declaration name: (field_identifier) @method.name)
+      (type_declaration (type_spec name: (type_identifier) @type.name))
+      (const_declaration (const_spec name: (identifier) @constant.name))
+      (var_declaration (var_spec name: (identifier) @variable.name))
+    ]],
   }
   
   local query_string = queries[lang]
@@ -118,8 +126,8 @@ M.index_project = function(opts)
   -- Use plenary.scandir for robust file finding
   local files_to_scan = scandir.scan_dir(root, {
     hidden = false,
-    respect_gitignore = false, -- Temporarily disabled for debugging
-    -- exclude = config.search.exclude_patterns,
+    respect_gitignore = true,
+    exclude = config.search.exclude_patterns,
   })
 
   -- Filter for included extensions
