@@ -314,9 +314,10 @@ M.request = function(messages, opts, callback)
     local function on_complete(_, err)
       if stream_ui then
         vim.schedule(function()
-          stream_ui.close()
           if err then
             stream_ui.lock()
+          else
+            stream_ui.close()
           end
         end)
       end
