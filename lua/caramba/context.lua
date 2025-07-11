@@ -303,8 +303,20 @@ vim.api.nvim_create_autocmd({"TextChanged", "TextChangedI", "TextChangedP"}, {
 -- Collect context information around cursor
 M.collect = function(opts)
   opts = opts or {}
+  local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
+  local from_visual_selection = opts.start_row and opts.end_row
+
+  -- If no specific range is provided, check for a visual selection
+  if not from_visual_selection then
+    local start_pos, end_pos = utils.get_visual_selection_pos()
+    if start_pos and end_pos then
+      opts.start_row, opts.start_col = start_pos[1], start_pos[2]
+      opts.end_row, opts.end_col = end_pos[1], end_pos[2]
+      from_visual_selection = true
+    end
+  end
+
   -- Ensure bufnr is always a number
-  local bufnr
   if opts.bufnr then
     bufnr = tonumber(opts.bufnr)
     if not bufnr then
@@ -321,6 +333,23 @@ M.collect = function(opts)
   
   local parser = parsers.get_parser(bufnr)
   
+  -- If there's a selection, prioritize it
+  if from_visual_selection then
+    local lines = vim.api.nvim_buf_get_lines(bufnr, opts.start_row - 1, opts.end_row, false)
+    if #lines > 0 then
+        -- Trim the first and last lines according to column selection
+        lines[#lines] = lines[#lines]:sub(1, opts.end_col)
+        lines[1] = lines[1]:sub(opts.start_col)
+    end
+    
+    return {
+      language = vim.bo[bufnr].filetype,
+      file_path = vim.api.nvim_buf_get_name(bufnr),
+      content = table.concat(lines, "\n"),
+      imports = M.extract_imports(bufnr),
+    }
+  end
+
   if not parser then
     return nil
   end
@@ -331,9 +360,12 @@ M.collect = function(opts)
   -- Get the node at cursor for cache key
   local node = M.get_node_at_cursor()
   if not node then
+    -- Fallback: If no node at cursor but we want context, use the whole buffer
     return {
       language = vim.bo[bufnr].filetype,
-      current_line = vim.api.nvim_get_current_line(),
+      file_path = vim.api.nvim_buf_get_name(bufnr),
+      content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n"),
+      imports = M.extract_imports(bufnr),
     }
   end
   
@@ -359,7 +391,13 @@ M.collect = function(opts)
   -- Find the appropriate context node
   local context_node = M.find_context_node(node)
   if not context_node then
-    return context
+    -- If tree-sitter fails to find a specific node, use the whole buffer as context
+    return {
+      language = vim.bo[bufnr].filetype,
+      file_path = vim.api.nvim_buf_get_name(bufnr),
+      content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n"),
+      imports = M.extract_imports(bufnr),
+    }
   end
   
   -- Get the name of the context node

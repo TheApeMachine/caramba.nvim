@@ -259,6 +259,32 @@ function M.interactive_planning_session(task_description, context_info, callback
   
   context_info = context_info or context.build_context_string(context.collect())
   
+  -- If no context is selected, use the current buffer's content
+  if not context_info or context_info:match("^%s*$") then
+    vim.schedule(function()
+      vim.notify("AI Planner: No code selected, using current buffer as context.", vim.log.levels.INFO)
+    end)
+    local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    context_info = table.concat(buffer_lines, "\n")
+  end
+  
+  -- Final fallback: if buffer is also empty, then prompt user.
+  if not context_info or context_info:match("^%s*$") then
+    vim.schedule(function()
+      vim.notify("AI Planner: Buffer is empty. Please provide a task description.", vim.log.levels.WARN)
+      vim.ui.input({
+        prompt = "Describe what you want to do: ",
+      }, function(input)
+        if input and input ~= "" then
+          M.interactive_planning_session(input, "", callback)
+        else
+          if callback then callback(nil, nil, "Planning cancelled.") end
+        end
+      end)
+    end)
+    return
+  end
+  
   M.create_task_plan(task_description, context_info, function(plan_result, plan_err)
     if plan_err then
       vim.schedule(function()
@@ -267,8 +293,18 @@ function M.interactive_planning_session(task_description, context_info, callback
       return
     end
     
-    -- Parse the plan
-    local ok, plan = pcall(vim.json.decode, plan_result)
+    -- Parse the plan, with better error handling
+    local ok, plan
+    if type(plan_result) == "table" then
+      plan = plan_result -- Already a table, no need to decode
+      ok = true
+    elseif type(plan_result) == "string" then
+      ok, plan = pcall(vim.json.decode, plan_result)
+    else
+      ok = false
+      plan = "Invalid response type: " .. type(plan_result)
+    end
+    
     if not ok then
       vim.schedule(function()
         vim.notify("Failed to parse plan: " .. tostring(plan), vim.log.levels.ERROR)
@@ -460,7 +496,27 @@ Return ONLY a valid JSON object with this structure:
 }]]
   end
   
-  llm.request(planning_prompt, opts, callback)
+  llm.request(planning_prompt, opts, function(result, err)
+    if err then
+      callback(nil, err)
+      return
+    end
+    
+    -- The llm.request now often returns a parsed table directly
+    if type(result) == "table" then
+      callback(result, nil)
+    elseif type(result) == "string" then
+      -- Fallback for providers that return a raw string
+      local ok, decoded = pcall(vim.json.decode, result)
+      if ok then
+        callback(decoded, nil)
+      else
+        callback(nil, "Failed to decode JSON response: " .. result)
+      end
+    else
+      callback(nil, "Invalid response type from LLM: " .. type(result))
+    end
+  end)
 end
 
 -- Review a plan before execution (with callback)
