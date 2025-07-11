@@ -490,20 +490,67 @@ end
 -- Synchronous request (blocks until complete)
 M.request_sync = function(prompt, opts)
   opts = opts or {}
-  local result = nil
-  local done = false
+  local provider = opts.provider or config.get().provider
+
+  -- Validate API key
+  local api_config = config.get().api[provider]
+  if provider == "openai" and not (api_config and api_config.api_key) then
+    vim.notify("OpenAI API key not set.", vim.log.levels.ERROR)
+    return nil
+  elseif provider == "anthropic" and not (api_config and api_config.api_key) then
+    vim.notify("Anthropic API key not set.", vim.log.levels.ERROR)
+    return nil
+  elseif provider == "google" and not (api_config and api_config.api_key) then
+    vim.notify("Google API key not set.", vim.log.levels.ERROR)
+    return nil
+  end
+
+  -- Prepare request
+  local request_data = M.providers[provider].prepare_request(prompt, opts)
   
-  M.request(prompt, opts, function(response)
-    result = response
-    done = true
-  end)
+  -- Build curl command
+  local curl_args = {
+    "-sS",
+    request_data.url,
+    "-X", "POST",
+    "--max-time", "15", -- Shorter timeout for sync requests
+  }
   
-  -- Wait for completion (with timeout)
-  local timeout = opts.timeout or 30000 -- 30 seconds
-  local start = vim.loop.now()
+  for header, value in pairs(request_data.headers) do
+    table.insert(curl_args, "-H")
+    table.insert(curl_args, header .. ": " .. value)
+  end
   
-  while not done and (vim.loop.now() - start) < timeout do
-    vim.wait(10) -- Wait 10ms
+  table.insert(curl_args, "-d")
+  table.insert(curl_args, request_data.body)
+
+  local job = Job:new({
+    command = "curl",
+    args = curl_args,
+  })
+  
+  local stdout, stderr, code = job:sync()
+
+  if code ~= 0 then
+    local err_msg = "LLM sync request failed with code " .. tostring(code)
+    if stderr and #stderr > 0 and stderr[1] ~= "" then
+      err_msg = err_msg .. ": " .. table.concat(stderr, " ")
+    end
+    vim.notify(err_msg, vim.log.levels.ERROR)
+    return nil
+  end
+
+  if not stdout or #stdout == 0 then
+    vim.notify("LLM sync request returned empty response.", vim.log.levels.ERROR)
+    return nil
+  end
+  
+  local response_text = table.concat(stdout, "\n")
+  local result, err = M.providers[provider].parse_response(response_text)
+  
+  if err then
+    vim.notify("LLM sync request failed to parse response: " .. err, vim.log.levels.ERROR)
+    return nil
   end
   
   return result
