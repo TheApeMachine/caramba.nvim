@@ -184,7 +184,7 @@ end
 ---@return string? Selected text
 function M.get_visual_selection()
   local mode = vim.fn.mode()
-  if mode ~= "v" and mode ~= "V" and mode ~= "\22" then
+  if mode ~= "v" and mode ~= "V" and mode ~= "GV" and mode ~= "\22" then
     return nil
   end
   
@@ -211,6 +211,29 @@ function M.get_visual_selection()
   lines[#lines] = lines[#lines]:sub(1, end_pos[3])
   
   return table.concat(lines, "\n")
+end
+
+--- Get visual selection start and end positions
+---@return table? start_pos {line, col}
+---@return table? end_pos {line, col}
+function M.get_visual_selection_pos()
+  local mode = vim.fn.mode()
+  if mode ~= "v" and mode ~= "V" and mode ~= "GV" and mode ~= "\22" then
+    return nil, nil
+  end
+
+  local start_pos_raw = vim.fn.getpos("'<")
+  local end_pos_raw = vim.fn.getpos("'>")
+
+  -- Check if the selection is valid
+  if start_pos_raw[2] == 0 or end_pos_raw[2] == 0 then
+    return nil, nil
+  end
+
+  local start_pos = { start_pos_raw[2], start_pos_raw[3] }
+  local end_pos = { end_pos_raw[2], end_pos_raw[3] }
+
+  return start_pos, end_pos
 end
 
 --- Create a scratch buffer with content
