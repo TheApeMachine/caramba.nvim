@@ -1,7 +1,7 @@
 local M = {}
 
 M.check = function()
-  vim.health.start("AI Assistant")
+  vim.health.start("Caramba")
   
   -- Check for required dependencies
   local deps = {

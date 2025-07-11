@@ -1,4 +1,4 @@
--- AI Assistant Configuration
+-- Caramba Configuration
 
 local M = {}
 
@@ -144,8 +144,8 @@ function M.setup(opts)
   M._validate()
   
   -- Set up global namespace
-  _G.ai_assistant = _G.ai_assistant or {}
-  _G.ai_assistant.config = M.options
+  _G.caramba = _G.caramba or {}
+  _G.caramba.config = M.options
 end
 
 -- Validate configuration
@@ -153,11 +153,11 @@ function M._validate()
   -- Check API keys
   local provider = M.options.provider
   if provider == "openai" and not M.options.api.openai.api_key then
-    vim.notify("AI: OpenAI API key not found. Set OPENAI_API_KEY environment variable.", vim.log.levels.WARN)
+    vim.notify("Caramba: OpenAI API key not found. Set OPENAI_API_KEY environment variable.", vim.log.levels.WARN)
   elseif provider == "anthropic" and not M.options.api.anthropic.api_key then
-    vim.notify("AI: Anthropic API key not found. Set ANTHROPIC_API_KEY environment variable.", vim.log.levels.WARN)
+    vim.notify("Caramba: Anthropic API key not found. Set ANTHROPIC_API_KEY environment variable.", vim.log.levels.WARN)
   elseif provider == "google" and not M.options.api.google.api_key then
-    vim.notify("AI: Google API key not found. Set GOOGLE_API_KEY environment variable.", vim.log.levels.WARN)
+    vim.notify("Caramba: Google API key not found. Set GOOGLE_API_KEY environment variable.", vim.log.levels.WARN)
   end
   
   -- Validate numeric values

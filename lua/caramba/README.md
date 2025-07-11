@@ -5,6 +5,7 @@ A comprehensive AI-powered coding assistant that integrates directly into Neovim
 ## Features
 
 ### Core Features
+
 - **Smart Code Completion** - Context-aware code suggestions using LLMs
 - **Code Explanation** - Understand complex code with AI-powered explanations
 - **Intelligent Refactoring** - Automated code improvements and transformations
@@ -15,6 +16,7 @@ A comprehensive AI-powered coding assistant that integrates directly into Neovim
 - **Interactive Chat** - ChatGPT-style interface within Neovim
 
 ### Advanced Features
+
 - **AST-Based Transformations** - Language-aware code transformations
 - **Local Code Intelligence** - Fast, offline code analysis and navigation
 - **AI Pair Programming** - Real-time coding assistance and suggestions
@@ -53,78 +55,88 @@ Add to your Neovim configuration:
 ## Commands
 
 ### Basic Commands
-- `:AIComplete` - Complete code at cursor
-- `:AIExplain` - Explain selected code
-- `:AIRefactor <type>` - Refactor code (extract/inline/simplify)
-- `:AISearch <query>` - Search codebase semantically
-- `:AIChat` - Open interactive chat
+
+- `:CarambaComplete` - Complete code at cursor
+- `:CarambaExplain` - Explain selected code
+- `:CarambaRefactor <type>` - Refactor code (extract/inline/simplify)
+- `:CarambaSearch <query>` - Search codebase semantically
+- `:CarambaChat` - Open interactive chat
 
 ### Planning & Architecture
-- `:AIPlan` - Create implementation plan
-- `:AIShowPlan` - Show current plan
-- `:AIAnalyzeProject` - Analyze project structure
-- `:AILearnPatterns` - Learn project patterns
+
+- `:CarambaPlan` - Create implementation plan
+- `:CarambaShowPlan` - Show current plan
+- `:CarambaAnalyzeProject` - Analyze project structure
+- `:CarambaLearnPatterns` - Learn project patterns
 
 ### Testing & Debugging
-- `:AIGenerateTests` - Generate tests for current code
-- `:AIDebugError` - Analyze error at cursor
-- `:AIImplementFromTest` - Implement code from test specification
-- `:AIGeneratePropertyTests` - Generate property-based tests
-- `:AIWatchTests` - Watch tests and suggest fixes
-- `:AIImplementUncovered` - Implement uncovered code paths
+
+- `:CarambaGenerateTests` - Generate tests for current code
+- `:CarambaDebugError` - Analyze error at cursor
+- `:CarambaImplementFromTest` - Implement code from test specification
+- `:CarambaGeneratePropertyTests` - Generate property-based tests
+- `:CarambaWatchTests` - Watch tests and suggest fixes
+- `:CarambaImplementUncovered` - Implement uncovered code paths
 
 ### Multi-File & Refactoring
-- `:AIRenameSymbol` - Rename across project
-- `:AIExtractModule` - Extract code to new module
-- `:AITransform` - Transform code using AST
-- `:AITransformCallback` - Convert callbacks to async/await
-- `:AITransformClass` - Convert class components to hooks
-- `:AITransformImports` - Convert CommonJS to ESM
+
+- `:CarambaRenameSymbol` - Rename across project
+- `:CarambaExtractModule` - Extract code to new module
+- `:CarambaTransform` - Transform code using AST
+- `:CarambaTransformCallback` - Convert callbacks to async/await
+- `:CarambaMigratePattern` - Apply migration pattern
 
 ### Git Integration
-- `:AICommitMessage` - Generate commit message
-- `:AIReviewCode` - Review current changes
-- `:AIReviewPR` - Review pull request
-- `:AIExplainDiff` - Explain current diff
-- `:AIResolveConflict` - Help resolve merge conflicts
-- `:AIGitBlame` - Explain git blame
+
+- `:CarambaCommitMessage` - Generate commit message
+- `:CarambaReviewCode` - Review current changes
+- `:CarambaReviewPR` - Review pull request
+- `:CarambaExplainDiff` - Explain current diff
+- `:CarambaResolveConflict` - Help resolve merge conflicts
+- `:CarambaGitBlame` - Explain git blame
 
 ### Code Intelligence
-- `:AIIndexProject` - Index project for navigation
-- `:AIFindDefinition` - Find symbol definition
-- `:AIFindReferences` - Find symbol references
-- `:AIFindRelated` - Find related code
-- `:AICallHierarchy` - Show call hierarchy
-- `:AIFindSimilar` - Find similar functions
+
+- `:CarambaIndexProject` - Index project for navigation
+- `:CarambaFindDefinition` - Find symbol definition
+- `:CarambaFindReferences` - Find symbol references
+- `:CarambaFindRelated` - Find related code
+- `:CarambaCallHierarchy` - Show call hierarchy
+- `:CarambaFindSimilar` - Find similar functions
 
 ### Consistency & Quality
-- `:AICheckConsistency` - Check file for consistency issues
-- `:AILearnPatterns` - Learn coding patterns from codebase
-- `:AIEnableConsistencyCheck` - Auto-check on save
+
+- `:CarambaCheckConsistency` - Check file for consistency issues
+- `:CarambaLearnPatterns` - Learn coding patterns from codebase
+- `:CarambaEnableConsistencyCheck` - Auto-check on save
 
 ### Pair Programming
-- `:AIPairStart` - Start pair programming session
-- `:AIPairStop` - Stop pair programming session
-- `:AIPairToggle` - Toggle pair programming
-- `:AIPairStatus` - Show session status
+
+- `:CarambaPairStart` - Start pair programming session
+- `:CarambaPairStop` - Stop pair programming session
+- `:CarambaPairToggle` - Toggle pair programming
+- `:CarambaPairStatus` - Show session status
 
 ### Web & Research
-- `:AIWebSearch <query>` - Search the web
-- `:AIWebSummary <url>` - Summarize web page
-- `:AIResearch <topic>` - Research topic online
-- `:AIQuery <question>` - Query with tool access
+
+- `:CarambaWebSearch <query>` - Search the web
+- `:CarambaWebSummary <url>` - Summarize web page
+- `:CarambaResearch <topic>` - Research topic online
+- `:CarambaQuery <question>` - Query with tool access
 
 ### Utility Commands
-- `:AICancel` - Cancel current operation
-- `:AISetModel <model>` - Change AI model
-- `:AISetProvider <provider>` - Change provider
-- `:AIShowContext` - Show current context
+
+- `:CarambaCancel` - Cancel current operation
+- `:CarambaSetModel <model>` - Change AI model
+- `:CarambaSetProvider <provider>` - Change provider
+- `:CarambaShowContext` - Show current context
 
 ## Test-Driven Development Assistant
 
 The TDD Assistant helps you write code by implementing functionality from test specifications:
 
 ### Features
+
 - **Test-First Implementation** - Write tests, then let AI implement the code
 - **Property-Based Testing** - Generate comprehensive property tests
 - **Test Watching** - Monitor test execution and suggest fixes
@@ -133,6 +145,7 @@ The TDD Assistant helps you write code by implementing functionality from test s
 ### Usage
 
 1. **Implement from Test**:
+
    ```javascript
    // Write your test first
    describe('Calculator', () => {
@@ -141,22 +154,24 @@ The TDD Assistant helps you write code by implementing functionality from test s
      });
    });
    ```
-   Run `:AIImplementFromTest` to generate the implementation.
+
+   Run `:CarambaImplementFromTest` to generate the implementation.
 
 2. **Property Testing**:
-   Place cursor on a function and run `:AIGeneratePropertyTests` to create property-based tests that check invariants.
+   Place cursor on a function and run `:CarambaGeneratePropertyTests` to create property-based tests that check invariants.
 
 3. **Test Watching**:
-   Run `:AIWatchTests` to monitor test execution. When tests fail, AI will analyze failures and suggest fixes.
+   Run `:CarambaWatchTests` to monitor test execution. When tests fail, AI will analyze failures and suggest fixes.
 
 4. **Coverage Gaps**:
-   Run `:AIImplementUncovered` to find code paths without test coverage and generate appropriate tests.
+   Run `:CarambaImplementUncovered` to find code paths without test coverage and generate appropriate tests.
 
 ## Project-Wide Consistency Enforcer
 
 The Consistency Enforcer learns your project's coding patterns and helps maintain them:
 
 ### Features
+
 - **Pattern Learning** - Analyzes your codebase to learn conventions
 - **Real-time Checking** - Validates code against learned patterns
 - **Auto-fixing** - Suggests and applies fixes for inconsistencies
@@ -191,21 +206,27 @@ The Consistency Enforcer learns your project's coding patterns and helps maintai
 ### Usage
 
 1. **Learn Project Patterns**:
+
    ```vim
-   :AILearnPatterns
+   :CarambaLearnPatterns
    ```
+
    Analyzes your entire codebase to learn conventions.
 
 2. **Check Current File**:
+
    ```vim
-   :AICheckConsistency
+   :CarambaCheckConsistency
    ```
+
    Shows consistency issues in the current file.
 
 3. **Enable Auto-Check**:
+
    ```vim
-   :AIEnableConsistencyCheck
+   :CarambaEnableConsistencyCheck
    ```
+
    Automatically checks files on save and shows issues as diagnostics.
 
 4. **Fix Issues**:
@@ -215,6 +236,7 @@ The Consistency Enforcer learns your project's coding patterns and helps maintai
    - Press `i` to ignore an issue
 
 ### Example Consistency Report
+
 ```
 # Consistency Report
 
@@ -236,7 +258,7 @@ Found 3 consistency issues
 ## Configuration
 
 ```lua
-require('ai').setup({
+require('caramba').setup({
   -- Provider settings
   providers = {
     openai = {
@@ -338,7 +360,7 @@ ai/
 
 ## Requirements
 
-- Neovim 0.9+ 
+- Neovim 0.9+
 - Tree-sitter parsers for your languages
 - API keys for AI providers (OpenAI/Anthropic/Ollama)
 - Git (for git integration features)
@@ -354,9 +376,10 @@ ai/
 
 ## Troubleshooting
 
-Run `:checkhealth ai` to diagnose issues.
+Run `:checkhealth caramba` to diagnose issues.
 
 Common issues:
+
 - **No API key**: Set environment variables
 - **Timeout errors**: Increase timeout in config
 - **Context too large**: Reduce max_lines in config
@@ -367,6 +390,7 @@ Common issues:
 Contributions welcome! The codebase is modular and well-documented.
 
 Areas for contribution:
+
 - Additional language support
 - New transformation patterns
 - Performance optimizations

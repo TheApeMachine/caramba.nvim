@@ -7,15 +7,15 @@ M.commands = {}
 
 --- Register a new command definition.
 -- This function now just adds to a table, to be set up later.
--- @param name string The command name (e.g., "Chat", which becomes "AIChat").
+-- @param name string The command name (e.g., "Chat", which becomes "CarambaChat").
 -- @param func function The function to execute.
 -- @param opts table? Optional vim.api.nvim_create_user_command options.
 function M.register(name, func, opts)
   opts = opts or {}
 
-  -- Ensure command starts with "AI"
-  if not name:match("^AI") then
-    name = "AI" .. name
+  -- Ensure command starts with "Caramba"
+  if not name:match("^Caramba") then
+    name = "Caramba" .. name
   end
 
   if M.commands[name] then
@@ -33,10 +33,10 @@ function M.register(name, func, opts)
 end
 
 --- Unregister a command by removing it from the registry and deleting the user command.
---- @param name string The command name (e.g., "AIChat").
+--- @param name string The command name (e.g., "CarambaChat").
 function M.unregister(name)
-  if not name:match("^AI") then
-    name = "AI" .. name
+  if not name:match("^Caramba") then
+    name = "Caramba" .. name
   end
 
   if M.commands[name] then
@@ -85,7 +85,7 @@ end
 --- Print a formatted list of all registered commands for debugging.
 function M.debug()
   local command_list = M.list()
-  vim.notify(string.format("=== Registered AI Commands (%d) ===", #command_list))
+  vim.notify(string.format("=== Registered Caramba Commands (%d) ===", #command_list))
   local lines = {}
   for _, cmd in ipairs(command_list) do
     table.insert(lines, string.format("%-30s %s", cmd.name, cmd.desc))

@@ -1,4 +1,4 @@
--- AI Chat Panel Module
+-- Caramba Chat Panel Module
 -- Provides an interactive chat interface with context awareness
 
 local M = {}
@@ -76,7 +76,7 @@ local function parse_context_commands(message)
   end
   
   -- @web:query - search the web
-  for query in message:gmatch("@web:([^\n]+)") do
+  for query in message:gmatch("@web:([^%s]+)") do
     -- This will be handled separately as it's async
     table.insert(contexts, {
       type = "web_search",
@@ -103,7 +103,7 @@ local function format_message(msg)
   table.insert(lines, "")
   
   -- Add content
-  for line in msg.content:gmatch("[^\n]+") do
+  for line in msg.content:gmatch("[^%s]+") do
     table.insert(lines, line)
   end
   
@@ -179,7 +179,7 @@ M.open = function()
   -- Create chat buffer if needed
   if not M._chat_state.bufnr or not vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
     M._chat_state.bufnr = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_name(M._chat_state.bufnr, "AI Chat")
+    vim.api.nvim_buf_set_name(M._chat_state.bufnr, "Caramba Chat")
     vim.api.nvim_buf_set_option(M._chat_state.bufnr, "filetype", "markdown")
     vim.api.nvim_buf_set_option(M._chat_state.bufnr, "buftype", "nofile")
     vim.api.nvim_buf_set_option(M._chat_state.bufnr, "modifiable", false)
@@ -198,7 +198,7 @@ M.open = function()
     height = height,
     style = "minimal",
     border = "rounded",
-    title = " AI Chat ",
+    title = " Caramba Chat ",
     title_pos = "center",
   })
   
@@ -324,7 +324,7 @@ end
 M._send_message_with_context = function(cleaned_message, contexts, search_results, original_message)
   -- Debug logging
   if config.get().debug then
-    vim.notify("AI: Sending message: " .. string.sub(cleaned_message, 1, 50) .. "...", vim.log.levels.INFO)
+    vim.notify("Caramba: Sending message: " .. string.sub(cleaned_message, 1, 50) .. "...", vim.log.levels.INFO)
   end
   
   -- If no context commands were used, automatically add smart context
@@ -337,7 +337,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
         content = context.build_context_string(smart_context)
       })
       if config.get().debug then
-        vim.notify("AI: Automatically added smart context.", vim.log.levels.INFO)
+        vim.notify("Caramba: Automatically added smart context.", vim.log.levels.INFO)
       end
     end
   end
@@ -434,6 +434,7 @@ M._format_plan_for_chat = function(plan, review)
   
   table.insert(lines, "")
   table.insert(lines, "---")
+  table.insert(lines, "")
   table.insert(lines, "_You can now approve this plan to execute it, or continue the conversation to refine it._")
   
   return table.concat(lines, "\n")
@@ -457,7 +458,7 @@ end
 M._render_chat = function()
   -- Debug logging
   if config.get().debug then
-    vim.notify("AI: Rendering chat with " .. #M._chat_state.history .. " messages", vim.log.levels.INFO)
+    vim.notify("Caramba: Rendering chat with " .. #M._chat_state.history .. " messages", vim.log.levels.INFO)
   end
   
   if not M._chat_state.bufnr or not vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
@@ -470,7 +471,7 @@ M._render_chat = function()
   local code_blocks = {}
   
   -- Add title
-  table.insert(lines, "# AI Chat Session")
+  table.insert(lines, "# Caramba Chat Session")
   table.insert(lines, "")
   table.insert(lines, "_Commands: (i)nput, (a)pply code, (y)ank code, (d)elete history, (q)uit_")
   table.insert(lines, "")
@@ -614,12 +615,12 @@ M.setup_commands = function()
   
   -- Open chat window
   commands.register('Chat', M.open, {
-    desc = 'Open AI chat window',
+    desc = 'Open Caramba chat window',
   })
   
   -- Toggle chat window
   commands.register('ChatToggle', M.toggle, {
-    desc = 'Toggle AI chat window',
+    desc = 'Toggle Caramba chat window',
   })
   
   -- Clear chat history
@@ -711,4 +712,5 @@ M.setup_commands = function()
   })
 end
 
-return M 
+return M
+ 

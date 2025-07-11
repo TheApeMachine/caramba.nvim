@@ -1,4 +1,4 @@
--- Core AI Assistant Commands
+-- Core Caramba Commands
 -- Handles system-wide commands and delegates module-specific commands
 
 local M = {}
@@ -25,7 +25,7 @@ function M._do_completion(instruction)
   end
   
   if is_complex then
-    vim.notify("This looks like a complex task. Consider using :AIPlan for better results.", vim.log.levels.WARN)
+    vim.notify("This looks like a complex task. Consider using :CarambaPlan for better results.", vim.log.levels.WARN)
     vim.ui.select({"Use Planner", "Continue with Completion"}, {
       prompt = "This task might benefit from planning first:",
     }, function(choice)
@@ -47,18 +47,18 @@ function M._do_simple_completion(instruction)
   local llm = require("caramba.llm")
   local edit = require("caramba.edit")
   
-  vim.notify("AI: Extracting context...", vim.log.levels.INFO)
+  vim.notify("Caramba: Extracting context...", vim.log.levels.INFO)
   
   -- Build context
   local ctx = context.build_completion_context()
   if not ctx then
-    vim.notify("AI: Cannot get context - ensure Tree-sitter parser is installed for this filetype", vim.log.levels.WARN)
+    vim.notify("Caramba: Cannot get context - ensure Tree-sitter parser is installed for this filetype", vim.log.levels.WARN)
     return
   end
   
   local prompt = llm.build_completion_prompt(ctx, instruction)
   
-  vim.notify("AI: Generating completion for: " .. instruction, vim.log.levels.INFO)
+  vim.notify("Caramba: Generating completion for: " .. instruction, vim.log.levels.INFO)
   
   llm.request(prompt, {}, function(result, err)
     if err then
@@ -75,9 +75,9 @@ function M._do_simple_completion(instruction)
       edit.show_diff_preview(0, cursor_line, end_row, result, function()
         local success, err = edit.insert_at_cursor(result)
         if success then
-          vim.notify("AI: Completion applied", vim.log.levels.INFO)
+          vim.notify("Caramba: Completion applied", vim.log.levels.INFO)
         else
-          vim.notify("AI: Completion failed - " .. err, vim.log.levels.ERROR)
+          vim.notify("Caramba: Completion failed - " .. err, vim.log.levels.ERROR)
         end
       end)
     end)
@@ -98,7 +98,7 @@ function M.setup_commands()
     
     if instruction == "" then
       vim.ui.input({
-        prompt = "AI Complete: What would you like me to do? ",
+        prompt = "Caramba Complete: What would you like me to do? ",
         default = "Complete the code at cursor",
       }, function(input)
         if input and input ~= "" then
@@ -109,7 +109,7 @@ function M.setup_commands()
       M._do_completion(instruction)
     end
   end, {
-    desc = "AI: Complete code at cursor",
+    desc = "Caramba: Complete code at cursor",
     nargs = "?",
   })
   
@@ -141,10 +141,10 @@ function M.setup_commands()
         return
       end
       
-      utils.show_result_window(result, "AI Explanation")
+      utils.show_result_window(result, "Caramba Explanation")
     end)
   end, {
-    desc = "AI: Explain code",
+    desc = "Caramba: Explain code",
     nargs = "?",
     range = true,
   })
@@ -161,9 +161,9 @@ function M.setup_commands()
     
     local cfg = config.get()
     cfg.provider = provider
-    vim.notify("AI: Provider set to " .. provider, vim.log.levels.INFO)
+    vim.notify("Caramba: Provider set to " .. provider, vim.log.levels.INFO)
   end, {
-    desc = "AI: Set LLM provider",
+    desc = "Caramba: Set LLM provider",
     nargs = 1,
     complete = function()
       return {"openai", "anthropic", "ollama"}
@@ -174,9 +174,9 @@ function M.setup_commands()
   commands.register("ClearCache", function()
     llm.clear_cache()
     context.clear_cache()
-    vim.notify("AI: All caches cleared", vim.log.levels.INFO)
+    vim.notify("Caramba: All caches cleared", vim.log.levels.INFO)
   end, {
-    desc = "AI: Clear all caches",
+    desc = "Caramba: Clear all caches",
   })
   
   -- Debug commands
@@ -197,29 +197,29 @@ function M.setup_commands()
       vim.notify("No context available", vim.log.levels.WARN)
     end
   end, {
-    desc = "AI: Show current context info",
+    desc = "Caramba: Show current context info",
   })
   
   -- Cancel any ongoing operations
   commands.register("Cancel", function()
     llm.cancel_all()
-    vim.notify("AI: Cancelled all pending operations", vim.log.levels.INFO)
+    vim.notify("Caramba: Cancelled all pending operations", vim.log.levels.INFO)
   end, {
-    desc = "AI: Cancel all pending LLM requests",
+    desc = "Caramba: Cancel all pending LLM requests",
   })
   
   -- Show all registered commands
   commands.register("ShowCommands", function()
     local cmds = commands.list()
-    local lines = {"=== Registered AI Commands ===", ""}
+    local lines = {"=== Registered Caramba Commands ===", ""}
     
     for _, cmd in ipairs(cmds) do
       table.insert(lines, string.format("%-30s %s", cmd.name, cmd.desc))
     end
     
-    utils.show_result_window(table.concat(lines, "\n"), "AI Commands")
+    utils.show_result_window(table.concat(lines, "\n"), "Caramba Commands")
   end, {
-    desc = "AI: Show all registered commands",
+    desc = "Caramba: Show all registered commands",
   })
 end
 

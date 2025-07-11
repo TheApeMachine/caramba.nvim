@@ -478,7 +478,7 @@ M.setup_commands = function()
   commands.register('CrossRename', function(args)
     local parts = vim.split(args.args, " ")
     if #parts < 2 then
-      vim.notify("Usage: :AICrossRename <old_name> <new_name>", vim.log.levels.ERROR)
+      vim.notify("Usage: :CarambaCrossRename <old_name> <new_name>", vim.log.levels.ERROR)
       return
     end
     M.cross_language_rename(parts[1], parts[2])

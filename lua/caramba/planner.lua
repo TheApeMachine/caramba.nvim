@@ -1,4 +1,4 @@
--- AI Planning Module - Multi-stage reasoning for better code generation
+-- Caramba Planning Module - Multi-stage reasoning for better code generation
 local M = {}
 
 local config = require("caramba.config")
@@ -33,7 +33,7 @@ M._project_plan = {
 
 -- Load project plan from file if exists
 function M.load_project_plan()
-  local plan_file = vim.fn.getcwd() .. "/.ai-project-plan.json"
+  local plan_file = vim.fn.getcwd() .. "/.caramba-project-plan.json"
   if vim.fn.filereadable(plan_file) == 1 then
     local ok, content = pcall(vim.fn.readfile, plan_file)
     if ok and content then
@@ -42,7 +42,7 @@ function M.load_project_plan()
         M._project_plan = vim.tbl_deep_extend("force", M._project_plan, plan)
         return true
       else
-        vim.notify("AI Planner: Failed to parse project plan file", vim.log.levels.WARN)
+        vim.notify("Caramba Planner: Failed to parse project plan file", vim.log.levels.WARN)
       end
     end
   end
@@ -51,7 +51,7 @@ end
 
 -- Save project plan to file
 function M.save_project_plan()
-  local plan_file = vim.fn.getcwd() .. "/.ai-project-plan.json"
+  local plan_file = vim.fn.getcwd() .. "/.caramba-project-plan.json"
   
   -- Update metadata
   M._project_plan.metadata = M._project_plan.metadata or {}
@@ -61,10 +61,10 @@ function M.save_project_plan()
   if ok then
     local write_ok = pcall(vim.fn.writefile, vim.split(content, "\n"), plan_file)
     if not write_ok then
-      vim.notify("AI Planner: Failed to save project plan", vim.log.levels.ERROR)
+      vim.notify("Caramba Planner: Failed to save project plan", vim.log.levels.ERROR)
     end
   else
-    vim.notify("AI Planner: Failed to encode project plan", vim.log.levels.ERROR)
+    vim.notify("Caramba Planner: Failed to encode project plan", vim.log.levels.ERROR)
   end
 end
 
@@ -171,7 +171,8 @@ Return your analysis as a JSON object with this structure:
     "internal": ["internal module structure"]
   },
   "notes": "any other important observations"
-}]]
+}
+]]
   end
   
   llm.request(analysis_prompt, opts, callback)
@@ -232,7 +233,7 @@ M._show_questions_window = function(lines, callback)
     row = math.floor((vim.o.lines - height) / 2),
     style = 'minimal',
     border = 'rounded',
-    title = ' AI Questions ',
+    title = ' Caramba Questions ',
     title_pos = 'center',
   })
   
@@ -255,14 +256,14 @@ end
 -- Interactive planning session
 function M.interactive_planning_session(task_description, context_info, callback)
   -- Step 1: Create initial plan
-  vim.notify("AI Planner: Creating initial plan...", vim.log.levels.INFO)
+  vim.notify("Caramba Planner: Creating initial plan...", vim.log.levels.INFO)
   
   context_info = context_info or context.build_context_string(context.collect())
   
   -- If no context is selected, use the current buffer's content
   if not context_info or context_info:match("^%s*$") then
     vim.schedule(function()
-      vim.notify("AI Planner: No code selected, using current buffer as context.", vim.log.levels.INFO)
+      vim.notify("Caramba Planner: No code selected, using current buffer as context.", vim.log.levels.INFO)
     end)
     local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     context_info = table.concat(buffer_lines, "\n")
@@ -271,7 +272,7 @@ function M.interactive_planning_session(task_description, context_info, callback
   -- Final fallback: if buffer is also empty, then prompt user.
   if not context_info or context_info:match("^%s*$") then
     vim.schedule(function()
-      vim.notify("AI Planner: Buffer is empty. Please provide a task description.", vim.log.levels.WARN)
+      vim.notify("Caramba Planner: Buffer is empty. Please provide a task description.", vim.log.levels.WARN)
       vim.ui.input({
         prompt = "Describe what you want to do: ",
       }, function(input)
@@ -323,7 +324,7 @@ function M.interactive_planning_session(task_description, context_info, callback
       if plan.questions and #plan.questions > 0 then
         -- Show questions in a window first
         local question_lines = {
-          "=== AI Planning System - Questions ===",
+          "=== Caramba Planning System - Questions ===",
           "",
           "The AI has the following questions about your request:",
           ""
@@ -358,7 +359,7 @@ end
 -- Continue planning after questions
 function M._continue_planning(task_description, plan, callback)
   -- Step 3: Review plan
-  vim.notify("AI Planner: Reviewing plan...", vim.log.levels.INFO)
+  vim.notify("Caramba Planner: Reviewing plan...", vim.log.levels.INFO)
   
   M.review_plan(vim.json.encode(plan), task_description, function(review_result, review_err)
     if review_err then
@@ -493,7 +494,8 @@ Return ONLY a valid JSON object with this structure:
   "potential_issues": ["list", "of", "concerns"],
   "questions": ["clarifying", "questions", "if", "any"],
   "estimated_complexity": "low|medium|high"
-}]]
+}
+]]
   end
   
   llm.request(planning_prompt, opts, function(result, err)
@@ -585,7 +587,8 @@ Return ONLY a valid JSON object with this structure:
   "feedback": ["specific", "feedback", "points"],
   "suggestions": ["improvement", "suggestions"],
   "risks": ["identified", "risks"]
-}]]
+}
+]]
   end
   
   llm.request(review_prompt, opts, callback)
@@ -632,7 +635,7 @@ function M._show_plan_window(plan, review)
   
   -- Format plan content
   local lines = {
-    "=== AI Implementation Plan ===",
+    "=== Caramba Implementation Plan ===",
     "",
     "Understanding: " .. (plan.understanding or ""),
     "",
@@ -704,13 +707,13 @@ function M._show_plan_window(plan, review)
     row = (vim.o.lines - height) / 2,
     style = "minimal",
     border = "rounded",
-    title = " AI Planning System ",
+    title = " Caramba Planning System ",
     title_pos = "center",
   })
   
   -- Store plan for execution
-  vim.b[buf].ai_plan = plan
-  vim.b[buf].ai_review = review
+  vim.b[buf].caramba_plan = plan
+  vim.b[buf].caramba_review = review
   
   -- Set up keymaps
   local opts = { buffer = buf, silent = true }
@@ -842,7 +845,7 @@ end
 function M.learn_from_codebase()
   -- This would analyze recent changes and update conventions
   -- For now, just a placeholder
-  vim.notify("AI Planner: Learning from codebase patterns...", vim.log.levels.INFO)
+  vim.notify("Caramba Planner: Learning from codebase patterns...", vim.log.levels.INFO)
 end
 
 -- Initialize planner
@@ -876,7 +879,7 @@ function M.setup_commands()
       M.interactive_planning_session(task, nil, nil)
     end
   end, {
-    desc = 'Create an AI-powered implementation plan',
+    desc = 'Create an Caramba-powered implementation plan',
     nargs = '?',
   })
   

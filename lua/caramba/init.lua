@@ -1,4 +1,4 @@
--- AI Assistant for Neovim
+-- Caramba for Neovim
 local M = {}
 
 -- Health check support
