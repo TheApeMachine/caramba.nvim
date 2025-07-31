@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """
-Python-based test runner for Caramba.nvim Lua tests
-Parses and executes Lua test files without requiring Lua interpreter
+FALLBACK Test Runner for Caramba.nvim Lua tests
+
+WARNING: This is a FALLBACK runner that does NOT execute Lua code.
+It only performs basic syntax and structure validation.
+
+For REAL test execution, use:
+1. Neovim headless mode (preferred)
+2. Lua interpreter
+
+This fallback should only be used when neither Neovim nor Lua are available,
+and it will only validate test structure, not execute actual test logic.
 """
 
 import os
@@ -80,51 +89,39 @@ class LuaTestRunner:
         return tests
     
     def execute_test(self, test: Dict[str, Any]) -> Tuple[bool, str]:
-        """Execute a single test case by analyzing its assertions"""
+        """
+        WARNING: This is a fallback test runner that cannot actually execute Lua code.
+        It only performs basic syntax and structure validation.
+        For real test execution, use Neovim or Lua interpreter.
+        """
         try:
             body = test['body']
-            
-            # Look for assertion patterns and evaluate them
-            assertion_patterns = [
-                (r'assert\.equals\s*\(\s*([^,]+)\s*,\s*([^,)]+)', self.check_equals),
-                (r'assert\.is_true\s*\(\s*([^,)]+)', self.check_is_true),
-                (r'assert\.is_false\s*\(\s*([^,)]+)', self.check_is_false),
-                (r'assert\.is_nil\s*\(\s*([^,)]+)', self.check_is_nil),
-                (r'assert\.is_not_nil\s*\(\s*([^,)]+)', self.check_is_not_nil),
+
+            # Basic syntax validation
+            if not body.strip():
+                return False, "Empty test body"
+
+            # Check for basic test structure
+            has_assertions = bool(re.search(r'assert\.\w+\s*\(', body))
+            if not has_assertions:
+                return False, "No assertions found in test"
+
+            # Check for obvious syntax errors
+            syntax_errors = [
+                r'function\s*\(\s*\)\s*end\s*\(',  # Malformed function calls
+                r'assert\.\w+\s*\(\s*\)',          # Empty assertions
+                r'local\s+function\s*\(',          # Incomplete function definitions
             ]
-            
-            # For now, we'll do a simplified check - if the test contains basic patterns
-            # that suggest it should pass, we'll mark it as passed
-            
-            # Check for common success patterns
-            success_indicators = [
-                'should',  # Test description suggests expected behavior
-                'assert',  # Contains assertions
-                'function',  # Calls functions
-                'return',  # Has return statements
-            ]
-            
-            # Check for obvious failure patterns
-            failure_indicators = [
-                'error(',  # Explicit error calls
-                'fail',    # Explicit failures
-                'nil)',    # Nil checks that might fail
-            ]
-            
-            success_score = sum(1 for indicator in success_indicators if indicator in body.lower())
-            failure_score = sum(1 for indicator in failure_indicators if indicator in body.lower())
-            
-            # Simple heuristic: if test has more success indicators than failure indicators
-            # and contains assertions, consider it passing
-            if success_score > failure_score and 'assert' in body:
-                return True, "Test passed (heuristic analysis)"
-            elif failure_score > 0:
-                return False, "Test failed (contains failure indicators)"
-            else:
-                return True, "Test passed (basic structure check)"
-                
+
+            for pattern in syntax_errors:
+                if re.search(pattern, body):
+                    return False, f"Potential syntax error detected: {pattern}"
+
+            # This is NOT actual test execution - just structure validation
+            return True, "Structure validation passed (NOT executed)"
+
         except Exception as e:
-            return False, f"Test error: {str(e)}"
+            return False, f"Validation error: {str(e)}"
     
     def check_equals(self, actual: str, expected: str) -> bool:
         """Check equality assertion"""
@@ -151,9 +148,10 @@ class LuaTestRunner:
         """Run all tests in a file"""
         print(f"========================================")
         print(f"Testing: \t{file_path}")
-        
+        print(f"WARNING: Using fallback runner - structure validation only!")
+
         tests = self.parse_lua_test_file(file_path)
-        
+
         if not tests:
             print(f"Error\t||\tNo tests found in {file_path}")
             self.errors += 1
@@ -161,21 +159,23 @@ class LuaTestRunner:
         
         for test in tests:
             success, message = self.execute_test(test)
-            
+
             if success:
-                print(f"Success\t||\t{test['name']}")
+                print(f"SUCCESS: {test['name']}")
                 self.passed += 1
             else:
-                print(f"Failed\t||\t{test['name']}")
+                print(f"FAILED: {test['name']}")
                 if message:
                     print(f"Error: {message}")
                 self.failed += 1
     
     def run_all_tests(self, test_dir: str = "tests/spec") -> int:
         """Run all test files in the test directory"""
-        print("Starting Caramba.nvim Test Suite")
+        print("Starting Caramba.nvim Test Suite (FALLBACK MODE)")
+        print("WARNING: This runner only validates test structure, not execution!")
+        print("For real test execution, use Neovim or Lua interpreter.")
         print("========================================")
-        
+
         if not os.path.exists(test_dir):
             print(f"Test directory {test_dir} not found")
             return 1

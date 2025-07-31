@@ -6,35 +6,35 @@ local assert = {}
 
 function assert.equals(actual, expected, message)
     if actual ~= expected then
-        error(string.format("Assertion failed: %s\nExpected: %s\nActual: %s", 
+        error(string.format("Assertion failed: %s\nExpected: %s\nActual: %s",
             message or "values not equal", tostring(expected), tostring(actual)))
     end
 end
 
 function assert.is_true(value, message)
     if not value then
-        error(string.format("Assertion failed: %s\nExpected: true\nActual: %s", 
+        error(string.format("Assertion failed: %s\nExpected: true\nActual: %s",
             message or "value is not true", tostring(value)))
     end
 end
 
 function assert.is_false(value, message)
     if value then
-        error(string.format("Assertion failed: %s\nExpected: false\nActual: %s", 
+        error(string.format("Assertion failed: %s\nExpected: false\nActual: %s",
             message or "value is not false", tostring(value)))
     end
 end
 
 function assert.is_nil(value, message)
     if value ~= nil then
-        error(string.format("Assertion failed: %s\nExpected: nil\nActual: %s", 
+        error(string.format("Assertion failed: %s\nExpected: nil\nActual: %s",
             message or "value is not nil", tostring(value)))
     end
 end
 
 function assert.is_not_nil(value, message)
     if value == nil then
-        error(string.format("Assertion failed: %s\nExpected: not nil\nActual: nil", 
+        error(string.format("Assertion failed: %s\nExpected: not nil\nActual: nil",
             message or "value is nil"))
     end
 end
@@ -73,12 +73,12 @@ _G.it = it
 function M.run_file(file_path)
     test_results = {}
     local success, err = pcall(dofile, file_path)
-    
+
     if not success then
         print("ERROR: Failed to load test file: " .. tostring(err))
         return false
     end
-    
+
     return true
 end
 

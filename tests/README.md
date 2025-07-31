@@ -51,11 +51,13 @@ python3 tests/python_test_runner.py
 
 ### Test Runners
 
-The test suite supports multiple execution environments:
+The test suite supports multiple execution environments with different levels of reliability:
 
 1. **Neovim Headless** (preferred): Uses nvim --headless for authentic testing
 2. **Lua Interpreter**: Fallback for environments without Neovim
-3. **Python Test Runner**: Cross-platform fallback that parses Lua tests
+3. **Python Test Runner**: ⚠️ **FALLBACK ONLY** - Structure validation, NOT execution
+
+**IMPORTANT**: The Python test runner does NOT execute Lua code. It only validates test structure and syntax. For real test execution, use Neovim or Lua interpreter.
 
 ### Requirements
 
