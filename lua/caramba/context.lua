@@ -96,8 +96,8 @@ end
 
 -- Get the current buffer's parser
 function M.get_parser(bufnr)
-  local parsers = require('nvim-treesitter.parsers')
-  if not parsers then return nil end
+  local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if not ok or not parsers then return nil end
   bufnr = tonumber(bufnr) or 0
   local lang = vim.bo[bufnr].filetype
   
@@ -189,7 +189,8 @@ function M.extract_imports(bufnr, max_lines)
   local root = tree:root()
   
   -- Use Tree-sitter query to find imports
-  local parsers = require('nvim-treesitter.parsers')
+  local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if not ok or not parsers then return {} end
   local lang = parsers.get_buf_lang(bufnr)
   local query_string = ""
   
@@ -335,7 +336,8 @@ M.collect = function(opts)
   local filetype = vim.api.nvim_buf_get_option(bufnr, "filetype")
   local filename = vim.api.nvim_buf_get_name(bufnr)
   
-  local parsers = require('nvim-treesitter.parsers')
+  local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if not ok or not parsers then return {} end
   local parser = parsers.get_parser(bufnr)
   
   -- If there's a selection, prioritize it
@@ -471,8 +473,9 @@ end
 -- Try to extract the name of a node (function name, class name, etc.)
 function M.get_node_name(node, bufnr)
   if not node then return nil end
-  
-  local ts_utils = require('nvim-treesitter.ts_utils')
+
+  local ok, ts_utils = pcall(require, 'nvim-treesitter.ts_utils')
+  if not ok or not ts_utils then return nil end
   -- Look for identifier child nodes
   for child in node:iter_children() do
     if child:type() == "identifier" or child:type() == "name" then
@@ -503,8 +506,8 @@ end
 
 -- Update cursor context (called on cursor movement)
 function M.update_cursor_context()
-  local ts_utils = require('nvim-treesitter.ts_utils')
-  if not ts_utils then return end
+  local ok, ts_utils = pcall(require, 'nvim-treesitter.ts_utils')
+  if not ok or not ts_utils then return end
   local bufnr = vim.api.nvim_get_current_buf()
   
   -- Skip special buffers that don't need Tree-sitter

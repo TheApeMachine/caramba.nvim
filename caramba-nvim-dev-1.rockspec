@@ -15,6 +15,7 @@ description = {
 }
 dependencies = {
   "lua >= 5.1",
+  "luv",          -- provides the Neovim event loop used by `vim.loop`
 }
 test_dependencies = {
   "busted",
