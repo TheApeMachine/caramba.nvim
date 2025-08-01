@@ -3,9 +3,9 @@
 
 local M = {}
 local ts = vim.treesitter
-local ts_utils = require('nvim-treesitter.ts_utils')
-local ts_query = vim.treesitter.query
-local parsers = require('nvim-treesitter.parsers')
+-- local ts_utils = require('nvim-treesitter.ts_utils') -- Defer loading
+-- local ts_query = require('vim.treesitter.query') -- Already part of vim
+-- local parsers = require('nvim-treesitter.parsers') -- Defer loading
 local utils = require('caramba.utils')
 
 -- Cache for parsed contexts
@@ -96,11 +96,13 @@ end
 
 -- Get the current buffer's parser
 function M.get_parser(bufnr)
+  local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if not ok or not parsers then return nil end
   bufnr = tonumber(bufnr) or 0
   local lang = vim.bo[bufnr].filetype
   
   -- Try to auto-install if missing
-  if lang and lang ~= "" and not parsers.has_parser(lang) then
+  if lang and lang ~= "" and parsers and not parsers.has_parser(lang) then
     -- Check if this is a known language that has a parser available
     local configs = require('nvim-treesitter.parsers').get_parser_configs()
     if configs[lang] then
@@ -109,7 +111,7 @@ function M.get_parser(bufnr)
     return nil
   end
   
-  if not parsers.has_parser() then
+  if not parsers or not parsers.has_parser() then
     return nil
   end
   return parsers.get_parser(bufnr)
@@ -130,8 +132,8 @@ function M.get_node_at_cursor(winnr)
       M._warned_buffers[bufnr] = true
       
       -- Check if parser is available but not installed
-      local configs = require('nvim-treesitter.parsers').get_parser_configs()
-      if lang and configs[lang] and not M._installing_parsers[lang] then
+      local ok, configs = pcall(require, 'nvim-treesitter.parsers')
+      if ok and lang and configs[lang] and not M._installing_parsers[lang] then
         -- Parser is available, will be auto-installed
         vim.notify("Tree-sitter parser for " .. lang .. " will be installed automatically", vim.log.levels.INFO)
       elseif lang and lang ~= "" then
@@ -187,6 +189,8 @@ function M.extract_imports(bufnr, max_lines)
   local root = tree:root()
   
   -- Use Tree-sitter query to find imports
+  local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if not ok or not parsers then return {} end
   local lang = parsers.get_buf_lang(bufnr)
   local query_string = ""
   
@@ -229,7 +233,8 @@ function M.extract_imports(bufnr, max_lines)
   end
   
   -- Execute query
-  local ok, query = pcall(vim.treesitter.query.parse, lang, query_string)
+  local ts_query = vim.treesitter.query
+  local ok, query = pcall(ts_query.parse, lang, query_string)
   if ok and query then
     for _, match, _ in query:iter_matches(root, bufnr, 0, max_lines) do
       for _, node in pairs(match) do
@@ -294,7 +299,7 @@ end
 
 -- Set up cache invalidation
 vim.api.nvim_create_autocmd({"TextChanged", "TextChangedI", "TextChangedP"}, {
-  group = vim.api.nvim_create_augroup("AIContextCache", { clear = true }),
+  group = vim.api.nvim_create_augroup("CarambaContextCache", { clear = true }),
   callback = function(args)
     clear_buffer_cache(args.buf)
   end,
@@ -331,6 +336,8 @@ M.collect = function(opts)
   local filetype = vim.api.nvim_buf_get_option(bufnr, "filetype")
   local filename = vim.api.nvim_buf_get_name(bufnr)
   
+  local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if not ok or not parsers then return {} end
   local parser = parsers.get_parser(bufnr)
   
   -- If there's a selection, prioritize it
@@ -466,16 +473,18 @@ end
 -- Try to extract the name of a node (function name, class name, etc.)
 function M.get_node_name(node, bufnr)
   if not node then return nil end
-  
+
+  local ok, ts_utils = pcall(require, 'nvim-treesitter.ts_utils')
+  if not ok or not ts_utils then return nil end
   -- Look for identifier child nodes
   for child in node:iter_children() do
     if child:type() == "identifier" or child:type() == "name" then
-      return utils.get_node_text(child, bufnr)
+      return ts_utils.get_node_text(child, bufnr)
     end
   end
   
   -- Fallback: get first line and try to extract name
-  local text = utils.get_node_text(node, bufnr)
+  local text = ts_utils.get_node_text(node, bufnr)
   local first_line = vim.split(text, "\n")[1]
   
   -- Common patterns
@@ -497,6 +506,8 @@ end
 
 -- Update cursor context (called on cursor movement)
 function M.update_cursor_context()
+  local ok, ts_utils = pcall(require, 'nvim-treesitter.ts_utils')
+  if not ok or not ts_utils then return end
   local bufnr = vim.api.nvim_get_current_buf()
   
   -- Skip special buffers that don't need Tree-sitter
