@@ -6,6 +6,10 @@ local original_values = {}
 
 -- Mock a global or module function
 function M.mock(name, mock_value, is_global)
+  if not name or name == "" then
+    error("Mock name cannot be empty")
+  end
+
   local target = _G
   local key = name
 
@@ -18,6 +22,9 @@ function M.mock(name, mock_value, is_global)
 
     key = table.remove(parts)
     for i = 1, #parts do
+      if not target[parts[i]] then
+        error("Invalid mock path: " .. name)
+      end
       target = target[parts[i]]
     end
   end
@@ -48,4 +55,4 @@ function M.clear_package_cache()
   end
 end
 
-return M 
+return M
