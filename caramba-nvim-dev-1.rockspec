@@ -22,6 +22,6 @@ test_dependencies = {
   "lua-cjson",
 }
 build = {
-  type = "builtin",
+  type = "none",
   modules = {},
-} 
+}
