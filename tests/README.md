@@ -61,9 +61,15 @@ The test suite supports multiple execution environments with different levels of
 
 ### Requirements
 
-- **Preferred**: Neovim 0.9+ 
+- **Preferred**: Neovim 0.9+
 - **Fallback**: Lua 5.1+ or Python 3.6+
 - **Optional**: Git, curl (for integration tests)
+
+### Test Setup
+
+The test suite uses a custom test runner and does **not** require plenary.nvim to be installed in the repository. The tests run in standalone Lua or with mocked vim APIs.
+
+**Note**: `tests/plenary.nvim/` is not included in the repository and should not be committed. If you see this directory, it was accidentally added and should be removed from git tracking.
 
 ## Test Categories
 

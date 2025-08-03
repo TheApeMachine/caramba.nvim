@@ -1,1 +1,16 @@
 .ai-project-plan.json
+
+# Test dependencies (should be installed separately)
+tests/plenary.nvim/
+
+# Cache and temporary files
+*.tmp
+*.cache
+.DS_Store
+
+# Lua bytecode
+*.luac
+
+# IDE files
+.vscode/
+.idea/
