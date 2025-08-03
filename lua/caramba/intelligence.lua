@@ -4,7 +4,6 @@
 local M = {}
 
 local parsers = require('nvim-treesitter.parsers')
-local ts_utils = require('nvim-treesitter.ts_utils')
 local Path = require('plenary.path')
 local utils = require('caramba.utils')
 

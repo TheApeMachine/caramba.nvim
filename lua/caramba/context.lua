@@ -475,17 +475,18 @@ end
 function M.get_node_name(node, bufnr)
   if not node then return nil end
 
-  local ok, ts_utils = pcall(require, 'nvim-treesitter.ts_utils')
-  if not ok or not ts_utils then return nil end
   -- Look for identifier child nodes
   for child in node:iter_children() do
     if child:type() == "identifier" or child:type() == "name" then
-      return ts_utils.get_node_text(child, bufnr)
+      return vim.treesitter.get_node_text(child, bufnr)
     end
   end
-  
+
   -- Fallback: get first line and try to extract name
-  local text = ts_utils.get_node_text(node, bufnr)
+  local text = vim.treesitter.get_node_text(node, bufnr)
+  if type(text) ~= "string" then
+    return nil
+  end
   local first_line = vim.split(text, "\n")[1]
   
   -- Common patterns
@@ -507,8 +508,6 @@ end
 
 -- Update cursor context (called on cursor movement)
 function M.update_cursor_context()
-  local ok, ts_utils = pcall(require, 'nvim-treesitter.ts_utils')
-  if not ok or not ts_utils then return end
   local bufnr = vim.api.nvim_get_current_buf()
   
   -- Skip special buffers that don't need Tree-sitter

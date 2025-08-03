@@ -5,7 +5,6 @@ local M = {}
 local context = require("caramba.context")
 local llm = require("caramba.llm")
 local edit = require("caramba.edit")
-local ts_utils = require("nvim-treesitter.ts_utils")
 local config = require("caramba.config")
 local utils = require('caramba.utils')
 
@@ -25,11 +24,10 @@ M.operations = {
 -- Rename symbol with AI assistance
 function M.rename_symbol(new_name, opts)
   opts = opts or {}
-  local ts_utils = require("nvim-treesitter.ts_utils")
   local context = require("caramba.context")
 
   -- Get current symbol
-  local node = ts_utils.get_node_at_cursor()
+  local node = context.get_node_at_cursor()
   if not node then
     vim.notify("No symbol at cursor", vim.log.levels.WARN)
     return

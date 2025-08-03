@@ -1258,10 +1258,10 @@ function M.setup_commands()
     local symbol = args.args
     if symbol == "" then
       -- Get symbol under cursor
-      local node = require("nvim-treesitter.ts_utils").get_node_at_cursor()
+      local context = require("caramba.context")
+      local node = context.get_node_at_cursor()
       if node and node:type() == "identifier" then
-        local context = require("caramba.context")
-        symbol = context.get_node_text(node)
+        symbol = vim.treesitter.get_node_text(node, 0)
       end
     end
     

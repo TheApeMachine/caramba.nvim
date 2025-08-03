@@ -50,30 +50,56 @@ local function setup_which_key()
   if not ok then
     return
   end
-  
-  wk.register({
-    a = {
-      name = "Caramba AI Assistant",
-      c = { ':CarambaComplete<CR>', 'Complete code' },
-      e = { ':CarambaExplain<CR>', 'Explain code' },
-      r = { ':CarambaRefactor<CR>', 'Refactor code' },
-      s = { ':CarambaSearch<CR>', 'Search code' },
-      p = { ':CarambaPlan<CR>', 'Plan implementation' },
-      t = { ':CarambaChat<CR>', 'Open chat' },
-      g = { ':CarambaGenerateTests<CR>', 'Generate tests' },
-      i = { ':CarambaImplementFromTest<CR>', 'Implement from test' },
-      m = { ':CarambaCommitMessage<CR>', 'Generate commit message' },
-      w = { ':CarambaWebSearch<CR>', 'Web search' },
-      q = { ':CarambaQuery<CR>', 'Query with tools' },
-      x = { ':CarambaTransform<CR>', 'Transform code' },
-      o = { ':CarambaCheckConsistency<CR>', 'Check consistency' },
-      I = { ':CarambaIndexProject<CR>', 'Index project' },
-      F = { ':CarambaFindSymbol<CR>', 'Find symbol' },
-      M = { ':CarambaProjectMap<CR>', 'Show project map' },
-      C = { ':CarambaCancel<CR>', 'Cancel operations' },
-      S = { ':CarambaShowCommands<CR>', 'Show all commands' },
-    }
-  }, { prefix = '<leader>' })
+
+  -- Use the new which-key v3 API (recommended)
+  if wk.add then
+    -- Only add if not already registered to avoid duplicates
+    local success, _ = pcall(wk.add, {
+      { "<leader>a", group = "Caramba" },
+      { "<leader>ac", ":CarambaComplete<CR>", desc = "Complete code" },
+      { "<leader>ae", ":CarambaExplain<CR>", desc = "Explain code" },
+      { "<leader>ar", ":CarambaRefactor<CR>", desc = "Refactor code" },
+      { "<leader>as", ":CarambaSearch<CR>", desc = "Search code" },
+      { "<leader>ap", ":CarambaPlan<CR>", desc = "Plan implementation" },
+      { "<leader>at", ":CarambaChat<CR>", desc = "Open chat" },
+      { "<leader>ag", ":CarambaGenerateTests<CR>", desc = "Generate tests" },
+      { "<leader>ai", ":CarambaImplementFromTest<CR>", desc = "Implement from test" },
+      { "<leader>am", ":CarambaCommitMessage<CR>", desc = "Generate commit message" },
+      { "<leader>aw", ":CarambaWebSearch<CR>", desc = "Web search" },
+      { "<leader>aq", ":CarambaQuery<CR>", desc = "Query with tools" },
+      { "<leader>ax", ":CarambaTransform<CR>", desc = "Transform code" },
+      { "<leader>ao", ":CarambaCheckConsistency<CR>", desc = "Check consistency" },
+      { "<leader>aI", ":CarambaIndexProject<CR>", desc = "Index project" },
+      { "<leader>aF", ":CarambaFindSymbol<CR>", desc = "Find symbol" },
+      { "<leader>aM", ":CarambaProjectMap<CR>", desc = "Show project map" },
+      { "<leader>aC", ":CarambaCancel<CR>", desc = "Cancel operations" },
+      { "<leader>aS", ":CarambaShowCommands<CR>", desc = "Show all commands" },
+    })
+
+    if not success then
+      -- Fallback: just register individual commands without group
+      pcall(wk.add, {
+        { "<leader>ac", ":CarambaComplete<CR>", desc = "Caramba: Complete code" },
+        { "<leader>ae", ":CarambaExplain<CR>", desc = "Caramba: Explain code" },
+        { "<leader>ar", ":CarambaRefactor<CR>", desc = "Caramba: Refactor code" },
+        { "<leader>as", ":CarambaSearch<CR>", desc = "Caramba: Search code" },
+        { "<leader>ap", ":CarambaPlan<CR>", desc = "Caramba: Plan implementation" },
+        { "<leader>at", ":CarambaChat<CR>", desc = "Caramba: Open chat" },
+        { "<leader>ag", ":CarambaGenerateTests<CR>", desc = "Caramba: Generate tests" },
+        { "<leader>ai", ":CarambaImplementFromTest<CR>", desc = "Caramba: Implement from test" },
+        { "<leader>am", ":CarambaCommitMessage<CR>", desc = "Caramba: Generate commit message" },
+        { "<leader>aw", ":CarambaWebSearch<CR>", desc = "Caramba: Web search" },
+        { "<leader>aq", ":CarambaQuery<CR>", desc = "Caramba: Query with tools" },
+        { "<leader>ax", ":CarambaTransform<CR>", desc = "Caramba: Transform code" },
+        { "<leader>ao", ":CarambaCheckConsistency<CR>", desc = "Caramba: Check consistency" },
+        { "<leader>aI", ":CarambaIndexProject<CR>", desc = "Caramba: Index project" },
+        { "<leader>aF", ":CarambaFindSymbol<CR>", desc = "Caramba: Find symbol" },
+        { "<leader>aM", ":CarambaProjectMap<CR>", desc = "Caramba: Show project map" },
+        { "<leader>aC", ":CarambaCancel<CR>", desc = "Caramba: Cancel operations" },
+        { "<leader>aS", ":CarambaShowCommands<CR>", desc = "Caramba: Show all commands" },
+      })
+    end
+  end
 end
 
 -- Set up health check command
