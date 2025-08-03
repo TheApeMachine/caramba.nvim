@@ -5,6 +5,7 @@ tests/plenary.nvim/
 
 # Rockspec files (not needed for Neovim plugins)
 *.rockspec
+.gitmodules
 
 # Cache and temporary files
 *.tmp
