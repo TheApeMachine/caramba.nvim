@@ -23,6 +23,8 @@ M._chat_state = {
   code_blocks = {},
   streaming = false,
   current_response = "",
+  tool_iterations = 0,
+  max_tool_iterations = 5,
 }
 
 -- Get open buffers for context
@@ -584,9 +586,10 @@ end
 
 -- Start agentic response with streaming
 M._start_agentic_response = function(full_content, plan_context, plan)
-  -- Initialize streaming response
+  -- Initialize streaming response and reset tool iteration counter
   M._chat_state.streaming = true
   M._chat_state.current_response = ""
+  M._chat_state.tool_iterations = 0
 
   -- Add placeholder for assistant response
   table.insert(M._chat_state.history, {
@@ -604,11 +607,12 @@ Key behaviors:
 1. Be proactive - use tools to gather information before responding
 2. When you see open files, analyze them to understand the codebase
 3. Use memory search to find relevant past conversations
-4. Follow the current plan context when provided
-5. Provide specific, actionable responses
-6. If you need to use tools, do so and then provide a comprehensive response
+4. Provide specific, actionable responses
+5. If you need to use tools, do so and then provide a comprehensive response
+6. When you have enough information, provide a final helpful response
 
-You can use tools by responding with JSON, then continue with your actual response.]]
+You can use tools by responding with JSON, then continue with your actual response.
+When you're ready to give a final answer, just respond normally without any tool usage.]]
 
   -- Combine content with plan context
   local enhanced_content = full_content
@@ -715,8 +719,14 @@ end
 
 -- Extract tool usage from response
 M._extract_tool_usage = function(response)
+  -- Try to find JSON in code blocks first
   local tool_pattern = '```json%s*(%{.-%})%s*```'
   local json_match = response:match(tool_pattern)
+
+  -- If not found in code blocks, try to find JSON anywhere in the response
+  if not json_match then
+    json_match = response:match('(%{%s*"tool"%s*:%s*"[^"]+".-%})')
+  end
 
   if json_match then
     local ok, tool_data = pcall(vim.json.decode, json_match)
@@ -728,58 +738,88 @@ M._extract_tool_usage = function(response)
   return nil
 end
 
--- Execute tools and continue conversation
+-- Execute tools and continue conversation with proper iteration
 M._execute_tools_and_continue = function(tool_usage, original_response)
+  -- Check iteration limit
+  M._chat_state.tool_iterations = M._chat_state.tool_iterations + 1
+  if M._chat_state.tool_iterations > M._chat_state.max_tool_iterations then
+    if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+      M._chat_state.history[#M._chat_state.history].content = original_response ..
+        "\n\n⚠️ *Reached maximum tool iterations. Stopping here to prevent infinite loops.*"
+      M._chat_state.history[#M._chat_state.history].streaming = false
+      M._render_chat()
+    end
+    return
+  end
+
   local tool_result = agent.execute_tool(tool_usage.tool, tool_usage.parameters or {})
 
-  -- Format tool result for display
-  local tool_display = string.format("🔧 **Used tool: %s**\n```json\n%s\n```\n\n",
-    tool_usage.tool, vim.json.encode(tool_result))
-
-  -- Update the assistant message with tool usage
+  -- Update the assistant message to show tool usage
   if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
-    M._chat_state.history[#M._chat_state.history].content = tool_display .. original_response
+    M._chat_state.history[#M._chat_state.history].content = original_response
+    M._chat_state.history[#M._chat_state.history].streaming = false
     M._render_chat()
   end
 
-  -- Continue conversation with tool result
-  local follow_up_prompt = string.format([[
-Previous response: %s
+  -- Add tool result as a system message to the conversation
+  table.insert(M._chat_state.history, {
+    role = "system",
+    content = string.format("Tool '%s' executed with result: %s",
+      tool_usage.tool, vim.json.encode(tool_result)),
+    tool_result = true
+  })
 
-Tool result: %s
-
-Please provide a comprehensive response based on the tool results and original request.]],
-    original_response, vim.json.encode(tool_result))
-
-  -- Start new streaming response
-  M._start_follow_up_response(follow_up_prompt)
+  -- Continue the agentic iteration with full conversation context
+  M._continue_agentic_iteration()
 end
 
--- Start follow-up response after tool usage
-M._start_follow_up_response = function(prompt)
+-- Continue agentic iteration with full conversation context
+M._continue_agentic_iteration = function()
+  -- Build conversation messages from history
+  local messages = {}
+
+  -- Add system prompt
+  table.insert(messages, {
+    role = "system",
+    content = [[You are Caramba, an autonomous AI assistant for Neovim. You have access to tools that let you read files, search memory, and analyze code.
+
+Key behaviors:
+1. Be proactive - use tools to gather information before responding
+2. When you see open files, analyze them to understand the codebase
+3. Use memory search to find relevant past conversations
+4. Provide specific, actionable responses
+5. If you need to use tools, do so and then provide a comprehensive response
+6. When you have enough information, provide a final helpful response
+
+You can use tools by responding with JSON, then continue with your actual response.
+When you're ready to give a final answer, just respond normally without any tool usage.]]
+  })
+
+  -- Add conversation history (skip system tool results for the LLM, but keep user/assistant messages)
+  for _, msg in ipairs(M._chat_state.history) do
+    if msg.role ~= "system" or not msg.tool_result then
+      table.insert(messages, {
+        role = msg.role,
+        content = msg.full_content or msg.content
+      })
+    end
+  end
+
+  -- Start streaming response
   M._chat_state.streaming = true
   M._chat_state.current_response = ""
 
-  llm.request_stream({
-    {
-      role = "user",
-      content = prompt
-    }
-  }, {}, -- opts
+  -- Add placeholder for new assistant response
+  table.insert(M._chat_state.history, {
+    role = "assistant",
+    content = "🤔 Processing...",
+    streaming = true
+  })
+  M._render_chat()
+
+  llm.request_stream(messages, {}, -- opts
   function(chunk) -- on_chunk
-    if M._chat_state.streaming then
-      M._chat_state.current_response = M._chat_state.current_response .. chunk
-      if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
-        local current_content = M._chat_state.history[#M._chat_state.history].content
-        local tool_part = current_content:match("^(🔧.-\n\n)")
-        if tool_part then
-          M._chat_state.history[#M._chat_state.history].content = tool_part .. M._chat_state.current_response
-        else
-          M._chat_state.history[#M._chat_state.history].content = M._chat_state.current_response
-        end
-        M._render_chat()
-      end
-    end
+    M._handle_response_chunk(chunk)
   end,
   function(full_response, err) -- on_complete
     if err then
