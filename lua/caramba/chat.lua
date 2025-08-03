@@ -660,11 +660,22 @@ end
 M._handle_response_complete = function(full_response)
   M._chat_state.streaming = false
 
+  if config.get().debug then
+    vim.notify("Caramba Debug: Response complete. Length: " .. #full_response, vim.log.levels.INFO)
+    vim.notify("Caramba Debug: Response preview: " .. string.sub(full_response, 1, 200) .. "...", vim.log.levels.INFO)
+  end
+
   -- Check if response contains tool usage
   local tool_usage = M._extract_tool_usage(full_response)
   if tool_usage then
+    if config.get().debug then
+      vim.notify("Caramba Debug: Tool usage detected: " .. vim.json.encode(tool_usage), vim.log.levels.INFO)
+    end
     M._execute_tools_and_continue(tool_usage, full_response)
   else
+    if config.get().debug then
+      vim.notify("Caramba Debug: No tool usage detected, finishing response", vim.log.levels.INFO)
+    end
     -- Store final response and save to memory
     if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
       M._chat_state.history[#M._chat_state.history].content = full_response
@@ -719,19 +730,48 @@ end
 
 -- Extract tool usage from response
 M._extract_tool_usage = function(response)
+  if config.get().debug then
+    vim.notify("Caramba Debug: Extracting tools from response", vim.log.levels.INFO)
+  end
+
   -- Try to find JSON in code blocks first
   local tool_pattern = '```json%s*(%{.-%})%s*```'
   local json_match = response:match(tool_pattern)
 
+  if config.get().debug then
+    vim.notify("Caramba Debug: Code block JSON match: " .. (json_match or "none"), vim.log.levels.INFO)
+  end
+
   -- If not found in code blocks, try to find JSON anywhere in the response
   if not json_match then
     json_match = response:match('(%{%s*"tool"%s*:%s*"[^"]+".-%})')
+    if config.get().debug then
+      vim.notify("Caramba Debug: Inline JSON match: " .. (json_match or "none"), vim.log.levels.INFO)
+    end
+  end
+
+  -- If still not found, check if the entire response is JSON
+  if not json_match then
+    local trimmed = response:match("^%s*(.-)%s*$")
+    if trimmed:match("^%{.*%}$") then
+      json_match = trimmed
+      if config.get().debug then
+        vim.notify("Caramba Debug: Full response JSON match: " .. json_match, vim.log.levels.INFO)
+      end
+    end
   end
 
   if json_match then
     local ok, tool_data = pcall(vim.json.decode, json_match)
     if ok and tool_data.tool then
+      if config.get().debug then
+        vim.notify("Caramba Debug: Successfully parsed tool: " .. tool_data.tool, vim.log.levels.INFO)
+      end
       return tool_data
+    else
+      if config.get().debug then
+        vim.notify("Caramba Debug: Failed to parse JSON or no tool field", vim.log.levels.WARN)
+      end
     end
   end
 
@@ -740,9 +780,16 @@ end
 
 -- Execute tools and continue conversation with proper iteration
 M._execute_tools_and_continue = function(tool_usage, original_response)
+  if config.get().debug then
+    vim.notify("Caramba Debug: Executing tool: " .. tool_usage.tool, vim.log.levels.INFO)
+  end
+
   -- Check iteration limit
   M._chat_state.tool_iterations = M._chat_state.tool_iterations + 1
   if M._chat_state.tool_iterations > M._chat_state.max_tool_iterations then
+    if config.get().debug then
+      vim.notify("Caramba Debug: Reached max iterations (" .. M._chat_state.max_tool_iterations .. ")", vim.log.levels.WARN)
+    end
     if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
       M._chat_state.history[#M._chat_state.history].content = original_response ..
         "\n\n⚠️ *Reached maximum tool iterations. Stopping here to prevent infinite loops.*"
@@ -753,6 +800,10 @@ M._execute_tools_and_continue = function(tool_usage, original_response)
   end
 
   local tool_result = agent.execute_tool(tool_usage.tool, tool_usage.parameters or {})
+
+  if config.get().debug then
+    vim.notify("Caramba Debug: Tool result: " .. vim.json.encode(tool_result), vim.log.levels.INFO)
+  end
 
   -- Update the assistant message to show tool usage
   if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
@@ -768,6 +819,10 @@ M._execute_tools_and_continue = function(tool_usage, original_response)
       tool_usage.tool, vim.json.encode(tool_result)),
     tool_result = true
   })
+
+  if config.get().debug then
+    vim.notify("Caramba Debug: Starting agentic iteration", vim.log.levels.INFO)
+  end
 
   -- Continue the agentic iteration with full conversation context
   M._continue_agentic_iteration()
@@ -1053,16 +1108,31 @@ M.setup_commands = function()
     desc = 'Test LLM streaming',
   })
   
+  -- Test tool extraction
+  commands.register('TestToolExtraction', function()
+    local test_response = '{"tool": "get_open_buffers", "parameters": {}}'
+    vim.notify("Testing tool extraction with: " .. test_response, vim.log.levels.INFO)
+
+    local tool_usage = M._extract_tool_usage(test_response)
+    if tool_usage then
+      vim.notify("Tool extraction SUCCESS: " .. vim.json.encode(tool_usage), vim.log.levels.INFO)
+    else
+      vim.notify("Tool extraction FAILED", vim.log.levels.ERROR)
+    end
+  end, {
+    desc = 'Test tool extraction',
+  })
+
   -- Test raw curl
   commands.register('TestCurl', function()
     vim.notify("Testing raw curl to OpenAI...", vim.log.levels.INFO)
-    
+
     local api_key = config.get().api.openai.api_key
     if not api_key then
       vim.notify("No OpenAI API key set", vim.log.levels.ERROR)
       return
     end
-    
+
     -- Simple non-streaming request first
     local curl_cmd = string.format(
       'curl -sS -X POST https://api.openai.com/v1/chat/completions ' ..
