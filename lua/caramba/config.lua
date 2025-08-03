@@ -102,7 +102,7 @@ M.defaults = {
   ui = {
     diff_highlights = true,
     progress_notifications = true,
-    stream_window = true,
+    stream_window = false, -- Disabled for chat - use sidebar instead
     floating_window_border = "rounded",
     preview_window_width = 0.6,
     preview_window_height = 0.8,
@@ -130,7 +130,7 @@ M.defaults = {
   },
   
   -- Planning settings
-  debug = true, -- Enable debug logging
+  debug = false, -- Enable debug logging
 }
 
 -- Current configuration

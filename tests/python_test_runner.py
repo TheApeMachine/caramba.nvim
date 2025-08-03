@@ -202,28 +202,34 @@ class LuaTestRunner:
 def main():
     runner = LuaTestRunner()
     
-    # Check if specific test pattern provided
+    # Check if specific test file or pattern provided
     if len(sys.argv) > 1:
-        pattern = sys.argv[1]
-        test_files = glob.glob(f"tests/spec/*{pattern}*_spec.lua")
-        
+        arg = sys.argv[1]
+
+        # If it's a full path to a test file, use it directly
+        if arg.endswith('_spec.lua') and os.path.exists(arg):
+            test_files = [arg]
+        else:
+            # Otherwise treat it as a pattern
+            test_files = glob.glob(f"tests/spec/*{arg}*_spec.lua")
+
         if not test_files:
-            print(f"No test files found matching pattern: {pattern}")
+            print(f"No test files found for: {arg}")
             return 1
-        
+
         print("Starting Caramba.nvim Test Suite")
         print("========================================")
-        
+
         for test_file in sorted(test_files):
             runner.run_test_file(test_file)
-        
+
         print("========================================")
         print("Test Summary:")
         print(f"Success: \t{runner.passed}")
         print(f"Failed : \t{runner.failed}")
         print(f"Errors : \t{runner.errors}")
         print("========================================")
-        
+
         return 1 if (runner.failed > 0 or runner.errors > 0) else 0
     else:
         return runner.run_all_tests()

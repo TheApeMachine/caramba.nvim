@@ -644,8 +644,8 @@ You can use tools by responding with JSON, then continue with your actual respon
     enhanced_content = enhanced_content .. "\n\n" .. plan_context
   end
 
-  -- Call LLM with streaming
-  llm.chat_stream({
+  -- Call LLM with streaming using existing request_stream function
+  llm.request_stream({
     {
       role = "system",
       content = system_prompt
@@ -654,23 +654,17 @@ You can use tools by responding with JSON, then continue with your actual respon
       role = "user",
       content = enhanced_content
     }
-  }, {
-    on_chunk = function(chunk)
-      vim.schedule(function()
-        M._handle_response_chunk(chunk)
-      end)
-    end,
-    on_complete = function(full_response)
-      vim.schedule(function()
-        M._handle_response_complete(full_response)
-      end)
-    end,
-    on_error = function(err)
-      vim.schedule(function()
-        M._handle_response_error(err)
-      end)
+  }, {}, -- opts
+  function(chunk) -- on_chunk
+    M._handle_response_chunk(chunk)
+  end,
+  function(full_response, err) -- on_complete
+    if err then
+      M._handle_response_error(err)
+    else
+      M._handle_response_complete(full_response)
     end
-  })
+  end)
 end
 
 -- Handle streaming response chunk
@@ -794,40 +788,34 @@ M._start_follow_up_response = function(prompt)
   M._chat_state.streaming = true
   M._chat_state.current_response = ""
 
-  llm.chat_stream({
+  llm.request_stream({
     {
       role = "user",
       content = prompt
     }
-  }, {
-    on_chunk = function(chunk)
-      vim.schedule(function()
-        if M._chat_state.streaming then
-          M._chat_state.current_response = M._chat_state.current_response .. chunk
-          if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
-            local current_content = M._chat_state.history[#M._chat_state.history].content
-            local tool_part = current_content:match("^(🔧.-\n\n)")
-            if tool_part then
-              M._chat_state.history[#M._chat_state.history].content = tool_part .. M._chat_state.current_response
-            else
-              M._chat_state.history[#M._chat_state.history].content = M._chat_state.current_response
-            end
-            M._render_chat()
-          end
+  }, {}, -- opts
+  function(chunk) -- on_chunk
+    if M._chat_state.streaming then
+      M._chat_state.current_response = M._chat_state.current_response .. chunk
+      if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+        local current_content = M._chat_state.history[#M._chat_state.history].content
+        local tool_part = current_content:match("^(🔧.-\n\n)")
+        if tool_part then
+          M._chat_state.history[#M._chat_state.history].content = tool_part .. M._chat_state.current_response
+        else
+          M._chat_state.history[#M._chat_state.history].content = M._chat_state.current_response
         end
-      end)
-    end,
-    on_complete = function(full_response)
-      vim.schedule(function()
-        M._handle_response_complete(full_response)
-      end)
-    end,
-    on_error = function(err)
-      vim.schedule(function()
-        M._handle_response_error(err)
-      end)
+        M._render_chat()
+      end
     end
-  })
+  end,
+  function(full_response, err) -- on_complete
+    if err then
+      M._handle_response_error(err)
+    else
+      M._handle_response_complete(full_response)
+    end
+  end)
 end
 
 -- Render chat history

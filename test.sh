@@ -64,73 +64,75 @@ run_test_file() {
     echo "========================================"
     echo -e "Testing: \t$test_file"
     
-    # Check available interpreters (lua > python fallback, skip nvim due to headless issues)
+    # Check available interpreters (prefer python3 for comprehensive test coverage)
     local test_cmd=""
-    if command -v lua &> /dev/null; then
-        test_cmd="lua"
-    elif command -v python3 &> /dev/null; then
+    if command -v python3 &> /dev/null; then
         test_cmd="python3"
+    elif command -v lua &> /dev/null; then
+        test_cmd="lua"
     else
-        print_result "ERROR" "$test_name" "No suitable interpreter found (lua or python3)"
+        print_result "ERROR" "$test_name" "No suitable interpreter found (python3 or lua)"
         return 1
     fi
 
     # Run the test based on available interpreter
-    local output
+    local temp_output="/tmp/caramba_test_output_$$"
     local exit_code
 
     case "$test_cmd" in
         "nvim")
             # Use nvim headless mode with minimal initialization
-            if output=$(nvim --headless -u tests/minimal_init.lua \
+            nvim --headless -u tests/minimal_init.lua \
                 -c "lua require('test_runner').run_file('$test_file')" \
-                -c "qa!" 2>&1); then
-                exit_code=0
-            else
-                exit_code=$?
-            fi
+                -c "qa!" > "$temp_output" 2>&1
+            exit_code=$?
             ;;
         "lua")
             # Use standalone lua
-            if output=$(lua -e "
+            lua -e "
                 package.path = package.path .. ';./lua/?.lua;./tests/?.lua'
                 require('test_runner').run_file('$test_file')
-            " 2>&1); then
-                exit_code=0
-            else
-                exit_code=$?
-            fi
+            " > "$temp_output" 2>&1
+            exit_code=$?
             ;;
         "python3")
-            # Use Python test runner
-            if output=$(python3 tests/python_test_runner.py "$(basename "$test_file" .lua | sed 's/_spec$//')" 2>&1); then
-                exit_code=0
-            else
-                exit_code=$?
-            fi
+            # Use Python test runner - pass the full test file path
+            python3 tests/python_test_runner.py "$test_file" > "$temp_output" 2>&1
+            exit_code=$?
             ;;
     esac
     
     if [ $exit_code -eq 0 ]; then
         # Parse output for individual test results
         local tests_in_file=0
+
+        # Read the output file line by line
         while IFS= read -r line; do
-            if [[ $line =~ ^(SUCCESS|FAILED|ERROR):\s*(.+)$ ]]; then
+            # Match SUCCESS:, FAILED:, or ERROR: at start of line
+            if [[ $line =~ ^(SUCCESS|FAILED|ERROR):[[:space:]]*(.+)$ ]]; then
                 ((tests_in_file++))
                 local status="${BASH_REMATCH[1]}"
                 local test_desc="${BASH_REMATCH[2]}"
                 print_result "$status" "$test_desc"
+            elif [[ $line =~ ^Error:[[:space:]]*(.+)$ ]]; then
+                # Handle error details on separate lines
+                echo -e "${RED}  ${BASH_REMATCH[1]}${NC}"
             fi
-        done <<< "$output"
+        done < "$temp_output"
 
         # If no tests were found in this file, it's an error
         if [ $tests_in_file -eq 0 ]; then
             print_result "ERROR" "$test_name" "No tests were executed for this file"
+            echo "Output was:"
+            cat "$temp_output"
         fi
     else
         print_result "ERROR" "$test_name" "Exit code: $exit_code"
-        echo "$output"
+        cat "$temp_output"
     fi
+
+    # Clean up temporary file
+    rm -f "$temp_output"
 }
 
 # Function to run all tests
