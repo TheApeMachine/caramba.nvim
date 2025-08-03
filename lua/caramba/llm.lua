@@ -939,12 +939,12 @@ end
 
 M.setup_commands = function()
   local commands = require('caramba.core.commands')
-  
-  commands.register('AISetModel', M.select_model, {
+
+  commands.register('SetModel', M.select_model, {
     desc = 'Select the AI provider and model to use',
   })
 
-  commands.register('AIShowConfig', function()
+  commands.register('ShowConfig', function()
     vim.notify(vim.inspect(config.get()), vim.log.levels.INFO)
   end, {
     desc = 'Show the current AI assistant configuration',

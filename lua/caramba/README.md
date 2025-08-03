@@ -39,7 +39,7 @@ Add to your Neovim configuration:
     'nvim-treesitter/nvim-treesitter',
   },
   config = function()
-    require('ai').setup({
+    require('caramba').setup({
       -- Optional configuration
       providers = {
         openai = {

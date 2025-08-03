@@ -65,7 +65,7 @@ use {
     'nvim-treesitter/nvim-treesitter',
   },
   config = function()
-    require('ai').setup({
+    require('caramba').setup({
       -- Your configuration here
     })
   end,
@@ -80,7 +80,7 @@ Plug 'nvim-treesitter/nvim-treesitter'
 Plug 'your-username/caramba.nvim'
 
 " Then in your init.lua or after plug#end()
-lua require('ai').setup({})
+lua require('caramba').setup({})
 ```
 
 ## ⚙️ Configuration
@@ -88,7 +88,7 @@ lua require('ai').setup({})
 ### Minimal Setup
 
 ```lua
-require('ai').setup({
+require('caramba').setup({
   providers = {
     openai = {
       api_key = vim.env.OPENAI_API_KEY,
@@ -100,7 +100,7 @@ require('ai').setup({
 ### Full Configuration
 
 ```lua
-require('ai').setup({
+require('caramba').setup({
   -- Provider settings
   providers = {
     openai = {
@@ -206,59 +206,59 @@ vim.env.ANTHROPIC_API_KEY = "your-anthropic-api-key"
 
 #### Core
 
-- `:AIComplete [instruction]` - Complete code with optional instruction
-- `:AIExplain [question]` - Explain code with optional question
-- `:AIRefactor <instruction>` - Refactor with instruction
-- `:AISearch <query>` - Semantic search
-- `:AIChat` - Toggle chat window
-- `:AICancel` - Cancel active operations
+- `:CarambaComplete [instruction]` - Complete code with optional instruction
+- `:CarambaExplain [question]` - Explain code with optional question
+- `:CarambaRefactor <instruction>` - Refactor with instruction
+- `:CarambaSearch <query>` - Semantic search
+- `:CarambaChat` - Toggle chat window
+- `:CarambaCancel` - Cancel active operations
 
 #### Planning & Architecture
 
-- `:AIPlan [task]` - Create implementation plan
-- `:AIShowPlan` - Show current plan
-- `:AIAnalyzeProject` - Analyze project structure
-- `:AILearnPatterns` - Learn coding patterns
+- `:CarambaPlan [task]` - Create implementation plan
+- `:CarambaShowPlan` - Show current plan
+- `:CarambaAnalyzeProject` - Analyze project structure
+- `:CarambaLearnPatterns` - Learn coding patterns
 
 #### Testing & Debugging
 
-- `:AIGenerateTests [framework]` - Generate tests
-- `:AIUpdateTests` - Update existing tests
-- `:AIDebugError [error]` - Analyze error
-- `:AIImplementFromTest` - Implement from test spec
-- `:AIWatchTests` - Watch tests for failures
+- `:CarambaGenerateTests [framework]` - Generate tests
+- `:CarambaUpdateTests` - Update existing tests
+- `:CarambaDebugError [error]` - Analyze error
+- `:CarambaImplementFromTest` - Implement from test spec
+- `:CarambaWatchTests` - Watch tests for failures
 
 #### Multi-File & Refactoring
 
-- `:AIRenameSymbol [new_name]` - Rename across project
-- `:AIExtractModule [name]` - Extract to new module
-- `:AITransform [type]` - Apply AST transformation
+- `:CarambaRenameSymbol [new_name]` - Rename across project
+- `:CarambaExtractModule [name]` - Extract to new module
+- `:CarambaTransform [type]` - Apply AST transformation
 
 #### Git Integration
 
-- `:AICommitMessage` - Generate commit message
-- `:AIReviewCode` - Review current code
-- `:AIReviewPR` - Review pull request
-- `:AIResolveConflict` - Resolve merge conflicts
+- `:CarambaCommitMessage` - Generate commit message
+- `:CarambaReviewCode` - Review current code
+- `:CarambaReviewPR` - Review pull request
+- `:CarambaResolveConflict` - Resolve merge conflicts
 
 #### Code Intelligence
 
-- `:AIIndexProject` - Index for navigation
-- `:AIFindDefinition` - Find symbol definition
-- `:AIFindReferences` - Find references
-- `:AICallHierarchy` - Show call hierarchy
+- `:CarambaIndexProject` - Index for navigation
+- `:CarambaFindDefinition` - Find symbol definition
+- `:CarambaFindReferences` - Find references
+- `:CarambaCallHierarchy` - Show call hierarchy
 
 #### Consistency & Quality
 
-- `:AICheckConsistency` - Check file consistency
-- `:AILearnPatterns` - Learn project patterns
-- `:AIEnableConsistencyCheck` - Auto-check on save
+- `:CarambaCheckConsistency` - Check file consistency
+- `:CarambaLearnPatterns` - Learn project patterns
+- `:CarambaEnableConsistencyCheck` - Auto-check on save
 
 #### Web & Research
 
-- `:AIWebSearch <query>` - Search the web
-- `:AIResearch <topic>` - Deep research
-- `:AIQuery <question>` - Query with tools
+- `:CarambaWebSearch <query>` - Search the web
+- `:CarambaResearch <topic>` - Deep research
+- `:CarambaQuery <question>` - Query with tools
 
 </details>
 
@@ -283,16 +283,16 @@ The plugin sets up keymaps under the `<leader>a` prefix:
 
 ```lua
 -- In your config
-vim.keymap.set('n', '<C-k>', ':AIComplete<CR>', { desc = 'AI Complete' })
-vim.keymap.set('v', '<C-k>', ':AIExplain<CR>', { desc = 'AI Explain' })
+vim.keymap.set('n', '<C-k>', ':CarambaComplete<CR>', { desc = 'Caramba Complete' })
+vim.keymap.set('v', '<C-k>', ':CarambaExplain<CR>', { desc = 'Caramba Explain' })
 ```
 
 ## 🚀 Quick Start
 
 1. Install the plugin using your package manager
 2. Set your OpenAI API key: `export OPENAI_API_KEY="sk-..."`
-3. Add to your config: `require('ai').setup({})`
-4. Open a file and try `:AIComplete` or `<leader>ac`
+3. Add to your config: `require('caramba').setup({})`
+4. Open a file and try `:CarambaComplete` or `<leader>ac`
 5. Results appear in a floating window as they stream back
 
 ## 📋 Requirements
@@ -313,7 +313,7 @@ vim.keymap.set('v', '<C-k>', ':AIExplain<CR>', { desc = 'AI Explain' })
 
 ## 🏥 Health Check
 
-Run `:checkhealth ai` to diagnose any issues with your setup.
+Run `:checkhealth caramba` to diagnose any issues with your setup.
 
 ## 🤝 Contributing
 
