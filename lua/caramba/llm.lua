@@ -13,6 +13,7 @@ M._active_jobs = {}
 M._request_queue = {}
 M._max_concurrent = 3
 M._processing_queue = false
+M._streaming_jobs = {}
 
 -- Provider implementations
 M.providers = {}
@@ -935,6 +936,80 @@ M.select_model = function()
       vim.notify(string.format("Set AI provider to %s and model to %s", provider, model), vim.log.levels.INFO)
     end)
   end)
+end
+
+-- Streaming chat function
+M.chat_stream = function(messages, callbacks)
+  local api_config = config.get().api.openai
+  callbacks = callbacks or {}
+
+  local body = {
+    model = api_config.model,
+    messages = messages,
+    temperature = api_config.temperature,
+    max_completion_tokens = api_config.max_tokens,
+    stream = true,
+  }
+
+  local request_id = vim.fn.localtime() .. "_" .. math.random(1000, 9999)
+  local accumulated_response = ""
+
+  local job = Job:new({
+    command = "curl",
+    args = {
+      "-sS",
+      "-X", "POST",
+      "https://api.openai.com/v1/chat/completions",
+      "-H", "Authorization: Bearer " .. api_config.api_key,
+      "-H", "Content-Type: application/json",
+      "-d", vim.json.encode(body),
+    },
+    on_stdout = function(_, line)
+      if line and line ~= "" then
+        -- Parse SSE format
+        if line:match("^data: ") then
+          local data = line:sub(7) -- Remove "data: " prefix
+
+          if data == "[DONE]" then
+            if callbacks.on_complete then
+              callbacks.on_complete(accumulated_response)
+            end
+            M._streaming_jobs[request_id] = nil
+            return
+          end
+
+          local ok, parsed = pcall(vim.json.decode, data)
+          if ok and parsed.choices and parsed.choices[1] and parsed.choices[1].delta then
+            local delta = parsed.choices[1].delta
+            if delta.content then
+              accumulated_response = accumulated_response .. delta.content
+              if callbacks.on_chunk then
+                callbacks.on_chunk(delta.content)
+              end
+            end
+          end
+        end
+      end
+    end,
+    on_stderr = function(_, line)
+      if line and line ~= "" then
+        vim.notify("LLM streaming error: " .. line, vim.log.levels.ERROR)
+      end
+    end,
+    on_exit = function(_, code)
+      M._streaming_jobs[request_id] = nil
+      if code ~= 0 then
+        if callbacks.on_error then
+          callbacks.on_error("Request failed with code: " .. code)
+        end
+      end
+    end,
+  })
+
+  M._streaming_jobs[request_id] = job
+  job:start()
+
+  return request_id
 end
 
 M.setup_commands = function()

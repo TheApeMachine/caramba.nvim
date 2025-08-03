@@ -53,6 +53,7 @@ function M.setup(opts)
   -- 4. Initialize other modules that require it
   require('caramba.planner').setup()
   require('caramba.consistency').setup()
+  require('caramba.chat').setup()
   
   vim.notify("Caramba.nvim is ready!", vim.log.levels.INFO)
 end

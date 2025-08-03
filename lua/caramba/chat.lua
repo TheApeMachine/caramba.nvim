@@ -10,6 +10,8 @@ local config = require('caramba.config')
 local context = require('caramba.context')
 local planner = require('caramba.planner')
 local utils = require('caramba.utils')
+local memory = require('caramba.memory')
+local agent = require('caramba.agent')
 
 -- Chat state
 M._chat_state = {
@@ -19,13 +21,37 @@ M._chat_state = {
   input_bufnr = nil,
   input_winid = nil,
   code_blocks = {},
+  streaming = false,
+  current_response = "",
 }
+
+-- Get open buffers for context
+local function get_open_buffers_context()
+  local buffers = {}
+
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) and vim.api.nvim_buf_get_option(bufnr, 'buflisted') then
+      local name = vim.api.nvim_buf_get_name(bufnr)
+      if name and name ~= "" and not name:match("caramba") then -- Exclude caramba buffers
+        local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+        table.insert(buffers, {
+          name = name,
+          content = table.concat(lines, "\n"),
+          filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype'),
+          modified = vim.api.nvim_buf_get_option(bufnr, 'modified')
+        })
+      end
+    end
+  end
+
+  return buffers
+end
 
 -- Parse special context commands from message
 local function parse_context_commands(message)
   local contexts = {}
   local cleaned_message = message
-  
+
   -- @buffer - include current buffer
   if message:match("@buffer") then
     local bufnr = vim.fn.bufnr("#") -- Last active buffer before chat
@@ -342,13 +368,48 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     end
   end
   
+  -- Get open buffers for automatic context
+  local open_buffers = get_open_buffers_context()
+
+  -- Search memory for relevant context
+  local memory_results = memory.search_multi_angle(
+    cleaned_message,
+    { language = "lua", context = "neovim" },
+    "caramba nvim plugin development"
+  )
+
   -- Build full prompt with contexts
   local full_content = cleaned_message
+
+  -- Add open buffers context
+  if #open_buffers > 0 then
+    full_content = full_content .. "\n\n## Open Files Context:\n"
+    for _, buffer in ipairs(open_buffers) do
+      local filename = buffer.name:match("([^/]+)$") or buffer.name
+      full_content = full_content .. string.format("\n### %s (%s)%s\n```%s\n%s\n```\n",
+        filename,
+        buffer.filetype,
+        buffer.modified and " [MODIFIED]" or "",
+        buffer.filetype,
+        buffer.content)
+    end
+  end
+
+  -- Add memory context
+  if #memory_results > 0 then
+    full_content = full_content .. "\n\n## Relevant Memory:\n"
+    for _, result in ipairs(memory_results) do
+      full_content = full_content .. string.format("\n- %s (relevance: %.2f)\n",
+        result.entry.content, result.relevance)
+    end
+  end
+
+  -- Add explicit contexts from commands
   if #contexts > 0 then
-    full_content = full_content .. "\n\nContext:\n"
+    full_content = full_content .. "\n\n## Additional Context:\n"
     for i, ctx in ipairs(contexts) do
       if ctx.type == "buffer" then
-        full_content = full_content .. string.format("\n[Current Buffer: %s]\n```\n%s\n```\n", 
+        full_content = full_content .. string.format("\n[Current Buffer: %s]\n```\n%s\n```\n",
           ctx.name, ctx.content)
       elseif ctx.type == "selection" then
         full_content = full_content .. "\n[Selected Code]\n```\n" .. ctx.content .. "\n```\n"
@@ -361,6 +422,9 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
       end
     end
   end
+
+  -- Add agent tools information
+  full_content = full_content .. "\n\n" .. agent.get_tools_prompt()
   
   -- Add to history (store original message for display)
   table.insert(M._chat_state.history, {
@@ -368,14 +432,25 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     content = original_message, -- Original message with @commands
     full_content = full_content, -- Full content for API
   })
-  
+
+  -- Store user message in memory
+  memory.store(
+    original_message,
+    {
+      context = "user_message",
+      timestamp = vim.fn.localtime(),
+      open_files = vim.tbl_map(function(buf) return buf.name end, open_buffers)
+    },
+    { "caramba", "chat", "user_message" }
+  )
+
   -- Close input window
   M._cancel_input()
-  
+
   -- Render immediately to show user message
   M._render_chat()
-  
-  -- Use the planner to handle the request
+
+  -- First, use the planner to create/update the plan, then start agentic response
   planner.interactive_planning_session(cleaned_message, full_content, function(plan, review, err)
     if err then
       vim.schedule(function()
@@ -389,31 +464,37 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     end
 
     vim.schedule(function()
-      local content = M._format_plan_for_chat(plan, review)
+      -- First, show the plan to the user
+      local plan_display = M._format_plan_for_display(plan, review)
       table.insert(M._chat_state.history, {
         role = "assistant",
-        content = content,
-        plan = plan, -- Store for later execution
+        content = plan_display,
+        plan = plan,
+        type = "plan"
       })
       M._render_chat()
+
+      -- Then store the plan for context and start agentic response
+      local plan_context = M._format_plan_for_context(plan, review)
+      M._start_agentic_response(full_content, plan_context, plan)
     end)
   end)
 end
 
--- Format a plan to be displayed in the chat window
-M._format_plan_for_chat = function(plan, review)
+-- Format plan for display to user
+M._format_plan_for_display = function(plan, review)
   local lines = {}
-  
+
   if not plan then
-    return "Failed to generate a plan."
+    return "📋 Failed to generate a plan."
   end
-  
-  table.insert(lines, "I have created a plan to address your request. Here is the summary:")
+
+  table.insert(lines, "📋 **Plan Created**")
   table.insert(lines, "")
   table.insert(lines, "**Understanding:** " .. (plan.understanding or "N/A"))
   table.insert(lines, "**Complexity:** " .. (plan.estimated_complexity or "N/A"))
   table.insert(lines, "")
-  
+
   if review and review.decision ~= "APPROVE" then
     table.insert(lines, "### ⚠️ Plan Review Feedback")
     table.insert(lines, "**Decision:** " .. review.decision)
@@ -422,7 +503,7 @@ M._format_plan_for_chat = function(plan, review)
     end
     table.insert(lines, "")
   end
-  
+
   table.insert(lines, "### Implementation Steps")
   if plan.implementation_steps and #plan.implementation_steps > 0 then
     for _, step in ipairs(plan.implementation_steps) do
@@ -431,13 +512,162 @@ M._format_plan_for_chat = function(plan, review)
   else
     table.insert(lines, "_No specific implementation steps were generated._")
   end
-  
+
   table.insert(lines, "")
   table.insert(lines, "---")
   table.insert(lines, "")
-  table.insert(lines, "_You can now approve this plan to execute it, or continue the conversation to refine it._")
-  
+  table.insert(lines, "_Now gathering context and preparing response..._")
+
   return table.concat(lines, "\n")
+end
+
+-- Format plan for context (not display)
+M._format_plan_for_context = function(plan, review)
+  if not plan then return "" end
+
+  local context_parts = {}
+  table.insert(context_parts, "## Current Plan Context:")
+  table.insert(context_parts, "**Understanding:** " .. (plan.understanding or "N/A"))
+  table.insert(context_parts, "**Complexity:** " .. (plan.estimated_complexity or "N/A"))
+
+  if plan.implementation_steps and #plan.implementation_steps > 0 then
+    table.insert(context_parts, "**Implementation Steps:**")
+    for _, step in ipairs(plan.implementation_steps) do
+      table.insert(context_parts, string.format("- %s (%s)", step.action, step.file or "N/A"))
+    end
+  end
+
+  if review and review.decision ~= "APPROVE" then
+    table.insert(context_parts, "**Review Status:** " .. review.decision)
+    if review.feedback then
+      table.insert(context_parts, "**Feedback:** " .. table.concat(review.feedback, "; "))
+    end
+  end
+
+  return table.concat(context_parts, "\n")
+end
+
+-- Start agentic response with streaming
+M._start_agentic_response = function(full_content, plan_context, plan)
+  -- Initialize streaming response
+  M._chat_state.streaming = true
+  M._chat_state.current_response = ""
+
+  -- Add placeholder for assistant response
+  table.insert(M._chat_state.history, {
+    role = "assistant",
+    content = "🤔 Analyzing request and gathering context...",
+    streaming = true,
+    plan = plan -- Store plan for later reference
+  })
+  M._render_chat()
+
+  -- Build system prompt for agentic behavior
+  local system_prompt = [[You are Caramba, an autonomous AI assistant for Neovim. You have access to tools that let you read files, search memory, and analyze code.
+
+Key behaviors:
+1. Be proactive - use tools to gather information before responding
+2. When you see open files, analyze them to understand the codebase
+3. Use memory search to find relevant past conversations
+4. Follow the current plan context when provided
+5. Provide specific, actionable responses
+6. If you need to use tools, do so and then provide a comprehensive response
+
+You can use tools by responding with JSON, then continue with your actual response.]]
+
+  -- Combine content with plan context
+  local enhanced_content = full_content
+  if plan_context and plan_context ~= "" then
+    enhanced_content = enhanced_content .. "\n\n" .. plan_context
+  end
+
+  -- Call LLM with streaming
+  llm.chat_stream({
+    {
+      role = "system",
+      content = system_prompt
+    },
+    {
+      role = "user",
+      content = enhanced_content
+    }
+  }, {
+    on_chunk = function(chunk)
+      vim.schedule(function()
+        M._handle_response_chunk(chunk)
+      end)
+    end,
+    on_complete = function(full_response)
+      vim.schedule(function()
+        M._handle_response_complete(full_response)
+      end)
+    end,
+    on_error = function(err)
+      vim.schedule(function()
+        M._handle_response_error(err)
+      end)
+    end
+  })
+end
+
+-- Handle streaming response chunk
+M._handle_response_chunk = function(chunk)
+  if not M._chat_state.streaming then return end
+
+  M._chat_state.current_response = M._chat_state.current_response .. chunk
+
+  -- Update the last assistant message
+  if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+    M._chat_state.history[#M._chat_state.history].content = M._chat_state.current_response
+    M._render_chat()
+  end
+end
+
+-- Handle response completion
+M._handle_response_complete = function(full_response)
+  M._chat_state.streaming = false
+
+  -- Check if response contains tool usage
+  local tool_usage = M._extract_tool_usage(full_response)
+  if tool_usage then
+    M._execute_tools_and_continue(tool_usage, full_response)
+  else
+    -- Store final response and save to memory
+    if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+      M._chat_state.history[#M._chat_state.history].content = full_response
+      M._chat_state.history[#M._chat_state.history].streaming = false
+      M._render_chat()
+
+      -- Save to memory with plan context
+      local memory_context = {
+        context = "chat_response",
+        timestamp = vim.fn.localtime()
+      }
+
+      -- Include plan information if available
+      if M._chat_state.history[#M._chat_state.history].plan then
+        memory_context.plan_understanding = M._chat_state.history[#M._chat_state.history].plan.understanding
+        memory_context.plan_complexity = M._chat_state.history[#M._chat_state.history].plan.estimated_complexity
+      end
+
+      memory.store(
+        full_response,
+        memory_context,
+        { "caramba", "chat", "response" }
+      )
+    end
+  end
+end
+
+-- Handle response error
+M._handle_response_error = function(err)
+  M._chat_state.streaming = false
+
+  if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+    M._chat_state.history[#M._chat_state.history].content = "I'm sorry, I encountered an error: " .. tostring(err)
+    M._chat_state.history[#M._chat_state.history].streaming = false
+    M._render_chat()
+  end
 end
 
 -- Cancel input
@@ -447,11 +677,94 @@ M._cancel_input = function()
     M._chat_state.input_winid = nil
     M._chat_state.input_bufnr = nil
   end
-  
+
   -- Return focus to chat window
   if M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid) then
     vim.api.nvim_set_current_win(M._chat_state.winid)
   end
+end
+
+-- Extract tool usage from response
+M._extract_tool_usage = function(response)
+  local tool_pattern = '```json%s*(%{.-%})%s*```'
+  local json_match = response:match(tool_pattern)
+
+  if json_match then
+    local ok, tool_data = pcall(vim.json.decode, json_match)
+    if ok and tool_data.tool then
+      return tool_data
+    end
+  end
+
+  return nil
+end
+
+-- Execute tools and continue conversation
+M._execute_tools_and_continue = function(tool_usage, original_response)
+  local tool_result = agent.execute_tool(tool_usage.tool, tool_usage.parameters or {})
+
+  -- Format tool result for display
+  local tool_display = string.format("🔧 **Used tool: %s**\n```json\n%s\n```\n\n",
+    tool_usage.tool, vim.json.encode(tool_result))
+
+  -- Update the assistant message with tool usage
+  if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+    M._chat_state.history[#M._chat_state.history].content = tool_display .. original_response
+    M._render_chat()
+  end
+
+  -- Continue conversation with tool result
+  local follow_up_prompt = string.format([[
+Previous response: %s
+
+Tool result: %s
+
+Please provide a comprehensive response based on the tool results and original request.]],
+    original_response, vim.json.encode(tool_result))
+
+  -- Start new streaming response
+  M._start_follow_up_response(follow_up_prompt)
+end
+
+-- Start follow-up response after tool usage
+M._start_follow_up_response = function(prompt)
+  M._chat_state.streaming = true
+  M._chat_state.current_response = ""
+
+  llm.chat_stream({
+    {
+      role = "user",
+      content = prompt
+    }
+  }, {
+    on_chunk = function(chunk)
+      vim.schedule(function()
+        if M._chat_state.streaming then
+          M._chat_state.current_response = M._chat_state.current_response .. chunk
+          if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
+            local current_content = M._chat_state.history[#M._chat_state.history].content
+            local tool_part = current_content:match("^(🔧.-\n\n)")
+            if tool_part then
+              M._chat_state.history[#M._chat_state.history].content = tool_part .. M._chat_state.current_response
+            else
+              M._chat_state.history[#M._chat_state.history].content = M._chat_state.current_response
+            end
+            M._render_chat()
+          end
+        end
+      end)
+    end,
+    on_complete = function(full_response)
+      vim.schedule(function()
+        M._handle_response_complete(full_response)
+      end)
+    end,
+    on_error = function(err)
+      vim.schedule(function()
+        M._handle_response_error(err)
+      end)
+    end
+  })
 end
 
 -- Render chat history
@@ -710,6 +1023,11 @@ M.setup_commands = function()
   end, {
     desc = 'Test raw curl to OpenAI',
   })
+end
+
+-- Setup function to initialize memory system
+M.setup = function()
+  memory.setup()
 end
 
 return M
