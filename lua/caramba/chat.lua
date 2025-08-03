@@ -450,36 +450,8 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   -- Render immediately to show user message
   M._render_chat()
 
-  -- First, use the planner to create/update the plan, then start agentic response
-  -- Use a chat-specific planning session that doesn't show popups
-  M._chat_planning_session(cleaned_message, full_content, function(plan, review, err)
-    if err then
-      vim.schedule(function()
-        table.insert(M._chat_state.history, {
-          role = "assistant",
-          content = "I'm sorry, I encountered an error during planning: " .. tostring(err),
-        })
-        M._render_chat()
-      end)
-      return
-    end
-
-    vim.schedule(function()
-      -- First, show the plan to the user
-      local plan_display = M._format_plan_for_display(plan, review)
-      table.insert(M._chat_state.history, {
-        role = "assistant",
-        content = plan_display,
-        plan = plan,
-        type = "plan"
-      })
-      M._render_chat()
-
-      -- Then store the plan for context and start agentic response
-      local plan_context = M._format_plan_for_context(plan, review)
-      M._start_agentic_response(full_content, plan_context, plan)
-    end)
-  end)
+  -- Start agentic response directly (skip automatic planning for now)
+  M._start_agentic_response(full_content, "", nil)
 end
 
 -- Chat-specific planning session (no popups)
