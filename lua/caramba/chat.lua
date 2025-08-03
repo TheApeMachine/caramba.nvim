@@ -12,6 +12,7 @@ local planner = require('caramba.planner')
 local utils = require('caramba.utils')
 local memory = require('caramba.memory')
 local agent = require('caramba.agent')
+local openai_tools = require('caramba.openai_tools')
 
 -- Chat state
 M._chat_state = {
@@ -584,12 +585,11 @@ M._format_plan_for_context = function(plan, review)
   return table.concat(context_parts, "\n")
 end
 
--- Start agentic response with streaming
+-- Start agentic response with proper OpenAI tools
 M._start_agentic_response = function(full_content, plan_context, plan)
-  -- Initialize streaming response and reset tool iteration counter
+  -- Initialize streaming response
   M._chat_state.streaming = true
   M._chat_state.current_response = ""
-  M._chat_state.tool_iterations = 0
 
   -- Add placeholder for assistant response
   table.insert(M._chat_state.history, {
@@ -606,13 +606,14 @@ M._start_agentic_response = function(full_content, plan_context, plan)
 Key behaviors:
 1. Be proactive - use tools to gather information before responding
 2. When you see open files, analyze them to understand the codebase
-3. Use memory search to find relevant past conversations
-4. Provide specific, actionable responses
-5. If you need to use tools, do so and then provide a comprehensive response
-6. When you have enough information, provide a final helpful response
+3. Provide specific, actionable responses
+4. Use tools when you need more information
+5. When you have enough information, provide a final helpful response
 
-You can use tools by responding with JSON, then continue with your actual response.
-When you're ready to give a final answer, just respond normally without any tool usage.]]
+Available tools:
+- get_open_buffers: Get list of open files and their content
+- read_file: Read a specific file
+- search_files: Search for files or content in the codebase]]
 
   -- Combine content with plan context
   local enhanced_content = full_content
@@ -620,25 +621,19 @@ When you're ready to give a final answer, just respond normally without any tool
     enhanced_content = enhanced_content .. "\n\n" .. plan_context
   end
 
-  -- Call LLM with streaming using existing request_stream function
-  llm.request_stream({
+  -- Create chat session with tools and send message
+  local chat_session = openai_tools.create_chat_session({
     {
       role = "system",
       content = system_prompt
-    },
-    {
-      role = "user",
-      content = enhanced_content
     }
-  }, {}, -- opts
-  function(chunk) -- on_chunk
-    M._handle_response_chunk(chunk)
-  end,
-  function(full_response, err) -- on_complete
+  })
+
+  chat_session:send(enhanced_content, function(final_response, err)
     if err then
       M._handle_response_error(err)
     else
-      M._handle_response_complete(full_response)
+      M._handle_response_complete(final_response)
     end
   end)
 end
@@ -1108,19 +1103,26 @@ M.setup_commands = function()
     desc = 'Test LLM streaming',
   })
   
-  -- Test tool extraction
-  commands.register('TestToolExtraction', function()
-    local test_response = '{"tool": "get_open_buffers", "parameters": {}}'
-    vim.notify("Testing tool extraction with: " .. test_response, vim.log.levels.INFO)
+  -- Test OpenAI tools
+  commands.register('TestOpenAITools', function()
+    vim.notify("Testing OpenAI tools implementation...", vim.log.levels.INFO)
 
-    local tool_usage = M._extract_tool_usage(test_response)
-    if tool_usage then
-      vim.notify("Tool extraction SUCCESS: " .. vim.json.encode(tool_usage), vim.log.levels.INFO)
-    else
-      vim.notify("Tool extraction FAILED", vim.log.levels.ERROR)
-    end
+    local chat_session = openai_tools.create_chat_session({
+      {
+        role = "system",
+        content = "You are a helpful assistant. Use tools when needed."
+      }
+    })
+
+    chat_session:send("What files are currently open?", function(response, err)
+      if err then
+        vim.notify("OpenAI tools test FAILED: " .. err, vim.log.levels.ERROR)
+      else
+        vim.notify("OpenAI tools test SUCCESS: " .. response, vim.log.levels.INFO)
+      end
+    end)
   end, {
-    desc = 'Test tool extraction',
+    desc = 'Test OpenAI tools implementation',
   })
 
   -- Test raw curl

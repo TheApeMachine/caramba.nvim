@@ -39,6 +39,11 @@ M.providers.openai = {
       max_completion_tokens = opts.max_tokens,
       stream = false,
     }
+
+    -- Add tools if provided
+    if opts.tools then
+      body.tools = opts.tools
+    end
     
     -- Handle JSON response format
     if opts.response_format then
