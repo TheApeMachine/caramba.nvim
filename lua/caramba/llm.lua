@@ -694,17 +694,28 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     vim.notify("AI: Starting streaming request to " .. provider, vim.log.levels.INFO)
   end
   
-  -- Build curl command as a single string for better compatibility
-  local curl_cmd = "curl -sS -N " .. request_data.url .. " -X POST --max-time 30"
+  -- Build curl command using table for better shell escaping
+  local curl_args = {
+    "curl",
+    "-sS",
+    "-N",
+    request_data.url,
+    "-X", "POST",
+    "--max-time", "30"
+  }
+
   for header, value in pairs(request_data.headers) do
-    curl_cmd = curl_cmd .. " -H '" .. header .. ": " .. value .. "'"
+    table.insert(curl_args, "-H")
+    table.insert(curl_args, header .. ": " .. value)
   end
-  curl_cmd = curl_cmd .. " -d '" .. request_data.body .. "'"
+
+  table.insert(curl_args, "-d")
+  table.insert(curl_args, request_data.body)
   
   -- Debug logging
   if config.get().debug then
     vim.schedule(function()
-      vim.notify("AI: Curl command: " .. curl_cmd, vim.log.levels.INFO)
+      vim.notify("AI: Curl command: " .. table.concat(curl_args, " "), vim.log.levels.INFO)
     end)
   end
   
@@ -718,7 +729,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   local buffer = ""
   
   -- Use vim's jobstart for better streaming support
-  local job_id = vim.fn.jobstart(curl_cmd, {
+  local job_id = vim.fn.jobstart(curl_args, {
     on_stdout = function(_, data, _)
       if not data or not M._active_requests[request_id] then return end
       

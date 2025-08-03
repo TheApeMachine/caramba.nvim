@@ -129,7 +129,7 @@ local function format_message(msg)
   table.insert(lines, "")
   
   -- Add content
-  for line in msg.content:gmatch("[^%s]+") do
+  for line in msg.content:gmatch("[^\n]+") do
     table.insert(lines, line)
   end
   
