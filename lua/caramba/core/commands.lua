@@ -51,7 +51,13 @@ end
 -- This should be called once during plugin initialization.
 M.setup = function()
   for name, cmd in pairs(M.commands) do
-    vim.api.nvim_create_user_command(name, cmd.func, cmd.opts or {})
+    local success, err = pcall(vim.api.nvim_create_user_command, name, cmd.func, cmd.opts or {})
+    if not success then
+      vim.notify(
+        string.format("Failed to create command %s: %s", name, err),
+        vim.log.levels.ERROR
+      )
+    end
   end
 end
 

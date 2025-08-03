@@ -64,16 +64,14 @@ run_test_file() {
     echo "========================================"
     echo -e "Testing: \t$test_file"
     
-    # Check available interpreters (nvim > lua > python fallback)
+    # Check available interpreters (lua > python fallback, skip nvim due to headless issues)
     local test_cmd=""
-    if command -v nvim &> /dev/null; then
-        test_cmd="nvim"
-    elif command -v lua &> /dev/null; then
+    if command -v lua &> /dev/null; then
         test_cmd="lua"
     elif command -v python3 &> /dev/null; then
         test_cmd="python3"
     else
-        print_result "ERROR" "$test_name" "No suitable interpreter found (nvim, lua, or python3)"
+        print_result "ERROR" "$test_name" "No suitable interpreter found (lua or python3)"
         return 1
     fi
 
@@ -83,9 +81,8 @@ run_test_file() {
 
     case "$test_cmd" in
         "nvim")
-            # Use nvim headless mode
-            if output=$(nvim --headless --noplugin -u NONE \
-                -c "lua package.path = package.path .. ';./lua/?.lua;./tests/?.lua'" \
+            # Use nvim headless mode with minimal initialization
+            if output=$(nvim --headless -u tests/minimal_init.lua \
                 -c "lua require('test_runner').run_file('$test_file')" \
                 -c "qa!" 2>&1); then
                 exit_code=0

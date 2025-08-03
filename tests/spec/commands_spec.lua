@@ -2,16 +2,16 @@
 -- Comprehensive test suite covering command registration, execution, and management
 
 -- Mock vim API for testing
-local mock_vim = {
+_G.vim = {
   api = {
     nvim_create_user_command = function(name, func, opts)
       -- Store created commands for verification
-      mock_vim._created_commands = mock_vim._created_commands or {}
-      mock_vim._created_commands[name] = {func = func, opts = opts}
+      _G.vim._created_commands = _G.vim._created_commands or {}
+      _G.vim._created_commands[name] = {func = func, opts = opts}
     end,
     nvim_del_user_command = function(name)
-      if mock_vim._created_commands then
-        mock_vim._created_commands[name] = nil
+      if _G.vim._created_commands then
+        _G.vim._created_commands[name] = nil
       end
     end,
   },
@@ -19,14 +19,12 @@ local mock_vim = {
     levels = { ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4 }
   },
   notify = function(msg, level) 
-    mock_vim._notifications = mock_vim._notifications or {}
-    table.insert(mock_vim._notifications, {msg = msg, level = level})
+    _G.vim._notifications = _G.vim._notifications or {}
+    table.insert(_G.vim._notifications, {msg = msg, level = level})
   end,
   _created_commands = {},
   _notifications = {},
 }
-
-_G.vim = mock_vim
 
 -- Mock debug module
 _G.debug = {
@@ -45,8 +43,8 @@ describe("caramba.core.commands", function()
   -- Reset state before each test
   local function reset_state()
     commands.clear()
-    mock_vim._created_commands = {}
-    mock_vim._notifications = {}
+    _G.vim._created_commands = {}
+    _G.vim._notifications = {}
   end
   
   it("should register a command", function()
@@ -90,8 +88,8 @@ describe("caramba.core.commands", function()
     commands.register("Duplicate", func1)
     commands.register("Duplicate", func2)
     
-    assert.equals(#mock_vim._notifications, 1, "Should have one warning notification")
-    assert.is_true(mock_vim._notifications[1].msg:find("already defined"), "Should warn about overwrite")
+    assert.equals(#_G.vim._notifications, 1, "Should have one warning notification")
+    assert.is_true(_G.vim._notifications[1].msg:find("already defined"), "Should warn about overwrite")
   end)
   
   it("should setup all registered commands", function()
@@ -102,8 +100,8 @@ describe("caramba.core.commands", function()
     
     commands.setup()
     
-    assert.is_not_nil(mock_vim._created_commands["CarambaFirst"], "Should create first command")
-    assert.is_not_nil(mock_vim._created_commands["CarambaSecond"], "Should create second command")
+    assert.is_not_nil(_G.vim._created_commands["CarambaFirst"], "Should create first command")
+    assert.is_not_nil(_G.vim._created_commands["CarambaSecond"], "Should create second command")
   end)
   
   it("should unregister commands", function()
@@ -184,7 +182,7 @@ describe("caramba.core.commands", function()
     commands.register("WithOpts", function() end, test_opts)
     commands.setup()
     
-    local created_cmd = mock_vim._created_commands["CarambaWithOpts"]
+    local created_cmd = _G.vim._created_commands["CarambaWithOpts"]
     assert.is_not_nil(created_cmd, "Command should be created")
     assert.equals(created_cmd.opts.desc, "Test command", "Should preserve description")
     assert.equals(created_cmd.opts.nargs, "*", "Should preserve nargs")
@@ -200,7 +198,7 @@ describe("caramba.core.commands", function()
     commands.register("Execute", test_func)
     commands.setup()
     
-    local created_cmd = mock_vim._created_commands["CarambaExecute"]
+    local created_cmd = _G.vim._created_commands["CarambaExecute"]
     created_cmd.func()
     
     assert.is_true(executed, "Command function should be executed")
@@ -210,8 +208,8 @@ describe("caramba.core.commands", function()
     reset_state()
     
     -- Mock vim.api.nvim_create_user_command to throw error
-    local original_create = mock_vim.api.nvim_create_user_command
-    mock_vim.api.nvim_create_user_command = function(name, func, opts)
+    local original_create = _G.vim.api.nvim_create_user_command
+    _G.vim.api.nvim_create_user_command = function(name, func, opts)
       error("Mock command creation error")
     end
     
@@ -222,7 +220,7 @@ describe("caramba.core.commands", function()
     assert.is_true(success, "Setup should handle command creation errors")
     
     -- Restore original function
-    mock_vim.api.nvim_create_user_command = original_create
+    _G.vim.api.nvim_create_user_command = original_create
   end)
   
   it("should handle command deletion errors gracefully", function()
@@ -231,8 +229,8 @@ describe("caramba.core.commands", function()
     commands.register("DeleteTest", function() end)
     
     -- Mock vim.api.nvim_del_user_command to throw error
-    local original_delete = mock_vim.api.nvim_del_user_command
-    mock_vim.api.nvim_del_user_command = function(name)
+    local original_delete = _G.vim.api.nvim_del_user_command
+    _G.vim.api.nvim_del_user_command = function(name)
       error("Mock command deletion error")
     end
     
@@ -241,7 +239,7 @@ describe("caramba.core.commands", function()
     assert.is_true(success, "Unregister should handle deletion errors")
     
     -- Restore original function
-    mock_vim.api.nvim_del_user_command = original_delete
+    _G.vim.api.nvim_del_user_command = original_delete
   end)
   
   it("should maintain command registry state", function()
@@ -262,13 +260,19 @@ describe("caramba.core.commands", function()
   it("should support command function with arguments", function()
     reset_state()
     
+    -- Ensure the mock function is working properly
+    _G.vim.api.nvim_create_user_command = function(name, func, opts)
+      _G.vim._created_commands = _G.vim._created_commands or {}
+      _G.vim._created_commands[name] = {func = func, opts = opts}
+    end
+    
     local received_args = nil
     local test_func = function(args) received_args = args end
     
     commands.register("WithArgs", test_func, {nargs = "*"})
     commands.setup()
     
-    local created_cmd = mock_vim._created_commands["CarambaWithArgs"]
+    local created_cmd = _G.vim._created_commands["CarambaWithArgs"]
     created_cmd.func({args = "test arguments"})
     
     assert.is_not_nil(received_args, "Function should receive arguments")
