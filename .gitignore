@@ -3,6 +3,9 @@
 # Test dependencies (should be installed separately)
 tests/plenary.nvim/
 
+# Rockspec files (not needed for Neovim plugins)
+*.rockspec
+
 # Cache and temporary files
 *.tmp
 *.cache
