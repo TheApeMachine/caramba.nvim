@@ -451,7 +451,8 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   M._render_chat()
 
   -- First, use the planner to create/update the plan, then start agentic response
-  planner.interactive_planning_session(cleaned_message, full_content, function(plan, review, err)
+  -- Use a chat-specific planning session that doesn't show popups
+  M._chat_planning_session(cleaned_message, full_content, function(plan, review, err)
     if err then
       vim.schedule(function()
         table.insert(M._chat_state.history, {
@@ -477,6 +478,68 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
       -- Then store the plan for context and start agentic response
       local plan_context = M._format_plan_for_context(plan, review)
       M._start_agentic_response(full_content, plan_context, plan)
+    end)
+  end)
+end
+
+-- Chat-specific planning session (no popups)
+M._chat_planning_session = function(task_description, context_info, callback)
+  -- Create initial plan without showing popups
+  planner.create_task_plan(task_description, context_info, function(plan_result, plan_err)
+    if plan_err then
+      if callback then callback(nil, nil, plan_err) end
+      return
+    end
+
+    local ok, plan = pcall(vim.json.decode, plan_result)
+    if not ok then
+      if callback then callback(nil, nil, "Failed to parse plan: " .. plan_result) end
+      return
+    end
+
+    -- Review the plan
+    planner.review_plan(vim.json.encode(plan), task_description, function(review_result, review_err)
+      local review = nil
+      if not review_err then
+        local review_ok, parsed_review = pcall(vim.json.decode, review_result)
+        if review_ok then
+          review = parsed_review
+        end
+      end
+
+      -- Call callback with plan and review (no popups)
+      if callback then callback(plan, review, nil) end
+    end)
+  end)
+end
+
+-- Chat-specific planning session (no popups)
+M._chat_planning_session = function(task_description, context_info, callback)
+  -- Create initial plan without showing popups
+  planner.create_task_plan(task_description, context_info, function(plan_result, plan_err)
+    if plan_err then
+      if callback then callback(nil, nil, plan_err) end
+      return
+    end
+
+    local ok, plan = pcall(vim.json.decode, plan_result)
+    if not ok then
+      if callback then callback(nil, nil, "Failed to parse plan: " .. plan_result) end
+      return
+    end
+
+    -- Review the plan
+    planner.review_plan(vim.json.encode(plan), task_description, function(review_result, review_err)
+      local review = nil
+      if not review_err then
+        local review_ok, parsed_review = pcall(vim.json.decode, review_result)
+        if review_ok then
+          review = parsed_review
+        end
+      end
+
+      -- Call callback with plan and review (no popups)
+      if callback then callback(plan, review, nil) end
     end)
   end)
 end

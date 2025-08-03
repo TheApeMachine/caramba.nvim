@@ -943,6 +943,14 @@ M.chat_stream = function(messages, callbacks)
   local api_config = config.get().api.openai
   callbacks = callbacks or {}
 
+  -- Validate API key
+  if not api_config.api_key or api_config.api_key == "" then
+    if callbacks.on_error then
+      callbacks.on_error("OpenAI API key not found. Please set OPENAI_API_KEY environment variable.")
+    end
+    return nil
+  end
+
   local body = {
     model = api_config.model,
     messages = messages,
@@ -950,6 +958,12 @@ M.chat_stream = function(messages, callbacks)
     max_completion_tokens = api_config.max_tokens,
     stream = true,
   }
+
+  -- Debug logging
+  if config.get().debug then
+    vim.notify("Starting streaming request to: " .. api_config.model, vim.log.levels.INFO)
+    vim.notify("Request body: " .. vim.json.encode(body), vim.log.levels.DEBUG)
+  end
 
   local request_id = vim.fn.localtime() .. "_" .. math.random(1000, 9999)
   local accumulated_response = ""
@@ -966,6 +980,11 @@ M.chat_stream = function(messages, callbacks)
     },
     on_stdout = function(_, line)
       if line and line ~= "" then
+        -- Debug logging
+        if config.get().debug then
+          vim.notify("LLM stdout: " .. line, vim.log.levels.DEBUG)
+        end
+
         -- Parse SSE format
         if line:match("^data: ") then
           local data = line:sub(7) -- Remove "data: " prefix
@@ -986,6 +1005,19 @@ M.chat_stream = function(messages, callbacks)
               if callbacks.on_chunk then
                 callbacks.on_chunk(delta.content)
               end
+            end
+          elseif ok and parsed.error then
+            -- Handle API errors
+            if callbacks.on_error then
+              callbacks.on_error("API Error: " .. (parsed.error.message or "Unknown error"))
+            end
+          end
+        elseif line:match("^{") then
+          -- Handle non-streaming error responses
+          local ok, parsed = pcall(vim.json.decode, line)
+          if ok and parsed.error then
+            if callbacks.on_error then
+              callbacks.on_error("API Error: " .. (parsed.error.message or "Unknown error"))
             end
           end
         end
