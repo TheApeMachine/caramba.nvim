@@ -84,6 +84,30 @@ function M._do_simple_completion(instruction)
   end)
 end
 
+-- Helper function for explanations
+function M._do_explanation(content, context_info, question)
+  local llm = require("caramba.llm")
+  local utils = require("caramba.utils")
+
+  vim.notify("Caramba: Analyzing " .. context_info:lower() .. "...", vim.log.levels.INFO)
+
+  local prompt = llm.build_explanation_prompt(content, question)
+
+  llm.request(prompt, {}, function(result, err)
+    if err then
+      vim.notify("Explanation failed: " .. err, vim.log.levels.ERROR)
+      return
+    end
+
+    local title = "Caramba Explanation"
+    if context_info then
+      title = title .. " - " .. context_info
+    end
+
+    utils.show_result_window(result, title)
+  end)
+end
+
 -- Setup core commands only
 function M.setup_commands()
   local commands = require('caramba.core.commands')
@@ -117,32 +141,52 @@ function M.setup_commands()
   commands.register("Explain", function(args)
     local mode = vim.fn.mode()
     local content
-    
+    local context_info = ""
+
     if mode == "v" or mode == "V" then
+      -- Visual selection - use selected text
       content = utils.get_visual_selection()
+      context_info = "Selected code"
     else
-      local ctx = context.collect()
-      if ctx then
-        content = ctx.content
+      -- No selection - use entire file
+      local bufnr = vim.api.nvim_get_current_buf()
+      local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+      content = table.concat(lines, "\n")
+
+      local filename = vim.fn.expand("%:t")
+      local filetype = vim.bo.filetype
+      context_info = string.format("Entire file: %s (%s)", filename, filetype)
+
+      -- If file is very large, warn user and offer to explain just current function
+      local line_count = #lines
+      if line_count > 500 then
+        vim.ui.select(
+          {"Entire file (" .. line_count .. " lines)", "Current function/scope only"},
+          {
+            prompt = "File is large. What would you like to explain?",
+          },
+          function(choice)
+            if choice and choice:match("Current function") then
+              local ctx = context.collect()
+              if ctx and ctx.content then
+                content = ctx.content
+                context_info = "Current scope"
+              end
+            end
+            -- Continue with explanation
+            M._do_explanation(content, context_info, args.args)
+          end
+        )
+        return
       end
     end
-    
-    if not content then
+
+    if not content or content:match("^%s*$") then
       vim.notify("No code to explain", vim.log.levels.WARN)
       return
     end
-    
-    local question = args.args ~= "" and args.args or nil
-    local prompt = llm.build_explanation_prompt(content, question)
-    
-    llm.request(prompt, {}, function(result, err)
-      if err then
-        vim.notify("Explanation failed: " .. err, vim.log.levels.ERROR)
-        return
-      end
-      
-      utils.show_result_window(result, "Caramba Explanation")
-    end)
+
+    M._do_explanation(content, context_info, args.args)
   end, {
     desc = "Caramba: Explain code",
     nargs = "?",

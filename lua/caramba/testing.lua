@@ -161,13 +161,62 @@ end
 -- Generate tests for a function or class
 M.generate_tests = function(opts)
   opts = opts or {}
-  
-  -- Get current context
+
+  -- Get current context - try to get meaningful scope first
   local ctx = context.collect()
+  if not ctx or not ctx.content or ctx.content:match("^%s*$") then
+    -- No meaningful context found, offer to generate tests for entire file
+    local bufnr = vim.api.nvim_get_current_buf()
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local line_count = #lines
+
+    if line_count > 200 then
+      vim.ui.select(
+        {"Current function/scope", "Entire file (" .. line_count .. " lines)"},
+        {
+          prompt = "Generate tests for:",
+        },
+        function(choice)
+          if choice and choice:match("Entire file") then
+            -- Use entire file
+            ctx = {
+              language = vim.bo.filetype,
+              file_path = vim.api.nvim_buf_get_name(bufnr),
+              content = table.concat(lines, "\n"),
+              imports = require("caramba.context").extract_imports(bufnr),
+            }
+          end
+
+          if ctx and ctx.content then
+            M._do_generate_tests(ctx, opts)
+          else
+            vim.notify("Could not extract context", vim.log.levels.ERROR)
+          end
+        end
+      )
+      return
+    else
+      -- Small file, use entire file
+      ctx = {
+        language = vim.bo.filetype,
+        file_path = vim.api.nvim_buf_get_name(bufnr),
+        content = table.concat(lines, "\n"),
+        imports = require("caramba.context").extract_imports(bufnr),
+      }
+    end
+  end
+
   if not ctx then
     vim.notify("Could not extract context", vim.log.levels.ERROR)
     return
   end
+
+  M._do_generate_tests(ctx, opts)
+end
+
+-- Helper function to generate tests with context
+function M._do_generate_tests(ctx, opts)
+  opts = opts or {}
   
   local language = ctx.language
   local framework = opts.framework or detect_test_framework(language)

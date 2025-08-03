@@ -287,22 +287,54 @@ function M.refactor_with_instruction(instruction, opts)
     local end_pos = vim.fn.getpos("'>")
     start_row = start_pos[2] - 1
     end_row = end_pos[2] - 1
-    
+
     local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
     content = table.concat(lines, "\n")
   else
-    -- Current function/class
-    local ctx = context.collect({ bufnr = bufnr })
-    if ctx then
-      content = ctx.content
-      local node = context.get_node_at_cursor()
-      local target = context.find_parent_node(
-        node,
-        vim.list_extend(context.node_types.function_like, context.node_types.class_like)
+    -- No selection - offer options
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local line_count = #lines
+
+    if line_count > 300 then
+      -- Large file - offer choices
+      vim.ui.select(
+        {"Current function/scope", "Entire file (" .. line_count .. " lines)"},
+        {
+          prompt = "What would you like to refactor?",
+        },
+        function(choice)
+          if choice and choice:match("Current function") then
+            -- Current function/class
+            local ctx = context.collect({ bufnr = bufnr })
+            if ctx then
+              content = ctx.content
+              local node = context.get_node_at_cursor()
+              local target = context.find_parent_node(
+                node,
+                vim.list_extend(context.node_types.function_like, context.node_types.class_like)
+              )
+              if target then
+                start_row, _, end_row, _ = target:range()
+              end
+            end
+          else
+            -- Entire file
+            content = table.concat(lines, "\n")
+            start_row = 0
+            end_row = line_count - 1
+          end
+
+          if content then
+            M._do_refactor_with_content(content, instruction, bufnr, start_row, end_row)
+          end
+        end
       )
-      if target then
-        start_row, _, end_row, _ = target:range()
-      end
+      return -- Exit early, callback will handle the rest
+    else
+      -- Small file - use entire file
+      content = table.concat(lines, "\n")
+      start_row = 0
+      end_row = line_count - 1
     end
   end
   
@@ -323,6 +355,45 @@ function M.refactor_with_instruction(instruction, opts)
       return
     end
     
+    vim.schedule(function()
+      if start_row and end_row then
+        local success, error_msg = edit.apply_edit(bufnr, start_row, 0, end_row, -1, result)
+        if success then
+          vim.notify("Refactoring applied")
+        else
+          vim.notify("Failed to apply refactoring: " .. error_msg, vim.log.levels.ERROR)
+        end
+      else
+        -- Full buffer
+        local success, error_msg = edit.apply_patch(bufnr, result)
+        if success then
+          vim.notify("Refactoring applied")
+        else
+          vim.notify("Failed to apply refactoring: " .. error_msg, vim.log.levels.ERROR)
+        end
+      end
+    end)
+  end)
+end
+
+-- Helper function for refactoring with content
+function M._do_refactor_with_content(content, instruction, bufnr, start_row, end_row, opts)
+  opts = opts or {}
+  local llm = require("caramba.llm")
+  local edit = require("caramba.edit")
+
+  -- Build prompt
+  local prompt = llm.build_refactor_prompt(content, instruction)
+
+  -- Request refactoring
+  llm.request(prompt, opts, function(result, err)
+    if err then
+      vim.schedule(function()
+        vim.notify("Refactoring failed: " .. err, vim.log.levels.ERROR)
+      end)
+      return
+    end
+
     vim.schedule(function()
       if start_row and end_row then
         local success, error_msg = edit.apply_edit(bufnr, start_row, 0, end_row, -1, result)
