@@ -7,7 +7,6 @@ local M = {}
 local config = require('caramba.config')
 local Job = require('plenary.job')
 
--- Available tools for the AI
 M.available_tools = {
   {
     type = "function",
@@ -17,9 +16,8 @@ M.available_tools = {
       parameters = {
         type = "object",
         properties = {},
-        required = {}
-      }
-    }
+      },
+    },
   },
   {
     type = "function",
@@ -31,12 +29,12 @@ M.available_tools = {
         properties = {
           file_path = {
             type = "string",
-            description = "The path to the file to read"
-          }
+            description = "The path to the file to read",
+          },
         },
-        required = {"file_path"}
-      }
-    }
+        required = { "file_path" },
+      },
+    },
   },
   {
     type = "function",
@@ -48,17 +46,17 @@ M.available_tools = {
         properties = {
           query = {
             type = "string",
-            description = "The search query"
+            description = "The search query",
           },
           file_pattern = {
             type = "string",
-            description = "Optional file pattern to limit search"
-          }
+            description = "Optional file pattern to limit search",
+          },
         },
-        required = {"query"}
-      }
-    }
-  }
+        required = { "query" },
+      },
+    },
+  },
 }
 
 -- Tool implementations
@@ -168,9 +166,10 @@ M.execute_tool = function(tool_call)
 end
 
 -- Create a chat session with tools
-M.create_chat_session = function(initial_messages)
+M.create_chat_session = function(initial_messages, tools)
   return {
     messages = initial_messages or {},
+    tools = tools or {},
     
     -- Add a message to the conversation
     add_message = function(self, role, content, tool_calls, tool_call_id)
@@ -197,7 +196,7 @@ M.create_chat_session = function(initial_messages)
       
       -- Continue conversation until no more tool calls
       local function continue_conversation()
-        local request_data = M._prepare_request(self.messages)
+        local request_data = M._prepare_request(self.messages, self.tools)
         
         M._make_request(request_data, function(response, err)
           vim.schedule(function()
@@ -237,13 +236,13 @@ M.create_chat_session = function(initial_messages)
 end
 
 -- Prepare OpenAI request with tools
-M._prepare_request = function(messages)
+M._prepare_request = function(messages, tools)
   local api_config = config.get().api.openai
   
   local body = {
     model = api_config.model,
     messages = messages,
-    tools = M.available_tools,
+    tools = tools,
     temperature = api_config.temperature,
     max_completion_tokens = api_config.max_tokens,
   }

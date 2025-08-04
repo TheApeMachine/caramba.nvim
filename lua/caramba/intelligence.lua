@@ -45,7 +45,7 @@ M.extract_symbols = function(bufnr)
         name: (identifier) @variable.name
         value: (arrow_function))
       (class_declaration name: (identifier) @class.name)
-      (method_definition key: (property_identifier) @method.name)
+      (method_definition name: (property_identifier) @method.name)
     ]],
     
     typescript = [[
@@ -54,7 +54,7 @@ M.extract_symbols = function(bufnr)
         name: (identifier) @variable.name
         value: (arrow_function))
       (class_declaration name: (identifier) @class.name)
-      (method_definition key: (property_identifier) @method.name)
+      (method_definition name: (property_identifier) @method.name)
       (interface_declaration name: (type_identifier) @interface.name)
       (type_alias_declaration name: (type_identifier) @type.name)
     ]],

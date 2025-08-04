@@ -273,38 +273,4 @@ function M._extract_js_imports(content)
   return imports
 end
 
--- Generate tool usage prompt for LLM
-function M.get_tools_prompt()
-  local tools_desc = {}
-  
-  table.insert(tools_desc, "You have access to the following tools:")
-  table.insert(tools_desc, "")
-  
-  for _, tool in pairs(M.tools) do
-    table.insert(tools_desc, string.format("**%s**: %s", tool.name, tool.description))
-    if tool.parameters then
-      table.insert(tools_desc, "Parameters:")
-      for param, desc in pairs(tool.parameters) do
-        table.insert(tools_desc, string.format("  - %s: %s", param, desc))
-      end
-    end
-    table.insert(tools_desc, "")
-  end
-  
-  table.insert(tools_desc, "To use a tool, respond with JSON in this format:")
-  table.insert(tools_desc, '```json')
-  table.insert(tools_desc, '{')
-  table.insert(tools_desc, '  "tool": "tool_name",')
-  table.insert(tools_desc, '  "parameters": {')
-  table.insert(tools_desc, '    "param1": "value1",')
-  table.insert(tools_desc, '    "param2": "value2"')
-  table.insert(tools_desc, '  }')
-  table.insert(tools_desc, '}')
-  table.insert(tools_desc, '```')
-  table.insert(tools_desc, "")
-  table.insert(tools_desc, "You can use multiple tools in sequence to gather information before providing your final response.")
-  
-  return table.concat(tools_desc, "\n")
-end
-
 return M

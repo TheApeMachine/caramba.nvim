@@ -425,9 +425,6 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
       end
     end
   end
-
-  -- Add agent tools information
-  full_content = full_content .. "\n\n" .. agent.get_tools_prompt()
   
   -- Add to history (store original message for display)
   table.insert(M._chat_state.history, {
@@ -454,38 +451,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   M._render_chat()
 
   -- Start agentic response directly (skip automatic planning for now)
-  M._start_agentic_response(full_content, "", nil)
-end
-
--- Chat-specific planning session (no popups)
-M._chat_planning_session = function(task_description, context_info, callback)
-  -- Create initial plan without showing popups
-  planner.create_task_plan(task_description, context_info, function(plan_result, plan_err)
-    if plan_err then
-      if callback then callback(nil, nil, plan_err) end
-      return
-    end
-
-    local ok, plan = pcall(vim.json.decode, plan_result)
-    if not ok then
-      if callback then callback(nil, nil, "Failed to parse plan: " .. plan_result) end
-      return
-    end
-
-    -- Review the plan
-    planner.review_plan(vim.json.encode(plan), task_description, function(review_result, review_err)
-      local review = nil
-      if not review_err then
-        local review_ok, parsed_review = pcall(vim.json.decode, review_result)
-        if review_ok then
-          review = parsed_review
-        end
-      end
-
-      -- Call callback with plan and review (no popups)
-      if callback then callback(plan, review, nil) end
-    end)
-  end)
+  M._start_agentic_response(full_content)
 end
 
 -- Chat-specific planning session (no popups)
@@ -586,50 +552,21 @@ M._format_plan_for_context = function(plan, review)
 end
 
 -- Start agentic response with proper OpenAI tools
-M._start_agentic_response = function(full_content, plan_context, plan)
-  -- Initialize streaming response
-  M._chat_state.streaming = true
-  M._chat_state.current_response = ""
-
-  -- Add placeholder for assistant response
-  table.insert(M._chat_state.history, {
-    role = "assistant",
-    content = "🤔 Analyzing request and gathering context...",
-    streaming = true,
-    plan = plan -- Store plan for later reference
-  })
-  M._render_chat()
-
-  -- Build system prompt for agentic behavior
-  local system_prompt = [[You are Caramba, an autonomous AI assistant for Neovim. You have access to tools that let you read files, search memory, and analyze code.
-
-Key behaviors:
-1. Be proactive - use tools to gather information before responding
-2. When you see open files, analyze them to understand the codebase
-3. Provide specific, actionable responses
-4. Use tools when you need more information
-5. When you have enough information, provide a final helpful response
-
-Available tools:
-- get_open_buffers: Get list of open files and their content
-- read_file: Read a specific file
-- search_files: Search for files or content in the codebase]]
-
-  -- Combine content with plan context
-  local enhanced_content = full_content
-  if plan_context and plan_context ~= "" then
-    enhanced_content = enhanced_content .. "\n\n" .. plan_context
-  end
-
-  -- Create chat session with tools and send message
-  local chat_session = openai_tools.create_chat_session({
+M._start_agentic_response = function(full_content)
+  local messages = {
     {
       role = "system",
-      content = system_prompt
-    }
-  })
+      content = "You are a helpful assistant. Use the tools provided to answer the user's question.",
+    },
+    {
+      role = "user",
+      content = full_content,
+    },
+  }
 
-  chat_session:send(enhanced_content, function(final_response, err)
+  local chat_session = openai_tools.create_chat_session(messages, openai_tools.available_tools)
+
+  chat_session:send(full_content, function(final_response, err)
     vim.schedule(function()
       if err then
         M._handle_response_error(err)
