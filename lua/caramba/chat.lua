@@ -553,8 +553,6 @@ end
 
 -- Start agentic response with proper OpenAI tools
 M._start_agentic_response = function(full_content)
-  vim.notify("DEBUG: _start_agentic_response called with content length: " .. #full_content, vim.log.levels.INFO)
-  
   -- Add placeholder for assistant response
   table.insert(M._chat_state.history, {
     role = "assistant",
@@ -570,13 +568,10 @@ M._start_agentic_response = function(full_content)
     },
   }
 
-  vim.notify("DEBUG: About to create chat session", vim.log.levels.INFO)
   local chat_session = openai_tools.create_chat_session(messages, openai_tools.available_tools)
   
-  vim.notify("DEBUG: About to send message to chat session", vim.log.levels.INFO)
   chat_session:send(full_content, function(final_response, err)
     vim.schedule(function()
-      vim.notify("DEBUG: Got response from chat session. Error: " .. tostring(err or "none"), vim.log.levels.INFO)
       if err then
         M._handle_response_error(err)
       else
@@ -584,7 +579,6 @@ M._start_agentic_response = function(full_content)
       end
     end)
   end)
-  vim.notify("DEBUG: chat_session:send called", vim.log.levels.INFO)
 end
 
 -- Handle response completion
