@@ -16,8 +16,7 @@ M.available_tools = {
       description = "Get a list of currently open buffers with their file paths and content",
       parameters = {
         type = "object",
-        properties = {},
-        required = {}
+        properties = {}
       }
     }
   },
