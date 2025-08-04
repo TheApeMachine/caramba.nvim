@@ -75,7 +75,7 @@ M.tool_functions = {
         end
       end
     end
-    return buffers
+    return { buffers = buffers }
   end,
 
   read_file = function(args)
@@ -154,7 +154,7 @@ M.execute_tool = function(tool_function)
   
   local tool_function = M.tool_functions[function_name]
   if not tool_function then
-    return { error = "Unknown function: " .. function_name }
+    return { error = "Unknown tool: " .. function_name }
   end
   
   local ok, result = pcall(tool_function, arguments)
@@ -191,12 +191,17 @@ M.create_chat_session = function(initial_messages, tools)
     
     -- Send a message and handle tool calls
     send = function(self, user_message, callback)
+      vim.notify("DEBUG: openai_tools send called with message length: " .. #user_message, vim.log.levels.INFO)
+      
       -- Add user message
       self:add_message("user", user_message)
+      vim.notify("DEBUG: User message added to session", vim.log.levels.INFO)
       
       -- Continue conversation until no more tool calls
       local function continue_conversation()
+        vim.notify("DEBUG: continue_conversation called", vim.log.levels.INFO)
         local request_data = M._prepare_request(self.messages, self.tools)
+        vim.notify("DEBUG: Request data prepared, about to make HTTP request", vim.log.levels.INFO)
         
         M._make_request(request_data, function(response, err)
           vim.schedule(function()
@@ -247,8 +252,10 @@ M._prepare_request = function(messages, tools)
     max_completion_tokens = api_config.max_tokens,
   }
   
+  local url = api_config.endpoint or (api_config.base_url .. "/chat/completions")
+  
   return {
-    url = api_config.endpoint,
+    url = url,
     headers = {
       ["Content-Type"] = "application/json",
       ["Authorization"] = "Bearer " .. api_config.api_key,
@@ -259,6 +266,9 @@ end
 
 -- Make HTTP request
 M._make_request = function(request_data, callback)
+  vim.notify("DEBUG: _make_request called with URL: " .. request_data.url, vim.log.levels.INFO)
+  vim.notify("DEBUG: Request body length: " .. #request_data.body, vim.log.levels.INFO)
+  
   local curl_args = {
     "-sS",
     request_data.url,
@@ -274,10 +284,12 @@ M._make_request = function(request_data, callback)
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
   
+  vim.notify("DEBUG: About to start curl job", vim.log.levels.INFO)
   local job = Job:new({
     command = "curl",
     args = curl_args,
     on_exit = function(j, return_val)
+      vim.notify("DEBUG: curl job completed with return_val: " .. tostring(return_val), vim.log.levels.INFO)
       vim.schedule(function()
         if return_val ~= 0 then
           callback(nil, "Request failed with code: " .. tostring(return_val))
