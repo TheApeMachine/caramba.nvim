@@ -138,9 +138,9 @@ M.tool_functions = {
 }
 
 -- Execute a tool function
-M.execute_tool = function(tool_call)
-  local function_name = tool_call.name
-  local arguments = tool_call.arguments
+M.execute_tool = function(tool_function)
+  local function_name = tool_function.name
+  local arguments = tool_function.arguments
   
   -- Parse arguments if they're a string
   if type(arguments) == "string" then
@@ -214,7 +214,7 @@ M.create_chat_session = function(initial_messages, tools)
             if message.tool_calls then
               -- Execute each tool call
               for _, tool_call in ipairs(message.tool_calls) do
-                local result = M.execute_tool(tool_call["function"])
+                local result = M.execute_tool(tool_call.function)
 
                 -- Add tool result message
                 self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
