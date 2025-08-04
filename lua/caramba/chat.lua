@@ -630,6 +630,7 @@ Available tools:
   })
 
   chat_session:send(enhanced_content, function(final_response, err)
+    vim.schedule(function()
       if err then
         M._handle_response_error(err)
       else
