@@ -200,32 +200,34 @@ M.create_chat_session = function(initial_messages)
         local request_data = M._prepare_request(self.messages)
         
         M._make_request(request_data, function(response, err)
-          if err then
-            callback(nil, err)
-            return
-          end
-          
-          local message = response.choices[1].message
-          
-          -- Add assistant message
-          self:add_message("assistant", message.content, message.tool_calls)
-          
-          -- Check if there are tool calls to execute
-          if message.tool_calls then
-            -- Execute each tool call
-            for _, tool_call in ipairs(message.tool_calls) do
-              local result = M.execute_tool(tool_call["function"])
-              
-              -- Add tool result message
-              self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
+          vim.schedule(function()
+            if err then
+              callback(nil, err)
+              return
             end
-            
-            -- Continue conversation with tool results
-            continue_conversation()
-          else
-            -- No more tool calls, return final response
-            callback(message.content, nil)
-          end
+
+            local message = response.choices[1].message
+
+            -- Add assistant message
+            self:add_message("assistant", message.content, message.tool_calls)
+
+            -- Check if there are tool calls to execute
+            if message.tool_calls then
+              -- Execute each tool call
+              for _, tool_call in ipairs(message.tool_calls) do
+                local result = M.execute_tool(tool_call["function"])
+
+                -- Add tool result message
+                self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
+              end
+
+              -- Continue conversation with tool results
+              continue_conversation()
+            else
+              -- No more tool calls, return final response
+              callback(message.content, nil)
+            end
+          end)
         end)
       end
       
@@ -277,25 +279,27 @@ M._make_request = function(request_data, callback)
     command = "curl",
     args = curl_args,
     on_exit = function(j, return_val)
-      if return_val ~= 0 then
-        callback(nil, "Request failed with code: " .. tostring(return_val))
-        return
-      end
-      
-      local response_text = table.concat(j:result(), "\n")
-      local ok, response = pcall(vim.json.decode, response_text)
-      
-      if not ok then
-        callback(nil, "Failed to parse response: " .. response_text)
-        return
-      end
-      
-      if response.error then
-        callback(nil, response.error.message or "API error")
-        return
-      end
-      
-      callback(response, nil)
+      vim.schedule(function()
+        if return_val ~= 0 then
+          callback(nil, "Request failed with code: " .. tostring(return_val))
+          return
+        end
+
+        local response_text = table.concat(j:result(), "\n")
+        local ok, response = pcall(vim.json.decode, response_text)
+
+        if not ok then
+          callback(nil, "Failed to parse response: " .. response_text)
+          return
+        end
+
+        if response.error then
+          callback(nil, response.error.message or "API error")
+          return
+        end
+
+        callback(response, nil)
+      end)
     end,
   })
   

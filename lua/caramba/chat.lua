@@ -630,11 +630,13 @@ Available tools:
   })
 
   chat_session:send(enhanced_content, function(final_response, err)
-    if err then
-      M._handle_response_error(err)
-    else
-      M._handle_response_complete(final_response)
-    end
+    vim.schedule(function()
+      if err then
+        M._handle_response_error(err)
+      else
+        M._handle_response_complete(final_response)
+      end
+    end)
   end)
 end
 
