@@ -15,9 +15,11 @@ M.available_tools = {
       description = "Get a list of currently open buffers with their file paths and content",
       parameters = {
         type = "object",
-        properties = {}
-      },
-    },
+        properties = {},
+        required = {},
+        additionalProperties = false
+      }
+    }
   },
   {
     type = "function",
@@ -224,6 +226,8 @@ M.create_chat_session = function(initial_messages, tools)
             if message.tool_calls then
               -- Execute each tool call
               for _, tool_call in ipairs(message.tool_calls) do
+                -- Debug: Show what OpenAI is sending us
+                vim.notify("OpenAI Tool Call Debug: " .. vim.inspect(tool_call), vim.log.levels.INFO)
                 local result = M.execute_tool(tool_call["function"])
 
                 -- Add tool result message
@@ -312,6 +316,8 @@ M._make_request = function(request_data, callback)
 
         if response.error then
           local error_msg = response.error.message or "API error"
+          -- Always show this error since we're debugging
+          vim.notify("OpenAI API Error: " .. error_msg, vim.log.levels.ERROR)
           if config.get().debug then
             vim.notify("OpenAI Tools Debug - Full error response: " .. vim.inspect(response.error), vim.log.levels.ERROR)
           end
