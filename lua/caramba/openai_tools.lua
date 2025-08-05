@@ -16,6 +16,7 @@ M.available_tools = {
       parameters = {
         type = "object",
         properties = {},
+        additionalProperties = false
       },
     },
   },
@@ -62,6 +63,8 @@ M.available_tools = {
 -- Tool implementations
 M.tool_functions = {
   get_open_buffers = function(args)
+    -- args can be empty object {} since no parameters are required
+    args = args or {}
     local buffers = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) then

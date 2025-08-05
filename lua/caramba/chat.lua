@@ -561,14 +561,14 @@ M._start_agentic_response = function(full_content)
   })
   M._render_chat()
 
-  local messages = {
+  local initial_messages = {
     {
       role = "system",
       content = "You are a helpful assistant. Use the tools provided to answer the user's question.",
     },
   }
 
-  local chat_session = openai_tools.create_chat_session(messages, openai_tools.available_tools)
+  local chat_session = openai_tools.create_chat_session(initial_messages, openai_tools.available_tools)
   
   chat_session:send(full_content, function(final_response, err)
     vim.schedule(function()
