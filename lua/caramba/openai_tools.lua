@@ -16,7 +16,7 @@ M.available_tools = {
       parameters = {
         type = "object",
         properties = {},
-        additionalProperties = false
+        required = {}
       },
     },
   },
@@ -155,12 +155,17 @@ M.execute_tool = function(tool_function)
     end
   end
   
-  local tool_function = M.tool_functions[function_name]
-  if not tool_function then
+  -- Ensure arguments is a table for function execution
+  if type(arguments) ~= "table" then
+    arguments = {}
+  end
+  
+  local tool_impl = M.tool_functions[function_name]
+  if not tool_impl then
     return { error = "Unknown tool: " .. function_name }
   end
   
-  local ok, result = pcall(tool_function, arguments)
+  local ok, result = pcall(tool_impl, arguments)
   if not ok then
     return { error = "Function execution failed: " .. tostring(result) }
   end
