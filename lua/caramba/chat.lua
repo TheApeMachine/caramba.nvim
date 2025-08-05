@@ -11,7 +11,7 @@ local context = require('caramba.context')
 local planner = require('caramba.planner')
 local utils = require('caramba.utils')
 local memory = require('caramba.memory')
-local agent = require('caramba.agent')
+
 local openai_tools = require('caramba.openai_tools')
 
 -- Chat state
@@ -28,27 +28,7 @@ M._chat_state = {
   max_tool_iterations = 5,
 }
 
--- Get open buffers for context
-local function get_open_buffers_context()
-  local buffers = {}
 
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(bufnr) and vim.api.nvim_buf_get_option(bufnr, 'buflisted') then
-      local name = vim.api.nvim_buf_get_name(bufnr)
-      if name and name ~= "" and not name:match("caramba") then -- Exclude caramba buffers
-        local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-        table.insert(buffers, {
-          name = name,
-          content = table.concat(lines, "\n"),
-          filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype'),
-          modified = vim.api.nvim_buf_get_option(bufnr, 'modified')
-        })
-      end
-    end
-  end
-
-  return buffers
-end
 
 -- Parse special context commands from message
 local function parse_context_commands(message)
@@ -372,7 +352,8 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   end
   
   -- Get open buffers for automatic context
-  local open_buffers = get_open_buffers_context()
+  local open_buffers_result = openai_tools.tool_functions.get_open_buffers({})
+  local open_buffers = open_buffers_result.buffers or {}
 
   -- Search memory for relevant context
   local memory_results = memory.search_multi_angle(

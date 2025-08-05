@@ -15,8 +15,7 @@ M.available_tools = {
       description = "Get a list of currently open buffers with their file paths and content",
       parameters = {
         type = "object",
-        properties = {},
-        required = {}
+        properties = {}
       },
     },
   },
@@ -67,18 +66,21 @@ M.tool_functions = {
     args = args or {}
     local buffers = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_loaded(buf) then
+      if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_option(buf, 'buflisted') then
         local name = vim.api.nvim_buf_get_name(buf)
-        if name and name ~= "" then
+        if name and name ~= "" and not name:match("caramba") then -- Exclude caramba buffers
           local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
           table.insert(buffers, {
             path = name,
-            content = table.concat(lines, "\n")
+            content = table.concat(lines, "\n"),
+            filetype = vim.api.nvim_buf_get_option(buf, 'filetype'),
+            modified = vim.api.nvim_buf_get_option(buf, 'modified'),
+            line_count = #lines
           })
         end
       end
     end
-    return { buffers = buffers }
+    return { buffers = buffers, count = #buffers }
   end,
 
   read_file = function(args)
@@ -255,6 +257,12 @@ M._prepare_request = function(messages, tools)
     max_completion_tokens = api_config.max_tokens,
   }
   
+  -- Debug logging to see what we're sending
+  if config.get().debug then
+    vim.notify("OpenAI Tools Debug - Request body: " .. vim.json.encode(body), vim.log.levels.INFO)
+    vim.notify("OpenAI Tools Debug - Tools: " .. vim.inspect(tools), vim.log.levels.INFO)
+  end
+  
   local url = api_config.endpoint or (api_config.base_url .. "/chat/completions")
   
   return {
@@ -303,7 +311,11 @@ M._make_request = function(request_data, callback)
         end
 
         if response.error then
-          callback(nil, response.error.message or "API error")
+          local error_msg = response.error.message or "API error"
+          if config.get().debug then
+            vim.notify("OpenAI Tools Debug - Full error response: " .. vim.inspect(response.error), vim.log.levels.ERROR)
+          end
+          callback(nil, error_msg)
           return
         end
 
