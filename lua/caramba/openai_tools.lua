@@ -90,12 +90,12 @@ M.tool_functions = {
     if not file_path then
       return { error = "file_path is required" }
     end
-    
+
     local ok, lines = pcall(vim.fn.readfile, file_path)
     if not ok then
       return { error = "Could not read file: " .. file_path }
     end
-    
+
     return {
       path = file_path,
       content = table.concat(lines, "\n")
@@ -105,22 +105,22 @@ M.tool_functions = {
   search_files = function(args)
     local query = args.query
     local file_pattern = args.file_pattern or "*"
-    
+
     if not query then
       return { error = "query is required" }
     end
-    
+
     -- Use ripgrep if available, otherwise fallback to grep
     local cmd = "rg"
     local cmd_args = {"-n", "--type-add", "code:*.{lua,py,js,ts,jsx,tsx,go,rs,java,c,cpp,h,hpp}", "-t", "code", query}
-    
+
     -- Check if rg is available
     local rg_available = vim.fn.executable("rg") == 1
     if not rg_available then
       cmd = "grep"
       cmd_args = {"-rn", query, "."}
     end
-    
+
     local results = {}
     local job = Job:new({
       command = cmd,
@@ -134,9 +134,9 @@ M.tool_functions = {
         end
       end,
     })
-    
+
     job:sync(5000) -- 5 second timeout
-    
+
     return {
       query = query,
       results = results
@@ -148,7 +148,7 @@ M.tool_functions = {
 M.execute_tool = function(tool_function)
   local function_name = tool_function.name
   local arguments = tool_function.arguments
-  
+
   -- Parse arguments if they're a string
   if type(arguments) == "string" then
     local ok, parsed = pcall(vim.json.decode, arguments)
@@ -158,22 +158,22 @@ M.execute_tool = function(tool_function)
       return { error = "Invalid JSON arguments: " .. arguments }
     end
   end
-  
+
   -- Ensure arguments is a table for function execution
   if type(arguments) ~= "table" then
     arguments = {}
   end
-  
+
   local tool_impl = M.tool_functions[function_name]
   if not tool_impl then
     return { error = "Unknown tool: " .. function_name }
   end
-  
+
   local ok, result = pcall(tool_impl, arguments)
   if not ok then
     return { error = "Function execution failed: " .. tostring(result) }
   end
-  
+
   return result
 end
 
@@ -182,98 +182,88 @@ M.create_chat_session = function(initial_messages, tools)
   return {
     messages = initial_messages or {},
     tools = tools or {},
-    
+
     -- Add a message to the conversation
     add_message = function(self, role, content, tool_calls, tool_call_id)
       local message = {
         role = role,
         content = content
       }
-      
+
       if tool_calls then
         message.tool_calls = tool_calls
       end
-      
+
       if tool_call_id then
         message.tool_call_id = tool_call_id
       end
-      
+
       table.insert(self.messages, message)
     end,
-    
+
     -- Send a message and handle tool calls
-    send = function(self, user_message, callback)
+    send = function(self, user_message, on_chunk, on_finish)
       -- Add user message
       self:add_message("user", user_message)
-      
-      -- Continue conversation until no more tool calls
+
       local function continue_conversation()
-        local request_data = M._prepare_request(self.messages, self.tools)
-        
-        M._make_request(request_data, function(response, err)
+        local request_data = M._prepare_request(self.messages, self.tools, true)
+
+        M._make_request(request_data, function(chunk, err)
           vim.schedule(function()
             if err then
-              callback(nil, err)
+              on_finish(nil, err)
               return
             end
 
-            local message = response.choices[1].message
-
-            -- Add assistant message
-            self:add_message("assistant", message.content, message.tool_calls)
-
-            -- Check if there are tool calls to execute
-            if message.tool_calls then
-              -- Execute each tool call
-              for _, tool_call in ipairs(message.tool_calls) do
-                -- Debug: Show what OpenAI is sending us
-                vim.notify("OpenAI Tool Call Debug: " .. vim.inspect(tool_call), vim.log.levels.INFO)
-                local result = M.execute_tool(tool_call["function"])
-
-                -- Add tool result message
-                self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
-              end
-
-              -- Continue conversation with tool results
-              continue_conversation()
-            else
-              -- No more tool calls, return final response
-              callback(message.content, nil)
+            if chunk then
+              on_chunk(chunk)
             end
           end)
+        end, function(final_message, err)
+            vim.schedule(function()
+                if err then
+                    on_finish(nil, err)
+                    return
+                end
+
+                self:add_message("assistant", final_message.content, final_message.tool_calls)
+
+                if final_message.tool_calls then
+                    for _, tool_call in ipairs(final_message.tool_calls) do
+                        local result = M.execute_tool(tool_call["function"])
+                        self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
+                    end
+                    -- Continue conversation with tool results
+                    continue_conversation()
+                else
+                    -- No more tool calls, return final response
+                    on_finish(final_message.content, nil)
+                end
+            end)
         end)
       end
-      
+
       continue_conversation()
     end
   }
 end
 
 -- Prepare OpenAI request with tools
-M._prepare_request = function(messages, tools)
+M._prepare_request = function(messages, tools, stream)
   local api_config = config.get().api.openai
-  
+
   local body = {
     model = api_config.model,
     messages = messages,
     tools = tools,
     temperature = api_config.temperature,
     max_completion_tokens = api_config.max_tokens,
+    stream = stream or false,
   }
-  
-  -- Debug logging to see what we're sending
-  vim.notify("OpenAI Tools Debug - About to send request", vim.log.levels.INFO)
-  vim.notify("OpenAI Tools Debug - Model: " .. tostring(body.model), vim.log.levels.INFO)
-  vim.notify("OpenAI Tools Debug - Tools count: " .. #tools, vim.log.levels.INFO)
-  
-  for i, tool in ipairs(tools) do
-    vim.notify("OpenAI Tools Debug - Tool " .. i .. ": " .. vim.json.encode(tool), vim.log.levels.INFO)
-  end
-  
-  vim.notify("OpenAI Tools Debug - Full request body: " .. vim.json.encode(body), vim.log.levels.INFO)
-  
+
   local url = api_config.endpoint or (api_config.base_url .. "/chat/completions")
-  
+
   return {
     url = url,
     headers = {
@@ -284,61 +274,105 @@ M._prepare_request = function(messages, tools)
   }
 end
 
--- Make HTTP request
-M._make_request = function(request_data, callback)
+-- Make HTTP request with streaming
+M._make_request = function(request_data, on_chunk, on_finish)
   local curl_args = {
     "-sS",
+    "--no-buffer",
     request_data.url,
     "-X", "POST",
     "--max-time", "30",
   }
-  
+
   for header, value in pairs(request_data.headers) do
     table.insert(curl_args, "-H")
     table.insert(curl_args, header .. ": " .. value)
   end
-  
+
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
-  
+
+  local full_response = ""
+  local tool_calls = {}
+
   local job = Job:new({
     command = "curl",
     args = curl_args,
-    on_exit = function(j, return_val)
-      vim.schedule(function()
+    on_stdout = function(_, data)
+        if data then
+            -- Split potential multiple SSE messages in one chunk
+            for line in string.gmatch(data, "[^\r\n]+") do
+                if line:match("^data: ") then
+                    local json_str = line:sub(7)
+
+                    if json_str == "[DONE]" then
+                        -- Stream is finished
+                        local final_message = {
+                            role = "assistant",
+                            content = full_response,
+                            tool_calls = #tool_calls > 0 and tool_calls or nil,
+                        }
+                        on_finish(final_message, nil)
+                        return
+                    end
+
+                    local ok, chunk = pcall(vim.json.decode, json_str)
+                    if ok then
+                        if chunk.choices and chunk.choices[1] and chunk.choices[1].delta then
+                            local delta = chunk.choices[1].delta
+                            if delta.content then
+                                full_response = full_response .. delta.content
+                                on_chunk({ content = delta.content }, nil)
+                            end
+
+                            if delta.tool_calls then
+                                for _, tool_call_delta in ipairs(delta.tool_calls) do
+                                    local index = tool_call_delta.index + 1 -- Lua is 1-based
+                                    if not tool_calls[index] then
+                                        tool_calls[index] = {
+                                            id = tool_call_delta.id,
+                                            type = "function",
+                                            ["function"] = { name = "", arguments = "" }
+                                        }
+                                    end
+
+                                    if tool_call_delta.id then
+                                        tool_calls[index].id = tool_call_delta.id
+                                    end
+                                    if tool_call_delta.type then
+                                        tool_calls[index].type = tool_call_delta.type
+                                    end
+                                    if tool_call_delta["function"] then
+                                        if tool_call_delta["function"].name then
+                                            tool_calls[index]["function"].name = tool_calls[index]["function"].name .. tool_call_delta["function"].name
+                                        end
+                                        if tool_call_delta["function"].arguments then
+                                            tool_calls[index]["function"].arguments = tool_calls[index]["function"].arguments .. tool_call_delta["function"].arguments
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
+    on_stderr = function(_, data)
+        if data then
+            on_finish(nil, "Request error: " .. data)
+        end
+    end,
+    on_exit = function(_, return_val)
         if return_val ~= 0 then
-          callback(nil, "Request failed with code: " .. tostring(return_val))
-          return
+            -- If we haven't already called on_finish, do it now.
+            -- This handles cases where the stream ends with an error but no stderr output
         end
-
-        local response_text = table.concat(j:result(), "\n")
-        vim.notify("OpenAI Tools Debug - Raw response: " .. response_text, vim.log.levels.INFO)
-        
-        local ok, response = pcall(vim.json.decode, response_text)
-
-        if not ok then
-          vim.notify("OpenAI Tools Debug - Failed to parse JSON: " .. response_text, vim.log.levels.ERROR)
-          callback(nil, "Failed to parse response: " .. response_text)
-          return
-        end
-
-        if response.error then
-          local error_msg = response.error.message or "API error"
-          -- Always show this error since we're debugging
-          vim.notify("OpenAI API Error: " .. error_msg, vim.log.levels.ERROR)
-          if config.get().debug then
-            vim.notify("OpenAI Tools Debug - Full error response: " .. vim.inspect(response.error), vim.log.levels.ERROR)
-          end
-          callback(nil, error_msg)
-          return
-        end
-
-        callback(response, nil)
-      end)
     end,
   })
-  
+
   job:start()
 end
+
 
 return M
