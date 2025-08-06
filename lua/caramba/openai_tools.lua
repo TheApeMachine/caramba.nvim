@@ -262,10 +262,15 @@ M._prepare_request = function(messages, tools)
   }
   
   -- Debug logging to see what we're sending
-  if config.get().debug then
-    vim.notify("OpenAI Tools Debug - Request body: " .. vim.json.encode(body), vim.log.levels.INFO)
-    vim.notify("OpenAI Tools Debug - Tools: " .. vim.inspect(tools), vim.log.levels.INFO)
+  vim.notify("OpenAI Tools Debug - About to send request", vim.log.levels.INFO)
+  vim.notify("OpenAI Tools Debug - Model: " .. tostring(body.model), vim.log.levels.INFO)
+  vim.notify("OpenAI Tools Debug - Tools count: " .. #tools, vim.log.levels.INFO)
+  
+  for i, tool in ipairs(tools) do
+    vim.notify("OpenAI Tools Debug - Tool " .. i .. ": " .. vim.json.encode(tool), vim.log.levels.INFO)
   end
+  
+  vim.notify("OpenAI Tools Debug - Full request body: " .. vim.json.encode(body), vim.log.levels.INFO)
   
   local url = api_config.endpoint or (api_config.base_url .. "/chat/completions")
   
@@ -307,9 +312,12 @@ M._make_request = function(request_data, callback)
         end
 
         local response_text = table.concat(j:result(), "\n")
+        vim.notify("OpenAI Tools Debug - Raw response: " .. response_text, vim.log.levels.INFO)
+        
         local ok, response = pcall(vim.json.decode, response_text)
 
         if not ok then
+          vim.notify("OpenAI Tools Debug - Failed to parse JSON: " .. response_text, vim.log.levels.ERROR)
           callback(nil, "Failed to parse response: " .. response_text)
           return
         end
