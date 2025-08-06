@@ -212,18 +212,18 @@ M.create_chat_session = function(initial_messages, tools)
         M._make_request(request_data, function(chunk, err)
           vim.schedule(function()
             if err then
-              on_finish(nil, err)
+              if on_finish then on_finish(nil, err) end
               return
             end
 
-            if chunk then
+            if chunk and on_chunk then
               on_chunk(chunk)
             end
           end)
         end, function(final_message, err)
             vim.schedule(function()
                 if err then
-                    on_finish(nil, err)
+                    if on_finish then on_finish(nil, err) end
                     return
                 end
 
@@ -238,7 +238,7 @@ M.create_chat_session = function(initial_messages, tools)
                     continue_conversation()
                 else
                     -- No more tool calls, return final response
-                    on_finish(final_message.content, nil)
+                    if on_finish then on_finish(final_message.content, nil) end
                 end
             end)
         end)
@@ -294,25 +294,25 @@ M._make_request = function(request_data, on_chunk, on_finish)
 
   local full_response = ""
   local tool_calls = {}
+  local stream_finished = false
 
   local job = Job:new({
     command = "curl",
     args = curl_args,
     on_stdout = function(_, data)
         if data then
-            -- Split potential multiple SSE messages in one chunk
             for line in string.gmatch(data, "[^\r\n]+") do
                 if line:match("^data: ") then
                     local json_str = line:sub(7)
 
                     if json_str == "[DONE]" then
-                        -- Stream is finished
+                        stream_finished = true
                         local final_message = {
                             role = "assistant",
                             content = full_response,
                             tool_calls = #tool_calls > 0 and tool_calls or nil,
                         }
-                        on_finish(final_message, nil)
+                        if on_finish then on_finish(final_message, nil) end
                         return
                     end
 
@@ -322,7 +322,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
                             local delta = chunk.choices[1].delta
                             if delta.content then
                                 full_response = full_response .. delta.content
-                                on_chunk({ content = delta.content }, nil)
+                                if on_chunk then on_chunk({ content = delta.content }, nil) end
                             end
 
                             if delta.tool_calls then
@@ -359,14 +359,15 @@ M._make_request = function(request_data, on_chunk, on_finish)
         end
     end,
     on_stderr = function(_, data)
-        if data then
-            on_finish(nil, "Request error: " .. data)
+        if data and not stream_finished then
+            stream_finished = true
+            if on_finish then on_finish(nil, "Request error: " .. data) end
         end
     end,
     on_exit = function(_, return_val)
-        if return_val ~= 0 then
-            -- If we haven't already called on_finish, do it now.
-            -- This handles cases where the stream ends with an error but no stderr output
+        if return_val ~= 0 and not stream_finished then
+            stream_finished = true
+            if on_finish then on_finish(nil, "Request exited with code: " .. return_val) end
         end
     end,
   })

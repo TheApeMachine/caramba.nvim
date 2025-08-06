@@ -111,8 +111,9 @@ local function format_message(msg)
   
   table.insert(lines, "")
   
-  -- Add content
-  for line in msg.content:gmatch("[^\n]+") do
+  -- Add content, ensuring it's not nil
+  local content = msg.content or ""
+  for line in content:gmatch("[^\n]+") do
     table.insert(lines, line)
   end
   
@@ -126,6 +127,8 @@ end
 -- Extract code blocks from message using Tree-sitter
 local function extract_code_blocks(content)
   local blocks = {}
+  if not content then return blocks end
+
   local parser = vim.treesitter.get_string_parser(content, "markdown")
   if not parser then
     return blocks
@@ -431,113 +434,15 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   -- Render immediately to show user message
   M._render_chat()
 
-  -- Start agentic response directly (skip automatic planning for now)
+  -- Start agentic response directly
   M._start_agentic_response(full_content)
 end
 
--- Chat-specific planning session (no popups)
-M._chat_planning_session = function(task_description, context_info, callback)
-  -- Create initial plan without showing popups
-  planner.create_task_plan(task_description, context_info, function(plan_result, plan_err)
-    if plan_err then
-      if callback then callback(nil, nil, plan_err) end
-      return
-    end
-
-    local ok, plan = pcall(vim.json.decode, plan_result)
-    if not ok then
-      if callback then callback(nil, nil, "Failed to parse plan: " .. plan_result) end
-      return
-    end
-
-    -- Review the plan
-    planner.review_plan(vim.json.encode(plan), task_description, function(review_result, review_err)
-      local review = nil
-      if not review_err then
-        local review_ok, parsed_review = pcall(vim.json.decode, review_result)
-        if review_ok then
-          review = parsed_review
-        end
-      end
-
-      -- Call callback with plan and review (no popups)
-      if callback then callback(plan, review, nil) end
-    end)
-  end)
-end
-
--- Format plan for display to user
-M._format_plan_for_display = function(plan, review)
-  local lines = {}
-
-  if not plan then
-    return "📋 Failed to generate a plan."
-  end
-
-  table.insert(lines, "📋 **Plan Created**")
-  table.insert(lines, "")
-  table.insert(lines, "**Understanding:** " .. (plan.understanding or "N/A"))
-  table.insert(lines, "**Complexity:** " .. (plan.estimated_complexity or "N/A"))
-  table.insert(lines, "")
-
-  if review and review.decision ~= "APPROVE" then
-    table.insert(lines, "### ⚠️ Plan Review Feedback")
-    table.insert(lines, "**Decision:** " .. review.decision)
-    if review.feedback then
-      for _, fb in ipairs(review.feedback) do table.insert(lines, "- " .. fb) end
-    end
-    table.insert(lines, "")
-  end
-
-  table.insert(lines, "### Implementation Steps")
-  if plan.implementation_steps and #plan.implementation_steps > 0 then
-    for _, step in ipairs(plan.implementation_steps) do
-      table.insert(lines, string.format("- **%s** (`%s`)", step.action, step.file or "N/A"))
-    end
-  else
-    table.insert(lines, "_No specific implementation steps were generated._")
-  end
-
-  table.insert(lines, "")
-  table.insert(lines, "---")
-  table.insert(lines, "")
-  table.insert(lines, "_Now gathering context and preparing response..._")
-
-  return table.concat(lines, "\n")
-end
-
--- Format plan for context (not display)
-M._format_plan_for_context = function(plan, review)
-  if not plan then return "" end
-
-  local context_parts = {}
-  table.insert(context_parts, "## Current Plan Context:")
-  table.insert(context_parts, "**Understanding:** " .. (plan.understanding or "N/A"))
-  table.insert(context_parts, "**Complexity:** " .. (plan.estimated_complexity or "N/A"))
-
-  if plan.implementation_steps and #plan.implementation_steps > 0 then
-    table.insert(context_parts, "**Implementation Steps:**")
-    for _, step in ipairs(plan.implementation_steps) do
-      table.insert(context_parts, string.format("- %s (%s)", step.action, step.file or "N/A"))
-    end
-  end
-
-  if review and review.decision ~= "APPROVE" then
-    table.insert(context_parts, "**Review Status:** " .. review.decision)
-    if review.feedback then
-      table.insert(context_parts, "**Feedback:** " .. table.concat(review.feedback, "; "))
-    end
-  end
-
-  return table.concat(context_parts, "\n")
-end
-
--- Start agentic response with proper OpenAI tools
 M._start_agentic_response = function(full_content)
   -- Add placeholder for assistant response
   table.insert(M._chat_state.history, {
     role = "assistant",
-    content = "🤔 Analyzing request and gathering context...",
+    content = "🤔",
     streaming = true,
   })
   M._render_chat()
@@ -551,31 +456,56 @@ M._start_agentic_response = function(full_content)
 
   local chat_session = openai_tools.create_chat_session(initial_messages, openai_tools.available_tools)
   
-  chat_session:send(full_content, function(final_response, err)
-    vim.schedule(function()
-      if err then
-        M._handle_response_error(err)
-      else
-        M._handle_response_complete(final_response)
-      end
-    end)
-  end)
+  chat_session:send(
+    full_content,
+    function(chunk, err) -- on_chunk
+      vim.schedule(function()
+        if err then
+          M._handle_response_error(err)
+        else
+          M._handle_chunk(chunk)
+        end
+      end)
+    end,
+    function(final_response, err) -- on_finish
+      vim.schedule(function()
+        if err then
+          M._handle_response_error(err)
+        else
+          M._handle_response_complete(final_response)
+        end
+      end)
+    end
+  )
 end
 
+-- Handle incoming stream chunk
+M._handle_chunk = function(chunk)
+  local last_message = M._chat_state.history[#M._chat_state.history]
+  if last_message and last_message.role == "assistant" and last_message.streaming then
+    -- Ensure content is not nil
+    last_message.content = (last_message.content or "") .. (chunk.content or "")
+    M._render_chat()
+  end
+end
+
+
 -- Handle response completion
-M._handle_response_complete = function(full_response)
-  if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
-    M._chat_state.history[#M._chat_state.history].content = full_response
-    M._chat_state.history[#M._chat_state.history].streaming = false
+M._handle_response_complete = function(final_response)
+  local last_message = M._chat_state.history[#M._chat_state.history]
+  if last_message and last_message.role == "assistant" then
+    last_message.content = final_response.content
+    last_message.streaming = false
     M._render_chat()
   end
 end
 
 -- Handle response error
 M._handle_response_error = function(err)
-  if #M._chat_state.history > 0 and M._chat_state.history[#M._chat_state.history].role == "assistant" then
-    M._chat_state.history[#M._chat_state.history].content = "I'm sorry, I encountered an error: " .. tostring(err)
-    M._chat_state.history[#M._chat_state.history].streaming = false
+  local last_message = M._chat_state.history[#M._chat_state.history]
+  if last_message and last_message.role == "assistant" then
+    last_message.content = "I'm sorry, I encountered an error: " .. tostring(err)
+    last_message.streaming = false
     M._render_chat()
   end
 end
@@ -625,7 +555,7 @@ M._render_chat = function()
     local line_offset = #lines
     
     -- Track code blocks for this message
-    if msg.role == "assistant" then
+    if msg.role == "assistant" and msg.content then
       local blocks = extract_code_blocks(msg.content)
       for _, block in ipairs(blocks) do
         -- Adjust start line based on its position in the buffer.
@@ -881,4 +811,3 @@ M.setup = function()
 end
 
 return M
- 
