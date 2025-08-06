@@ -320,9 +320,10 @@ M._make_request = function(request_data, on_chunk, on_finish)
                     if ok then
                         if chunk.choices and chunk.choices[1] and chunk.choices[1].delta then
                             local delta = chunk.choices[1].delta
-                            if delta.content then
-                                full_response = full_response .. delta.content
-                                if on_chunk then on_chunk({ content = delta.content }, nil) end
+                            local content = delta.content
+                            if type(content) == "string" then
+                                full_response = full_response .. content
+                                if on_chunk then on_chunk({ content = content }, nil) end
                             end
 
                             if delta.tool_calls then
@@ -350,7 +351,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
                                             tool_calls[index]["function"].arguments = tool_calls[index]["function"].arguments .. tool_call_delta["function"].arguments
                                         end
                                     end
-                                end
+                                 end
                             end
                         end
                     end
