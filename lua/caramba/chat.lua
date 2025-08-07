@@ -372,7 +372,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   if #open_buffers > 0 then
     full_content = full_content .. "\n\n## Open Files Context:\n"
     for _, buffer in ipairs(open_buffers) do
-      local filename = buffer.name:match("([^/]+)$") or buffer.name
+      local filename = buffer.path:match("([^/]+)$") or buffer.path
       full_content = full_content .. string.format("\n### %s (%s)%s\n```%s\n%s\n```\n",
         filename,
         buffer.filetype,
@@ -423,7 +423,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     {
       context = "user_message",
       timestamp = vim.fn.localtime(),
-      open_files = vim.tbl_map(function(buf) return buf.name end, open_buffers)
+      open_files = vim.tbl_map(function(buf) return buf.path end, open_buffers)
     },
     { "caramba", "chat", "user_message" }
   )
