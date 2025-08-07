@@ -484,6 +484,9 @@ M._handle_chunk = function(chunk)
   local last_message = M._chat_state.history[#M._chat_state.history]
   if last_message and last_message.role == "assistant" and last_message.streaming then
     -- Ensure content is not nil
+    if last_message.content == "🤔" then
+      last_message.content = ""
+    end
     last_message.content = (last_message.content or "") .. (chunk.content or "")
     M._render_chat()
   end
@@ -494,7 +497,7 @@ end
 M._handle_response_complete = function(final_response)
   local last_message = M._chat_state.history[#M._chat_state.history]
   if last_message and last_message.role == "assistant" then
-    last_message.content = final_response.content
+    last_message.content = final_response
     last_message.streaming = false
     M._render_chat()
   end
