@@ -235,6 +235,7 @@ M.open = function()
   vim.keymap.set("n", "a", M._apply_code_at_cursor, opts)
   vim.keymap.set("n", "y", M._copy_code_at_cursor, opts)
   vim.keymap.set("n", "d", M.clear_history, opts)
+  vim.keymap.set("n", "r", M._revert_last_change, opts)
 end
 
 -- Close chat window
@@ -551,7 +552,7 @@ M._render_chat = function()
   -- Add title
   table.insert(lines, "# Caramba Chat Session")
   table.insert(lines, "")
-  table.insert(lines, "_Commands: (i)nput, (a)pply code, (y)ank code, (d)elete history, (q)uit_")
+  table.insert(lines, "_Commands: (i)nput, (a)pply code, (y)ank code, (d)elete history, (r)evert changes, (q)uit_")
   table.insert(lines, "")
   table.insert(lines, "---")
   table.insert(lines, "")
@@ -657,6 +658,13 @@ M.clear_history = function()
   M._chat_state.code_blocks = {}
   M._render_chat()
   vim.notify("Chat history cleared", vim.log.levels.INFO)
+end
+
+-- Revert last AI change
+M._revert_last_change = function()
+  local edit = require('caramba.edit')
+  edit.rollback(1)
+  vim.notify("Reverted last AI change", vim.log.levels.INFO)
 end
 
 -- Toggle chat window
@@ -809,6 +817,17 @@ M.setup_commands = function()
     })
   end, {
     desc = 'Test raw curl to OpenAI',
+  })
+  
+  -- Revert AI changes
+  commands.register('RevertChanges', function(args)
+    local edit = require('caramba.edit')
+    local steps = tonumber(args.args) or 1
+    edit.rollback(steps)
+    vim.notify(string.format("Reverted %d change(s)", steps), vim.log.levels.INFO)
+  end, {
+    desc = 'Revert AI-made changes (specify number of steps, default 1)',
+    nargs = '?',
   })
 end
 

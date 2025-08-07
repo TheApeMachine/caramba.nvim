@@ -59,6 +59,56 @@ M.available_tools = {
       },
     },
   },
+  {
+    type = "function",
+    ["function"] = {
+      name = "write_file",
+      description = "Write content to a file, creating or overwriting it completely",
+      parameters = {
+        type = "object",
+        properties = {
+          file_path = {
+            type = "string",
+            description = "The path to the file to write",
+          },
+          content = {
+            type = "string",
+            description = "The complete content to write to the file",
+          },
+        },
+        required = { "file_path", "content" },
+      },
+    },
+  },
+  {
+    type = "function",
+    ["function"] = {
+      name = "edit_file",
+      description = "Apply targeted edits to a specific range in a file",
+      parameters = {
+        type = "object",
+        properties = {
+          file_path = {
+            type = "string",
+            description = "The path to the file to edit",
+          },
+          start_line = {
+            type = "integer",
+            description = "Starting line number (1-based)",
+          },
+          end_line = {
+            type = "integer",
+            description = "Ending line number (1-based)",
+          },
+          new_content = {
+            type = "string",
+            description = "The new content to replace the specified range",
+          },
+        },
+        required = { "file_path", "start_line", "end_line", "new_content" },
+      },
+    },
+  },
 }
 
 -- Tool implementations
@@ -141,6 +191,132 @@ M.tool_functions = {
     return {
       query = query,
       results = results
+    }
+  end,
+
+  write_file = function(args)
+    local file_path = args.file_path
+    local content = args.content
+
+    if not file_path then
+      return { error = "file_path is required" }
+    end
+
+    if not content then
+      return { error = "content is required" }
+    end
+
+    -- Expand the path
+    local expanded_path = vim.fn.expand(file_path)
+    
+    -- Create directory if it doesn't exist
+    local dir = vim.fn.fnamemodify(expanded_path, ":h")
+    if vim.fn.isdirectory(dir) == 0 then
+      vim.fn.mkdir(dir, "p")
+    end
+
+    -- Write the file
+    local lines = vim.split(content, "\n", { plain = true })
+    local ok, err = pcall(vim.fn.writefile, lines, expanded_path)
+    
+    if not ok then
+      return { error = "Failed to write file: " .. tostring(err) }
+    end
+
+    -- If the file is currently open in a buffer, reload it
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) then
+        local buf_name = vim.api.nvim_buf_get_name(buf)
+        if buf_name == expanded_path then
+          vim.api.nvim_buf_call(buf, function()
+            vim.cmd("edit!")
+          end)
+          break
+        end
+      end
+    end
+
+    return {
+      success = true,
+      path = expanded_path,
+      lines_written = #lines
+    }
+  end,
+
+  edit_file = function(args)
+    local file_path = args.file_path
+    local start_line = args.start_line
+    local end_line = args.end_line
+    local new_content = args.new_content
+
+    if not file_path then
+      return { error = "file_path is required" }
+    end
+
+    if not start_line or not end_line then
+      return { error = "start_line and end_line are required" }
+    end
+
+    if not new_content then
+      return { error = "new_content is required" }
+    end
+
+    -- Expand the path
+    local expanded_path = vim.fn.expand(file_path)
+    
+    -- Check if file exists
+    if vim.fn.filereadable(expanded_path) == 0 then
+      return { error = "File does not exist: " .. expanded_path }
+    end
+
+    -- Find or create buffer for this file
+    local bufnr = nil
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) then
+        local buf_name = vim.api.nvim_buf_get_name(buf)
+        if buf_name == expanded_path then
+          bufnr = buf
+          break
+        end
+      end
+    end
+
+    -- If not found in buffers, create a new buffer and load the file
+    if not bufnr then
+      bufnr = vim.api.nvim_create_buf(false, false)
+      vim.api.nvim_buf_set_name(bufnr, expanded_path)
+      vim.api.nvim_buf_call(bufnr, function()
+        vim.cmd("edit!")
+      end)
+    end
+
+    -- Apply the edit using the edit module
+    local edit = require('caramba.edit')
+    local success, error_msg = edit.apply_edit(
+      bufnr,
+      start_line - 1, -- Convert to 0-based
+      0,
+      end_line - 1,   -- Convert to 0-based
+      -1,
+      new_content,
+      { one_based = false }
+    )
+
+    if not success then
+      return { error = "Edit failed: " .. (error_msg or "unknown error") }
+    end
+
+    -- Save the buffer
+    vim.api.nvim_buf_call(bufnr, function()
+      vim.cmd("write")
+    end)
+
+    return {
+      success = true,
+      path = expanded_path,
+      start_line = start_line,
+      end_line = end_line,
+      buffer_id = bufnr
     }
   end
 }
