@@ -521,9 +521,11 @@ M._cancel_input = function()
     M._chat_state.input_bufnr = nil
   end
 
-  -- Return focus to chat window
+  -- Return focus to chat window and ensure we're in normal mode
   if M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid) then
     vim.api.nvim_set_current_win(M._chat_state.winid)
+    -- Switch to normal mode to prevent staying in insert mode
+    vim.cmd("stopinsert")
   end
 end
 

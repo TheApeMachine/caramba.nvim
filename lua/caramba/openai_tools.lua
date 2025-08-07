@@ -70,7 +70,8 @@ M.tool_functions = {
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_option(buf, 'buflisted') then
         local name = vim.api.nvim_buf_get_name(buf)
-        if name and name ~= "" and not name:match("caramba") then -- Exclude caramba buffers
+        local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+        if name and name ~= "" and buftype ~= 'nofile' then
           local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
           table.insert(buffers, {
             path = name,
@@ -231,6 +232,14 @@ M.create_chat_session = function(initial_messages, tools)
 
                 if final_message.tool_calls then
                     for _, tool_call in ipairs(final_message.tool_calls) do
+                        -- Show tool usage feedback
+                        if on_chunk then
+                            on_chunk({
+                                content = "\n\n🔧 **Using tool:** `" .. tool_call["function"].name .. "`\n\n",
+                                is_tool_feedback = true
+                            })
+                        end
+                        
                         local result = M.execute_tool(tool_call["function"])
                         self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
                     end
