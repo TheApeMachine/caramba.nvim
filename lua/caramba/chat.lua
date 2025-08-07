@@ -160,7 +160,7 @@ local function extract_code_blocks(content)
     local fenced_node = captures.fenced_code
     local code_node = captures.code
     
-    if code_node and fenced_node then
+    if code_node and fenced_node and fenced_node.range then
       local lang = "text"
       if captures.language then
         lang = utils.get_node_text(captures.language, content)
@@ -169,12 +169,14 @@ local function extract_code_blocks(content)
       local start_line, _, _, _ = fenced_node:range()
       
       local code_content = utils.get_node_text(code_node, content)
-      table.insert(blocks, {
-        language = lang,
-        code = code_content,
-        start_line = start_line + 1, -- 1-based line number for the start of the block
-        line_count = #vim.split(code_content, "\n"),
-      })
+      if code_content then
+        table.insert(blocks, {
+          language = lang,
+          code = code_content,
+          start_line = start_line + 1, -- 1-based line number for the start of the block
+          line_count = #vim.split(code_content, "\n"),
+        })
+      end
     end
   end
 
