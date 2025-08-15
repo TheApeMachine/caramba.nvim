@@ -60,7 +60,7 @@ function M._do_simple_completion(instruction)
   
   vim.notify("Caramba: Generating completion for: " .. instruction, vim.log.levels.INFO)
   
-  llm.request(prompt, {}, function(result, err)
+  llm.request(prompt, { stream = false }, function(result, err)
     if err then
       vim.schedule(function()
         vim.notify("Completion failed: " .. err, vim.log.levels.ERROR)
@@ -93,7 +93,7 @@ function M._do_explanation(content, context_info, question)
 
   local prompt = llm.build_explanation_prompt(content, question)
 
-  llm.request(prompt, {}, function(result, err)
+  llm.request(prompt, { stream = false }, function(result, err)
     if err then
       vim.notify("Explanation failed: " .. err, vim.log.levels.ERROR)
       return

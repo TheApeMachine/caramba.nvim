@@ -678,7 +678,7 @@ M.setup_commands = function()
   })
   
   -- Generate property tests
-  commands.register('GeneratePropertyTests', M.generate_property_tests, {
+  commands.register('GenerateTests', M.generate_property_tests, {
     desc = 'Generate property-based tests for function',
   })
   
