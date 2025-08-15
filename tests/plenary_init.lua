@@ -58,7 +58,7 @@ if ok_cfg and cfg and cfg.setup then
     debug = false,
     features = { auto_install_parsers = false },
     ui = { stream_window = false },
-    api = { openai = { api_key = 'test', model = 'gpt-4o-mini' } },
+    api = { openai = { api_key = 'test', model = 'gpt-5-nano' } },
   })
 end
 

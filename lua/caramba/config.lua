@@ -15,12 +15,7 @@ M.defaults = {
       temperature = 1,
       max_tokens = 4096,
       api_key = vim.env.OPENAI_API_KEY,
-      -- Common models:
-      -- "gpt-4-turbo"
-      -- "gpt-4o"
-      -- "gpt-4o-mini"
-      -- "gpt-3.5-turbo"
-      models = { "gpt-4.1", "o4-mini", "o3", "o3-pro" },
+      models = { "gpt-5-nano", "gpt-5-mini", "gpt-5" },
     },
     anthropic = {
       endpoint = "https://api.anthropic.com/v1/messages",
