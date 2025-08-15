@@ -338,7 +338,14 @@ M.collect = function(opts)
   local filename = vim.api.nvim_buf_get_name(bufnr)
   
   local ok, parsers = pcall(require, 'nvim-treesitter.parsers')
-  if not ok or not parsers then return {} end
+  if not ok or not parsers then
+    return {
+      language = vim.bo[bufnr].filetype,
+      file_path = vim.api.nvim_buf_get_name(bufnr),
+      content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n"),
+      imports = {},
+    }
+  end
   local parser = parsers.get_parser(bufnr)
   
   -- If there's a selection, prioritize it
@@ -359,7 +366,12 @@ M.collect = function(opts)
   end
 
   if not parser then
-    return nil
+    return {
+      language = vim.bo[bufnr].filetype,
+      file_path = vim.api.nvim_buf_get_name(bufnr),
+      content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n"),
+      imports = {},
+    }
   end
   
   local tree = parser:parse()[1]

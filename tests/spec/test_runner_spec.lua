@@ -11,13 +11,16 @@ describe("test runner", function()
     assert.is_not_nil("something", "Not nil assertion should work")
   end)
   
-  it("should support string contains assertion", function()
-    assert.contains("hello world", "world", "String should contain substring")
+  it("should support string contains check", function()
+    local hay, needle = "hello world", "world"
+    assert.is_true(hay:find(needle, 1, true) ~= nil, "String should contain substring")
   end)
   
-  it("should support table contains assertion", function()
+  it("should support table contains check", function()
     local test_table = {"apple", "banana", "cherry"}
-    assert.contains(test_table, "banana", "Table should contain value")
+    local found = false
+    for _, v in ipairs(test_table) do if v == "banana" then found = true break end end
+    assert.is_true(found, "Table should contain value")
   end)
   
   it("should handle multiple test cases", function()

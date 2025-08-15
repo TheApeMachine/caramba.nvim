@@ -372,8 +372,13 @@ M.generate_property_tests = function()
   local cursor = vim.api.nvim_win_get_cursor(0)
   
   -- Get function at cursor
-  local ctx = context.get_context(bufnr, cursor[1])
-  if not ctx.current_function then
+  -- Use context.collect to build scope info; fallback to entire buffer
+  local collected = context.collect({ bufnr = bufnr })
+  local ctx = collected and {
+    current_function = collected.current_function,
+    current_function_text = collected.content,
+  } or nil
+  if not (ctx and ctx.current_function) then
     vim.notify("Place cursor on a function to generate property tests", vim.log.levels.WARN)
     return
   end
@@ -401,7 +406,7 @@ Generate comprehensive property-based tests.
         -- Show in centered window
         local ui = require('caramba.ui')
         local lines = vim.split(response, '\n')
-        ui.show_lines_centered(lines, { title = ' Property-based Tests ', filetype = vim.bo.filetype })
+        ui.show_lines_centered(lines, { title = ' Property-based Tests ', filetype = vim.bo.filetype or 'text' })
       end)
     end
   end)

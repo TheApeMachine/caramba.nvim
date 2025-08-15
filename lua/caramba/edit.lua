@@ -297,11 +297,18 @@ function M.show_diff_preview(bufnr, start_row, end_row, new_text, on_accept)
     vim.api.nvim_win_close(win, true)
   end, opts)
   
-  -- Add help text
+  -- Add help text (ensure buffer is temporarily modifiable)
+  local was_modifiable = vim.api.nvim_buf_get_option(preview_buf, 'modifiable')
+  if not was_modifiable then
+    vim.api.nvim_buf_set_option(preview_buf, 'modifiable', true)
+  end
   vim.api.nvim_buf_set_lines(preview_buf, 0, 0, false, {
     "Press <Enter> to accept, <Esc> or 'q' to cancel",
     "---",
   })
+  if not was_modifiable then
+    vim.api.nvim_buf_set_option(preview_buf, 'modifiable', false)
+  end
 end
 
 -- Clear edit history

@@ -207,6 +207,20 @@ setup_test_env() {
     echo "Test environment ready!"
 }
 
+run_plenary() {
+    if command -v nvim >/dev/null 2>&1; then
+        echo "Running plenary tests..."
+        # Use Plenary test_harness to print to stdout in headless mode
+        REPO_DIR=$(pwd)
+        nvim --headless -u tests/plenary_init.lua \
+          -c "set nomore" \
+          -c "lua require('plenary.test_harness').test_directory('$REPO_DIR/tests/spec', { minimal_init = '$REPO_DIR/tests/plenary_init.lua', sequential = true, verbose = true })" \
+          -c "qa!" | cat
+    else
+        echo "Neovim not found; skipping plenary tests"
+    fi
+}
+
 # Main execution
 case "${1:-all}" in
     "setup")
@@ -215,9 +229,11 @@ case "${1:-all}" in
     "all")
         setup_test_env
         run_all_tests
+        run_plenary
         ;;
     *)
         setup_test_env
         run_specific_test "$1"
+        run_plenary
         ;;
 esac
