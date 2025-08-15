@@ -5,9 +5,10 @@ local config = require("caramba.config")
 local llm = require("caramba.llm")
 local context = require("caramba.context")
 local search = require("caramba.search")
+local state_store = require('caramba.state')
 
 -- Project plan storage (in-memory for now, could persist to file)
-M._project_plan = {
+M._project_plan = state_store.get().planner or {
   goals = {},
   architecture = {
     project_type = "unknown",
@@ -30,6 +31,7 @@ M._project_plan = {
     version = "1.0"
   }
 }
+state_store.set_namespace('planner', M._project_plan)
 
 -- Load project plan from file if exists
 function M.load_project_plan()
@@ -232,17 +234,7 @@ M._show_questions_window = function(lines, callback)
   local width = 80
   local height = math.min(#lines + 2, 20)
   
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = width,
-    height = height,
-    col = math.floor((vim.o.columns - width) / 2),
-    row = math.floor((vim.o.lines - height) / 2),
-    style = 'minimal',
-    border = 'rounded',
-    title = ' Caramba Questions ',
-    title_pos = 'center',
-  })
+  local win = require('caramba.utils').create_centered_window(buf, width, height, { title = ' Caramba Questions ' })
   
   -- Set up keymaps to close window and continue
   local opts = { buffer = buf, nowait = true }
@@ -598,6 +590,8 @@ Return ONLY a valid JSON object with this structure:
 ]]
   end
   
+  opts = opts or {}
+  opts.task = 'plan'
   llm.request(review_prompt, opts, callback)
 end
 
@@ -617,17 +611,7 @@ function M._show_result_window(content, title)
   local width = math.min(100, vim.o.columns - 4)
   local height = math.min(#lines + 2, vim.o.lines - 4)
   
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    col = (vim.o.columns - width) / 2,
-    row = (vim.o.lines - height) / 2,
-    style = "minimal",
-    border = "rounded",
-    title = " " .. title .. " ",
-    title_pos = "center",
-  })
+  local win = require('caramba.utils').create_centered_window(buf, width, height, { title = " " .. title .. " " })
   
   -- Set up close keymap
   vim.keymap.set("n", "q", function()
@@ -706,36 +690,26 @@ function M._show_plan_window(plan, review)
   local width = math.min(100, vim.o.columns - 4)
   local height = math.min(#lines + 2, vim.o.lines - 4)
   
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    col = (vim.o.columns - width) / 2,
-    row = (vim.o.lines - height) / 2,
-    style = "minimal",
-    border = "rounded",
-    title = " Caramba Planning System ",
-    title_pos = "center",
-  })
+  local win = require('caramba.utils').create_centered_window(buf, width, height, { title = " Caramba Planning System " })
   
   -- Store plan for execution
   vim.b[buf].caramba_plan = plan
   vim.b[buf].caramba_review = review
   
   -- Set up keymaps
-  local opts = { buffer = buf, silent = true }
+  local opts = { buffer = buf, silent = true, nowait = true }
   vim.keymap.set("n", "y", function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     M.execute_plan(plan)
   end, opts)
   
   vim.keymap.set("n", "n", function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     vim.notify("Plan cancelled", vim.log.levels.INFO)
   end, opts)
   
   vim.keymap.set("n", "q", function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
   end, opts)
 end
 

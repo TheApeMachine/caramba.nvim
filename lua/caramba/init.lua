@@ -36,6 +36,9 @@ local modules = {
 function M.setup(opts)
   -- 1. Setup configuration first
   require('caramba.config').setup(opts)
+  -- Initialize global state namespace for easy debugging
+  _G.caramba = _G.caramba or {}
+  _G.caramba.state = require('caramba.state').get()
   
   -- 2. Load all modules and register their commands
   for _, name in ipairs(modules) do
@@ -54,6 +57,10 @@ function M.setup(opts)
   require('caramba.planner').setup()
   require('caramba.consistency').setup()
   require('caramba.chat').setup()
+  -- Optional: Telescope helpers (registered as commands even if Telescope absent)
+  pcall(function()
+    require('caramba.telescope').setup_commands()
+  end)
   
   vim.notify("Caramba.nvim is ready!", vim.log.levels.INFO)
 end

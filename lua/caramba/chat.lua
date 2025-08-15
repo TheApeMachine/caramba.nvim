@@ -8,25 +8,34 @@ local llm = require('caramba.llm')
 local edit = require('caramba.edit')
 local config = require('caramba.config')
 local context = require('caramba.context')
-local planner = require('caramba.planner')
-local utils = require('caramba.utils')
+-- local planner = require('caramba.planner') -- not used here
+-- local utils = require('caramba.utils') -- not used here
 local memory = require('caramba.memory')
+local state = require('caramba.state')
 
 local openai_tools = require('caramba.openai_tools')
 
--- Chat state
-M._chat_state = {
-  history = {},
-  bufnr = nil,
-  winid = nil,
-  input_bufnr = nil,
-  input_winid = nil,
-  code_blocks = {},
-  streaming = false,
-  current_response = "",
-  tool_iterations = 0,
-  max_tool_iterations = 5,
-}
+-- Chat state (centralized via state.lua)
+do
+  local defaults = {
+    history = {},
+    bufnr = nil,
+    winid = nil,
+    input_bufnr = nil,
+    input_winid = nil,
+    code_blocks = {},
+    streaming = false,
+    current_response = "",
+    tool_iterations = 0,
+    max_tool_iterations = config.get().chat.max_tool_iterations,
+  }
+  local s = state.get().chat or {}
+  for k, v in pairs(defaults) do
+    if s[k] == nil then s[k] = v end
+  end
+  state.set_namespace('chat', s)
+  M._chat_state = s
+end
 
 
 
@@ -201,8 +210,9 @@ M.open = function()
     vim.api.nvim_buf_set_option(M._chat_state.bufnr, "modifiable", false)
   end
   
-  -- Calculate window size (40% width, full height)
-  local width = math.floor(vim.o.columns * 0.4)
+  -- Calculate window size using config (sidebar style)
+  local ui = config.get().ui
+  local width = math.floor(vim.o.columns * (ui.chat_sidebar_width or 0.4))
   local height = vim.o.lines - 4
   
   -- Create floating window
@@ -213,7 +223,7 @@ M.open = function()
     width = width,
     height = height,
     style = "minimal",
-    border = "rounded",
+    border = ui.floating_window_border or "rounded",
     title = " Caramba Chat ",
     title_pos = "center",
   })
@@ -263,6 +273,7 @@ M.start_input = function()
   local input_height = 3
   
   M._chat_state.input_bufnr = input_buf
+  local ui = config.get().ui
   M._chat_state.input_winid = vim.api.nvim_open_win(input_buf, true, {
     relative = "editor",
     row = chat_config.row + chat_config.height - input_height,
@@ -270,7 +281,7 @@ M.start_input = function()
     width = chat_config.width,
     height = input_height,
     style = "minimal",
-    border = "single",
+    border = (ui and ui.floating_window_border == 'rounded' and 'single') or (ui and ui.floating_window_border or 'single'),
     title = " Type your message (Enter to send, Esc to cancel) ",
     title_pos = "center",
   })

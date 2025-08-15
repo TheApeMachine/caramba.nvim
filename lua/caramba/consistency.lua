@@ -702,8 +702,8 @@ M._show_consistency_report = function(issues)
     M._fix_all_issues(issues)
   end, { buffer = buf, desc = "Fix all issues" })
   
-  vim.cmd('split')
-  vim.api.nvim_set_current_buf(buf)
+  local ui = require('caramba.ui')
+  ui.show_lines_centered(lines, { title = ' Consistency Report ', filetype = 'markdown' })
 end
 
 -- Fix issue at cursor
@@ -766,18 +766,19 @@ Fix all issues while preserving functionality. Return only the fixed code.
     if response then
       vim.schedule(function()
         -- Show preview
-        local preview_buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, vim.split(response, '\n'))
-        vim.api.nvim_buf_set_option(preview_buf, 'filetype', vim.fn.fnamemodify(file, ':e'))
-        
-        vim.cmd('tabnew')
-        vim.api.nvim_set_current_buf(preview_buf)
+        local ui = require('caramba.ui')
+        local preview_lines = vim.split(response, '\n')
+        local preview_buf, win = ui.show_lines_centered(preview_lines, { title = ' Consistency Fix Preview ', filetype = vim.fn.fnamemodify(file, ':e') })
         
         vim.keymap.set('n', 'a', function()
+          if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
           vim.fn.writefile(vim.split(response, '\n'), file)
-          vim.cmd('tabclose')
           vim.notify("Consistency fixes applied to " .. file, vim.log.levels.INFO)
         end, { buffer = preview_buf, desc = "Apply fixes" })
+        
+        vim.keymap.set('n', 'q', function()
+          if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+        end, { buffer = preview_buf, desc = "Close" })
         
         vim.notify("Review fixes and press 'a' to apply", vim.log.levels.INFO)
       end)

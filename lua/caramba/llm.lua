@@ -18,6 +18,63 @@ M._streaming_jobs = {}
 -- Provider implementations
 M.providers = {}
 
+-- Task-aware model selection (router)
+-- opts.task: 'chat' | 'plan' | 'refactor' | 'search' | 'explain' | 'tdd'
+local function select_provider_and_model(opts)
+  local cfg = config.get()
+  local provider = (opts and opts.provider) or cfg.provider
+  local api = cfg.api
+  local task = opts and opts.task or 'chat'
+
+  -- Default: current provider
+  local chosen_provider = provider
+  local chosen_model = api[provider] and api[provider].model
+
+  -- Heuristics: route heavy tasks to more capable models if available
+  local function has(p)
+    return api[p] and api[p].api_key and api[p].models and #api[p].models > 0
+  end
+
+  local function prefer(p, model)
+    chosen_provider = p
+    if model then
+      chosen_model = model
+    else
+      chosen_model = api[p].model
+    end
+  end
+
+  if task == 'plan' or task == 'refactor' or task == 'tdd' then
+    if provider == 'openai' then
+      -- Prefer higher-capability OpenAI model if listed
+      local models = api.openai.models or {}
+      for _, m in ipairs(models) do
+        if m:match('^o3') or m:match('^gpt%-4%.?') or m:match('^o4') then
+          chosen_model = m
+          break
+        end
+      end
+    elseif has('anthropic') then
+      prefer('anthropic')
+    end
+  elseif task == 'search' or task == 'explain' or task == 'chat' then
+    -- Prefer cheaper/faster models when possible
+    if provider == 'openai' then
+      local models = api.openai.models or {}
+      for _, m in ipairs(models) do
+        if m:match('mini') or m:match('flash') then
+          chosen_model = m
+          break
+        end
+      end
+    elseif has('ollama') then
+      prefer('ollama')
+    end
+  end
+
+  return chosen_provider, chosen_model
+end
+
 -- OpenAI provider
 M.providers.openai = {
   prepare_request = function(prompt, opts)
@@ -284,7 +341,11 @@ end
 -- Make an LLM request
 M.request = function(messages, opts, callback)
   opts = opts or {}
-  local provider = opts.provider or config.get().provider
+  local routed_provider, routed_model = select_provider_and_model(opts)
+  local provider = routed_provider
+  if routed_model then
+    opts = vim.tbl_extend('force', opts, { model = routed_model })
+  end
 
   -- Guard unsupported/experimental providers
   if provider == "google" then
@@ -694,7 +755,11 @@ end
 -- Make an LLM request with optional streaming
 M.request_stream = function(messages, opts, on_chunk, on_complete)
   opts = opts or {}
-  local provider = opts.provider or config.get().provider
+  local routed_provider, routed_model = select_provider_and_model(opts)
+  local provider = routed_provider
+  if routed_model then
+    opts = vim.tbl_extend('force', opts, { model = routed_model })
+  end
   
   -- Guard unsupported/experimental providers
   if provider == "google" then

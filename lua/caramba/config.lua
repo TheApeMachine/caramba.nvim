@@ -108,6 +108,7 @@ M.defaults = {
     floating_window_border = "rounded",
     preview_window_width = 0.6,
     preview_window_height = 0.8,
+    chat_sidebar_width = 0.4,
   },
   
   -- Performance settings
@@ -133,6 +134,14 @@ M.defaults = {
   
   -- Planning settings
   debug = false, -- Debug logging disabled by default
+  -- Agent/Chat loop
+  chat = {
+    max_tool_iterations = 5,
+  },
+  pair = {
+    debounce_ms = 500,
+    suggestion_auto_close_ms = 10000,
+  },
 }
 
 -- Current configuration

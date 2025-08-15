@@ -61,16 +61,21 @@ M.check = function()
   vim.health.start("LLM Connection Test")
   local llm = require("caramba.llm")
 
-  local response = llm.request_sync({
-    { role = "user", content = "Say 'test passed' if you can read this." }
-  }, { max_tokens = 10, timeout = 10000 }) -- 10s timeout
-
-  if response and response:lower():find("test passed") then
-    vim.health.ok("LLM connection test passed")
-  else
-    vim.health.error("LLM connection test failed")
-    vim.health.info("Check your API key and network connection. Response: " .. tostring(response))
-  end
+  -- Run a non-blocking connection test
+  local done = false
+  llm.request({ { role = "user", content = "Say 'test passed' if you can read this." } }, { max_tokens = 10, timeout = 10000 }, function(result, err)
+    done = true
+    if err then
+      vim.health.error("LLM connection test failed: " .. tostring(err))
+      return
+    end
+    if result and result:lower():find("test passed") then
+      vim.health.ok("LLM connection test passed")
+    else
+      vim.health.error("LLM connection test failed")
+      vim.health.info("Check your API key and network connection. Response: " .. tostring(result))
+    end
+  end)
 
   -- Check optional features
   vim.health.start("Optional Features")

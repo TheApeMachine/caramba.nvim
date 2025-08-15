@@ -276,13 +276,9 @@ M.query_with_tools = function(query)
     end
     
     vim.schedule(function()
-      -- Show response in a buffer
-      local buf = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(response, "\n"))
-      
-      vim.cmd('split')
-      vim.api.nvim_set_current_buf(buf)
+      local ui = require('caramba.ui')
+      local lines = vim.split(response, "\n")
+      ui.show_lines_centered(lines, { title = ' Tool-Assisted Response ', filetype = 'markdown' })
     end)
   end)
 end

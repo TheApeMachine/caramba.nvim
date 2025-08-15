@@ -8,9 +8,10 @@ local llm = require('caramba.llm')
 local intelligence = require('caramba.intelligence')
 local config = require('caramba.config')
 local utils = require('caramba.utils')
+local state_store = require('caramba.state')
 
 -- State management
-M.state = {
+M.state = state_store.get().pair or {
   enabled = false,
   mode = "normal", -- normal, focused, learning
   last_edit_time = 0,
@@ -26,6 +27,8 @@ M.state = {
   suggestions_accepted = 0,
   learned_patterns = {},
 }
+
+state_store.set_namespace('pair', M.state)
 
 -- Pattern learning
 M.pattern_db = {
@@ -129,11 +132,12 @@ M._on_text_changed = function()
   M.state.last_edit_time = current_time
   
   -- Debounce to avoid too many requests
+  local debounce_ms = require('caramba.config').get().pair.debounce_ms or 500
   vim.defer_fn(function()
-    if vim.loop.now() - M.state.last_edit_time >= 500 then
+    if vim.loop.now() - M.state.last_edit_time >= debounce_ms then
       M._analyze_current_context()
     end
-  end, 500)
+  end, debounce_ms)
 end
 
 -- Handle cursor movement
@@ -492,7 +496,7 @@ M._show_suggestions = function(suggestions)
     width = width,
     height = height,
     style = 'minimal',
-    border = 'rounded',
+    border = require('caramba.config').get().ui.floating_window_border or 'rounded',
   }
   
   M.state.suggestion_window = vim.api.nvim_open_win(buf, false, opts)
@@ -505,11 +509,12 @@ M._show_suggestions = function(suggestions)
   end
   
   -- Auto-close after delay
+  local auto_close = require('caramba.config').get().pair.suggestion_auto_close_ms or 10000
   vim.defer_fn(function()
     if vim.api.nvim_win_is_valid(M.state.suggestion_window) then
       vim.api.nvim_win_close(M.state.suggestion_window, true)
     end
-  end, 10000)
+  end, auto_close)
 end
 
 -- Accept a suggestion

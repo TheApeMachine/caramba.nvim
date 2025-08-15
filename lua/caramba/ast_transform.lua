@@ -81,7 +81,7 @@ Rules:
 5. Return the transformed code only
 ]], text)
     
-    return llm.request_sync(prompt, { temperature = 1 })
+    return prompt
   end,
 }
 
@@ -124,7 +124,7 @@ Rules:
 6. Return only the transformed code
 ]], text)
     
-    return llm.request_sync(prompt, { temperature = 1 })
+    return prompt
   end,
 }
 
@@ -170,7 +170,7 @@ Rules:
 6. Return only the transformed code
 ]]
     
-    return llm.request_sync(prompt, { temperature = 1 })
+    return prompt
   end,
 }
 
@@ -211,7 +211,7 @@ Changes to make:
 8. Return only the transformed code
 ]]
     
-    return llm.request_sync(prompt, { temperature = 1 })
+    return prompt
   end,
 }
 
@@ -245,33 +245,35 @@ M.apply_transformation = function(transform_name, bufnr)
     return
   end
   
-  -- Show preview
+  -- Inform user
   vim.notify("Found " .. #nodes .. " locations to transform", vim.log.levels.INFO)
-  
-  -- For now, transform the entire buffer
-  -- TODO: Support partial transformations
-  local result = transform.transform(nodes[1], bufnr)
-  
-  if result then
-    -- Create preview buffer
-    local preview_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, vim.split(result, '\n'))
-    vim.api.nvim_buf_set_option(preview_buf, 'filetype', vim.bo[bufnr].filetype)
-    
-    -- Show in split
-    vim.cmd('split')
-    vim.api.nvim_set_current_buf(preview_buf)
-    
-    -- Add apply keymap
-    vim.keymap.set('n', 'a', function()
-      -- Apply transformation
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(result, '\n'))
-      vim.cmd('close')
-      vim.notify("Transformation applied", vim.log.levels.INFO)
-    end, { buffer = preview_buf, desc = "Apply transformation" })
-    
-    vim.notify("Press 'a' to apply transformation, 'q' to cancel", vim.log.levels.INFO)
-  end
+
+  -- Build prompt and make async request
+  local prompt = transform.transform(nodes[1], bufnr)
+  llm.request(prompt, { temperature = 1, task = 'refactor' }, function(response, err)
+    if err or not response then
+      vim.schedule(function()
+        vim.notify("Transformation failed: " .. tostring(err or "no response"), vim.log.levels.ERROR)
+      end)
+      return
+    end
+    vim.schedule(function()
+      local ui = require('caramba.ui')
+      local preview_lines = vim.split(response, '\n')
+      local preview_buf, win = ui.show_lines_centered(preview_lines, { title = ' AST Transformation Preview ', filetype = vim.bo[bufnr].filetype })
+
+      -- Keymaps to apply or close
+      vim.keymap.set('n', 'a', function()
+        if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, preview_lines)
+        vim.notify("Transformation applied", vim.log.levels.INFO)
+      end, { buffer = preview_buf, desc = 'Apply transformation' })
+
+      vim.keymap.set('n', 'q', function()
+        if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+      end, { buffer = preview_buf, desc = 'Cancel' })
+    end)
+  end)
 end
 
 -- Semantic diff/merge
@@ -305,6 +307,40 @@ Instructions:
 ]], base, ours, theirs)
   
   return llm.request_sync(prompt, { temperature = 1 })
+end
+
+-- Async variant (preferred to avoid UI blocking)
+M.semantic_merge_async = function(base, ours, theirs, callback)
+  local prompt = string.format([[\
+Perform a semantic merge of these code versions:\
+\
+BASE VERSION:\
+```\
+%s\
+```\
+\
+OUR CHANGES:\
+```\
+%s\
+```\
+\
+THEIR CHANGES:\
+```\
+%s\
+```\
+\
+Instructions:\
+1. Understand the intent of both changes\
+2. Merge them semantically, not textually\
+3. Preserve functionality from both versions\
+4. Resolve conflicts based on code intent\
+5. Add comments where the merge decision was non-trivial\
+6. Return only the merged code\
+\
+]], base, ours, theirs)
+  llm.request(prompt, { temperature = 1 }, function(result, err)
+    callback(result, err)
+  end)
 end
 
 -- Cross-language refactoring

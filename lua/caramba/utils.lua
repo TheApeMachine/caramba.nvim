@@ -51,6 +51,34 @@ function M.show_result_window(content, title)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
 end
 
+--- Create a centered floating window for a given buffer
+---@param buf number Buffer handle
+---@param width number Window width (columns)
+---@param height number Window height (rows)
+---@param opts table|nil { title?: string, border?: string, title_pos?: string }
+---@return number winid
+function M.create_centered_window(buf, width, height, opts)
+  opts = opts or {}
+  local cfg = require('caramba.config').get()
+  local border = opts.border or (cfg.ui and cfg.ui.floating_window_border) or 'rounded'
+  local title = opts.title
+  local title_pos = opts.title_pos or 'center'
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    col = math.floor((vim.o.columns - width) / 2),
+    row = math.floor((vim.o.lines - height) / 2),
+    style = 'minimal',
+    border = border,
+    title = title,
+    title_pos = title_pos,
+  })
+
+  return win
+end
+
 --- Create a window for streaming output
 ---@param title string? Optional title for the window
 ---@return table # {bufnr, winid, append, close, lock}

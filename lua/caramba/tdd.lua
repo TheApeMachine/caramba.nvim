@@ -305,8 +305,10 @@ M._apply_implementation = function(file_path, implementation, spec)
     vim.fn.writefile(vim.split(implementation, '\n'), file_path)
     vim.notify("Created: " .. file_path, vim.log.levels.INFO)
     
-    -- Open in split
-    vim.cmd('split ' .. file_path)
+    -- Open created file in a centered preview
+    local ui = require('caramba.ui')
+    local content_lines = vim.split(implementation, '\n')
+    ui.show_lines_centered(content_lines, { title = ' Created File: ' .. file_path .. ' ', filetype = vim.fn.fnamemodify(file_path, ':e') })
   else
     -- Add to existing file
     local buf = vim.fn.bufadd(file_path)
@@ -320,8 +322,9 @@ M._apply_implementation = function(file_path, implementation, spec)
     local impl_lines = vim.split(implementation, '\n')
     vim.api.nvim_buf_set_lines(buf, insert_line, insert_line, false, impl_lines)
     
-    -- Open file
-    vim.cmd('split | buffer ' .. buf)
+    -- Preview changes
+    local ui = require('caramba.ui')
+    ui.show_lines_centered(impl_lines, { title = ' Inserted Implementation ', filetype = vim.fn.fnamemodify(file_path, ':e') })
   end
   
   -- Record implementation
@@ -395,13 +398,10 @@ Generate comprehensive property-based tests.
   llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
-        -- Show in new buffer
-        local buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(response, '\n'))
-        vim.api.nvim_buf_set_option(buf, 'filetype', vim.bo.filetype)
-        
-        vim.cmd('split')
-        vim.api.nvim_set_current_buf(buf)
+        -- Show in centered window
+        local ui = require('caramba.ui')
+        local lines = vim.split(response, '\n')
+        ui.show_lines_centered(lines, { title = ' Property-based Tests ', filetype = vim.bo.filetype })
       end)
     end
   end)
@@ -515,8 +515,7 @@ Provide the specific code changes needed.
     if response then
       vim.schedule(function()
         -- Show suggestions
-        local buf = vim.api.nvim_create_buf(false, true)
-        
+        local ui = require('caramba.ui')
         local lines = {
           "# Test Failure Analysis",
           "",
@@ -527,12 +526,7 @@ Provide the specific code changes needed.
         table.insert(lines, "")
         table.insert(lines, "## Suggested Fixes:")
         vim.list_extend(lines, vim.split(response, '\n'))
-        
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-        vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-        
-        vim.cmd('split')
-        vim.api.nvim_set_current_buf(buf)
+        ui.show_lines_centered(lines, { title = ' Test Failure Analysis ', filetype = 'markdown' })
       end)
     end
   end)

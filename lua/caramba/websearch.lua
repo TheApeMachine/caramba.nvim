@@ -348,9 +348,9 @@ M._show_results = function(query, results)
     
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     
-    -- Open in a split
-    vim.cmd('split')
-    vim.api.nvim_set_current_buf(buf)
+    -- Open in a centered window
+    local ui = require('caramba.ui')
+    ui.show_lines_centered(lines, { title = ' Web Search Results ', filetype = 'markdown' })
     
     -- Add keymaps to open URLs
     for i = 1, #results do
@@ -389,13 +389,10 @@ M._show_results = function(query, results)
           end
           
           vim.schedule(function()
-            -- Show content in a new buffer
-            local content_buf = vim.api.nvim_create_buf(false, true)
-            vim.api.nvim_buf_set_lines(content_buf, 0, -1, false, vim.split(content, "\n"))
-            vim.api.nvim_buf_set_option(content_buf, 'filetype', 'text')
-            
-            vim.cmd('vsplit')
-            vim.api.nvim_set_current_buf(content_buf)
+            -- Show content in a centered window
+            local ui = require('caramba.ui')
+            local content_lines = vim.split(content, "\n")
+            ui.show_lines_centered(content_lines, { title = ' Page Content ', filetype = 'text' })
           end)
         end)
       end
@@ -438,9 +435,7 @@ Format your response clearly with sections as appropriate.
         if summary then
           vim.schedule(function()
             -- Show summary
-            local buf = vim.api.nvim_create_buf(false, true)
-            vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-            
+            local ui = require('caramba.ui')
             local lines = {
               "# Web Search Summary",
               "",
@@ -449,13 +444,8 @@ Format your response clearly with sections as appropriate.
               "---",
               "",
             }
-            
             vim.list_extend(lines, vim.split(summary, "\n"))
-            
-            vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-            
-            vim.cmd('split')
-            vim.api.nvim_set_current_buf(buf)
+            ui.show_lines_centered(lines, { title = ' Web Search Summary ', filetype = 'markdown' })
           end)
         end
       end)

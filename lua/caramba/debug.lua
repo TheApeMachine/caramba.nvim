@@ -189,9 +189,9 @@ Be specific and provide actual code that can be applied.
       
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
       
-      -- Open in a split
-      vim.cmd('split')
-      vim.api.nvim_set_current_buf(buf)
+      -- Open in a centered preview window
+      local ui = require('caramba.ui')
+      local _, win = ui.show_lines_centered(lines, { title = ' AI Analysis ', filetype = 'markdown' })
       
       -- Set up keymaps for navigation
       local function goto_location(idx)
@@ -317,9 +317,9 @@ M.start_debug_session = function(opts)
   
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   
-  -- Open in a split
-  vim.cmd('split')
-  vim.api.nvim_set_current_buf(buf)
+  -- Open in a centered window
+  local ui = require('caramba.ui')
+  ui.show_lines_centered(lines, { title = ' AI Debug Session ', filetype = 'markdown' })
   
   -- Set up debug commands
   local function debug_command(cmd, args)

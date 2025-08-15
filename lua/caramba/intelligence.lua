@@ -122,16 +122,24 @@ M.index_project = function(opts)
   
   M.db.symbols = {}
   
-  -- Use system `find` command for more robust file searching, as scandir is proving unreliable.
-  local find_cmd = "find " .. vim.fn.escape(root, " ") .. " -type f"
+  -- Prefer plenary.scandir for portability; fall back to `find` if needed
+  local cfg = require('caramba.config').get()
+  local scan_ok, scan = pcall(require, 'plenary.scandir')
   local files_to_scan
-  local ok, result = pcall(vim.fn.systemlist, find_cmd)
-
-  if not ok or not result then
-    vim.notify("Error: Failed to execute 'find' command to scan for files. Is `find` in your PATH?", vim.log.levels.ERROR)
-    return
+  if scan_ok and scan and scan.scan_dir then
+    files_to_scan = scan.scan_dir(root, {
+      hidden = false,
+      respect_gitignore = true,
+    })
+  else
+    local find_cmd = "find " .. vim.fn.escape(root, " ") .. " -type f"
+    local ok, result = pcall(vim.fn.systemlist, find_cmd)
+    if not ok or not result then
+      vim.notify("Error: Failed to scan for files (scandir and find unavailable)", vim.log.levels.ERROR)
+      return
+    end
+    files_to_scan = result
   end
-  files_to_scan = result
 
   -- Filter for included extensions and exclude patterns
   local files = {}
@@ -142,7 +150,7 @@ M.index_project = function(opts)
 
   for _, file in ipairs(files_to_scan) do
     local excluded = false
-    for _, pattern in ipairs(config.search.exclude_patterns or {}) do
+    for _, pattern in ipairs(cfg.search.exclude_patterns or {}) do
       if file:match(pattern) then
         excluded = true
         break

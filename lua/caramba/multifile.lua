@@ -162,35 +162,24 @@ M.preview_transaction = function()
   
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   
-  -- Open in a floating window
-  local width = math.floor(vim.o.columns * 0.8)
-  local height = math.floor(vim.o.lines * 0.8)
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    row = math.floor((vim.o.lines - height) / 2),
-    col = math.floor((vim.o.columns - width) / 2),
-    width = width,
-    height = height,
-    style = 'minimal',
-    border = 'rounded',
-    title = ' Multi-file Operation Preview ',
-    title_pos = 'center',
-  })
+  -- Open in a floating window via UI helper
+  local ui = require('caramba.ui')
+  local preview_buf, win = ui.show_lines_centered(lines, { title = ' Multi-file Operation Preview ', filetype = 'diff' })
   
   -- Set up keymaps
-  local opts = { buffer = buf, silent = true }
+  local opts = { buffer = preview_buf, silent = true, nowait = true }
   vim.keymap.set('n', 'a', function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     M.commit_transaction()
   end, opts)
   
   vim.keymap.set('n', 'q', function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     M.rollback_transaction()
   end, opts)
   
   vim.keymap.set('n', '<Esc>', function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     M.rollback_transaction()
   end, opts)
 end

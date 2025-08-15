@@ -274,34 +274,12 @@ end
 function M.show_diff_preview(bufnr, start_row, end_row, new_text, on_accept)
   local diff_lines = M.create_diff_preview(bufnr, start_row, end_row, new_text)
   
-  -- Create preview buffer
-  local preview_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, diff_lines)
-  vim.api.nvim_buf_set_option(preview_buf, "filetype", "diff")
-  vim.api.nvim_buf_set_option(preview_buf, "bufhidden", "wipe")
-  
-  -- Calculate window size
-  local width = math.floor(vim.o.columns * config.get().ui.preview_window_width)
-  local height = math.min(
-    #diff_lines + 4,
-    math.floor(vim.o.lines * config.get().ui.preview_window_height)
-  )
-  
-  -- Create floating window
-  local win = vim.api.nvim_open_win(preview_buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    col = math.floor((vim.o.columns - width) / 2),
-    row = math.floor((vim.o.lines - height) / 2),
-    style = "minimal",
-    border = config.get().ui.floating_window_border,
-    title = " Diff Preview ",
-    title_pos = "center",
-  })
+  -- Create preview window via UI helper
+  local ui = require('caramba.ui')
+  local preview_buf, win = ui.show_lines_centered(diff_lines, { title = ' Diff Preview ', filetype = 'diff' })
   
   -- Set up keymaps
-  local opts = { buffer = preview_buf, silent = true }
+  local opts = { buffer = preview_buf, silent = true, nowait = true }
   
   -- Accept
   vim.keymap.set("n", "<CR>", function()

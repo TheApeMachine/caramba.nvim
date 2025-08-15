@@ -45,18 +45,15 @@ Generate only the commit message, nothing else.
           local lines = vim.split(response, '\n')
           vim.api.nvim_buf_set_lines(0, 0, 0, false, lines)
         else
-          -- Show in a buffer
-          local buf = vim.api.nvim_create_buf(false, true)
-          vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(response, '\n'))
-          
-          vim.cmd('split')
-          vim.api.nvim_set_current_buf(buf)
-          
-          -- Add command to use this message
+          -- Show in a centered window
+          local ui = require('caramba.ui')
+          local lines = vim.split(response, '\n')
+          local buf, win = ui.show_lines_centered(lines, { title = ' Generated Commit Message ', filetype = 'markdown' })
           vim.keymap.set('n', '<CR>', function()
+            if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
             vim.fn.setreg('+', response)
             vim.notify("Commit message copied to clipboard", vim.log.levels.INFO)
-          end, { buffer = buf, desc = "Copy commit message" })
+          end, { buffer = buf, desc = 'Copy commit message' })
         end
       end)
     end
@@ -127,16 +124,18 @@ M._resolve_single_conflict = function(bufnr, conflict)
   local base = M._get_base_version(conflict.marker)
   
   -- Use semantic merge
-  local merged = ast_transform.semantic_merge(
+  ast_transform.semantic_merge_async(
     base or "",
     table.concat(ours, '\n'),
-    table.concat(theirs, '\n')
+    table.concat(theirs, '\n'),
+    function(merged)
+      if merged then
+        M._preview_resolution(bufnr, conflict, merged)
+      else
+        vim.notify("Semantic merge failed", vim.log.levels.ERROR)
+      end
+    end
   )
-  
-  if merged then
-    -- Show preview
-    M._preview_resolution(bufnr, conflict, merged)
-  end
 end
 
 -- Get base version from conflict marker
@@ -157,9 +156,6 @@ end
 
 -- Preview conflict resolution
 M._preview_resolution = function(bufnr, conflict, resolution)
-  -- Create preview buffer
-  local preview_buf = vim.api.nvim_create_buf(false, true)
-  
   -- Show before/after
   local preview_lines = {
     "# Conflict Resolution Preview",
@@ -178,22 +174,24 @@ M._preview_resolution = function(bufnr, conflict, resolution)
   table.insert(preview_lines, "```")
   vim.list_extend(preview_lines, vim.split(resolution, '\n'))
   table.insert(preview_lines, "```")
+  table.insert(preview_lines, "")
+  table.insert(preview_lines, "Press 'a' to apply resolution, 'q' to close")
   
-  vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, preview_lines)
-  vim.api.nvim_buf_set_option(preview_buf, 'filetype', 'markdown')
-  
-  -- Show in split
-  vim.cmd('split')
-  vim.api.nvim_set_current_buf(preview_buf)
+  local ui = require('caramba.ui')
+  local preview_buf, win = ui.show_lines_centered(preview_lines, { title = ' Conflict Resolution Preview ', filetype = 'markdown' })
   
   -- Add apply command
   vim.keymap.set('n', 'a', function()
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     -- Replace conflict with resolution
     local resolution_lines = vim.split(resolution, '\n')
     vim.api.nvim_buf_set_lines(bufnr, conflict.start - 1, conflict.end_line, false, resolution_lines)
-    vim.cmd('close')
     vim.notify("Conflict resolved", vim.log.levels.INFO)
   end, { buffer = preview_buf, desc = "Apply resolution" })
+  
+  vim.keymap.set('n', 'q', function()
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+  end, { buffer = preview_buf, desc = "Close" })
 end
 
 -- Generate PR description
@@ -241,20 +239,18 @@ Be specific and helpful for reviewers.
   llm.request(prompt, { temperature = 1 }, function(response)
     if response then
       vim.schedule(function()
-        -- Show in buffer
-        local buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(response, '\n'))
-        vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-        
-        vim.cmd('tabnew')
-        vim.api.nvim_set_current_buf(buf)
-        
-        -- Add copy command
+        local ui = require('caramba.ui')
+        local lines = vim.split(response, '\n')
+        local buf, win = ui.show_lines_centered(lines, { title = ' Generated PR Description ', filetype = 'markdown' })
         vim.keymap.set('n', 'y', function()
-          local content = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n')
+          if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+          local content = table.concat(lines, '\n')
           vim.fn.setreg('+', content)
           vim.notify("PR description copied to clipboard", vim.log.levels.INFO)
-        end, { buffer = buf, desc = "Copy PR description" })
+        end, { buffer = buf, desc = 'Copy PR description' })
+        vim.keymap.set('n', 'q', function()
+          if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+        end, { buffer = buf, desc = 'Close' })
       end)
     end
   end)
