@@ -44,7 +44,7 @@ function M.rename_symbol(new_name, opts)
     return
   end
 
-  local old_name = utils.get_node_text(ident_node)
+  local old_name = utils.get_node_text(ident_node, 0)
 
   -- Defer to the multi-file implementation for project-wide rename
   require('caramba.multifile').rename_symbol(old_name, new_name, opts)

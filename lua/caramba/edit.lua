@@ -41,7 +41,7 @@ function M.apply_edit(bufnr, start_row, start_col, end_row, end_col, new_text, o
   end
   
   -- Prepare new lines
-  local new_lines = vim.split(new_text, "\n", { plain = true })
+  local new_lines = vim.split(new_text, "\n")
   
   -- Apply the edit
   if start_row == end_row and start_col > 0 then
@@ -104,7 +104,7 @@ function M.apply_patch(bufnr, new_content, opts)
   end
   
   -- Apply new content
-  local new_lines = vim.split(new_content, "\n", { plain = true })
+  local new_lines = vim.split(new_content, "\n")
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
   
   -- Validate
@@ -240,7 +240,7 @@ function M.create_diff_preview(bufnr, start_row, end_row, new_text)
   
   -- Get current lines
   local old_lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
-  local new_lines = vim.split(new_text, "\n", { plain = true })
+  local new_lines = vim.split(new_text, "\n")
   
   -- Create diff
   local diff_lines = {}

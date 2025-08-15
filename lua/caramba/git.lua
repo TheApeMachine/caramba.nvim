@@ -683,7 +683,14 @@ M.review_code = function()
         table.insert(related_files_list, "- " .. pattern .. " (test file)")
         
         -- Read first few lines to understand test structure
-        local test_lines = vim.fn.readfile(full_path, '', 20) -- '' for text mode
+        local test_lines = vim.fn.readfile(full_path)
+        if #test_lines > 20 then
+          local truncated = {}
+          for i = 1, 20 do
+            truncated[i] = test_lines[i]
+          end
+          test_lines = truncated
+        end
         if #test_lines > 0 then
           table.insert(related_content, "\nTest file structure (" .. pattern .. "):")
           table.insert(related_content, "```")

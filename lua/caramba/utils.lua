@@ -324,7 +324,7 @@ function M.debounce(fn, delay)
       vim.fn.timer_stop(timer)
     end
     timer = vim.fn.timer_start(delay, function()
-      fn(unpack(args))
+      fn(table.unpack(args))
     end)
   end
 end
@@ -418,50 +418,23 @@ function M.deep_copy(orig)
   return copy
 end
 
---- Extract text from a Tree-sitter node with bounds checking.
+--- Extract text from a Tree-sitter node (supports bufnr or source string).
 ---@param node userdata The Tree-sitter node.
----@param bufnr number The buffer number.
+---@param source any Buffer number, source string, or lines table (optional; defaults to current buffer)
 ---@return string The text content of the node.
-function M.get_node_text(node, bufnr)
-  if not node then
-    return ""
+function M.get_node_text(node, source)
+  if not node then return "" end
+
+  -- Default to current buffer when no source provided
+  if source == nil then
+    source = vim.api.nvim_get_current_buf()
   end
 
-  bufnr = tonumber(bufnr) or 0
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
+  local ok, text = pcall(vim.treesitter.get_node_text, node, source)
+  if ok and type(text) == "string" then
+    return text
   end
-
-  -- Check if node has the range method
-  if not node.range then
-    return ""
-  end
-
-  local start_row, start_col, end_row, end_col = node:range()
-
-  -- Get lines
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row + 1, false)
-  if #lines == 0 then
-    return ""
-  end
-
-  -- Handle single line
-  if start_row == end_row then
-    -- Ensure indices are within string bounds
-    if start_col < end_col then
-      return string.sub(lines[1], start_col + 1, end_col)
-    else
-      return ""
-    end
-  else
-    -- Handle multi-line
-    lines[1] = string.sub(lines[1], start_col + 1)
-    if #lines > 1 then
-      lines[#lines] = string.sub(lines[#lines], 1, end_col)
-    end
-  end
-
-  return table.concat(lines, "\n")
+  return ""
 end
 
 return M 

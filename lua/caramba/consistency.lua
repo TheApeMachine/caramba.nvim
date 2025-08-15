@@ -205,7 +205,14 @@ M._analyze_import_patterns = function(root)
   local import_orders = {}
   
   for _, file in ipairs(files) do
-    local lines = vim.fn.readfile(file, '', 50) -- First 50 lines
+    local lines = vim.fn.readfile(file)
+    if #lines > 50 then
+      local truncated = {}
+      for i = 1, 50 do
+        truncated[i] = lines[i]
+      end
+      lines = truncated
+    end
     local imports = {}
     
     for _, line in ipairs(lines) do
@@ -352,7 +359,14 @@ M._learn_style_patterns = function(root)
   local line_lengths = {}
   
   for _, file in ipairs(files) do
-    local lines = vim.fn.readfile(file, '', 100)
+    local lines = vim.fn.readfile(file)
+    if #lines > 100 then
+      local truncated = {}
+      for i = 1, 100 do
+        truncated[i] = lines[i]
+      end
+      lines = truncated
+    end
     
     for _, line in ipairs(lines) do
       -- Detect indentation

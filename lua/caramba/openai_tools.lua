@@ -216,7 +216,7 @@ M.tool_functions = {
     end
 
     -- Write the file
-    local lines = vim.split(content, "\n", { plain = true })
+    local lines = vim.split(content, "\n")
     local ok, err = pcall(vim.fn.writefile, lines, expanded_path)
     
     if not ok then

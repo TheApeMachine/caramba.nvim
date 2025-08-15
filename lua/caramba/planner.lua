@@ -202,7 +202,14 @@ function M._get_project_overview()
       table.insert(overview, file)
       -- Include first few lines of important files
       if vim.fn.filereadable(file) == 1 then
-        local lines = vim.fn.readfile(file, "", 20)
+        local lines = vim.fn.readfile(file)
+        if #lines > 20 then
+          local truncated = {}
+          for i = 1, 20 do
+            truncated[i] = lines[i]
+          end
+          lines = truncated
+        end
         table.insert(overview, "  Content preview:")
         for i, line in ipairs(lines) do
           if i > 10 then break end
