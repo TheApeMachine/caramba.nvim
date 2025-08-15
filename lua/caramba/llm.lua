@@ -93,7 +93,7 @@ M.providers.openai = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_tokens = opts.max_tokens,
+      max_completion_tokens = opts.max_tokens,
       stream = false,
     }
 
@@ -159,7 +159,7 @@ M.providers.google = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_tokens = opts.max_tokens,
+      max_completion_tokens = opts.max_tokens,
       stream = false,
     }
     

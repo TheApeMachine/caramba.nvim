@@ -813,7 +813,7 @@ M.setup_commands = function()
       'curl -sS -X POST https://api.openai.com/v1/chat/completions ' ..
       '-H "Authorization: Bearer %s" ' ..
       '-H "Content-Type: application/json" ' ..
-      '-d \'{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}\'',
+      '-d \'{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Say hi"}],"max_completion_tokens":10}\'',
       api_key
     )
     
