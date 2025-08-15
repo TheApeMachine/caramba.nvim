@@ -36,7 +36,7 @@ M.providers.openai = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_completion_tokens = opts.max_tokens,
+      max_tokens = opts.max_tokens,
       stream = false,
     }
 
@@ -102,7 +102,7 @@ M.providers.google = {
       model = opts.model,
       messages = messages,
       temperature = opts.temperature,
-      max_completion_tokens = opts.max_tokens,
+      max_tokens = opts.max_tokens,
       stream = false,
     }
     
@@ -286,6 +286,18 @@ M.request = function(messages, opts, callback)
   opts = opts or {}
   local provider = opts.provider or config.get().provider
 
+  -- Guard unsupported/experimental providers
+  if provider == "google" then
+    local api = config.get().api
+    local compat = api and api.google and api.google.compatibility_mode
+    if not compat then
+      vim.schedule(function()
+        callback(nil, "Google provider is disabled. Enable api.google.compatibility_mode=true to use the experimental OpenAI-compatible endpoint.")
+      end)
+      return
+    end
+  end
+
   -- Default to streaming for faster feedback
   local use_streaming = opts.stream ~= false
   if use_streaming then
@@ -408,10 +420,37 @@ M.request = function(messages, opts, callback)
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
   
-  -- Debug logging
+  -- Debug logging (with redaction)
   if config.get().debug then
+    local function redact_args(args)
+      local redacted = {}
+      local i = 1
+      while i <= #args do
+        local val = args[i]
+        if val == "-H" and args[i+1] then
+          local header = args[i+1]
+          if type(header) == "string" and header:lower():match("authorization:%s*bearer%s+") then
+            table.insert(redacted, "-H")
+            table.insert(redacted, "Authorization: Bearer ***")
+            i = i + 2
+          else
+            table.insert(redacted, "-H")
+            table.insert(redacted, header)
+            i = i + 2
+          end
+        elseif val == "-d" and args[i+1] then
+          table.insert(redacted, "-d")
+          table.insert(redacted, "<omitted JSON body>")
+          i = i + 2
+        else
+          table.insert(redacted, val)
+          i = i + 1
+        end
+      end
+      return redacted
+    end
     vim.schedule(function()
-      vim.notify("AI: Curl command: curl " .. table.concat(curl_args, " "), vim.log.levels.INFO)
+      vim.notify("AI: Curl command: curl " .. table.concat(redact_args(vim.deepcopy(curl_args)), " "), vim.log.levels.INFO)
       vim.notify("AI: Request URL: " .. request_data.url, vim.log.levels.INFO)
     end)
   end
@@ -657,6 +696,18 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   opts = opts or {}
   local provider = opts.provider or config.get().provider
   
+  -- Guard unsupported/experimental providers
+  if provider == "google" then
+    local api = config.get().api
+    local compat = api and api.google and api.google.compatibility_mode
+    if not compat then
+      vim.schedule(function()
+        on_complete(nil, "Google provider is disabled. Enable api.google.compatibility_mode=true to use the experimental OpenAI-compatible endpoint.")
+      end)
+      return
+    end
+  end
+  
   -- Validate API key for providers that need it
   local api_config = config.get().api[provider]
   if provider == "openai" and not api_config.api_key then
@@ -717,10 +768,37 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
   
-  -- Debug logging
+  -- Debug logging (with redaction)
   if config.get().debug then
+    local function redact_args(args)
+      local redacted = {}
+      local i = 1
+      while i <= #args do
+        local val = args[i]
+        if val == "-H" and args[i+1] then
+          local header = args[i+1]
+          if type(header) == "string" and header:lower():match("authorization:%s*bearer%s+") then
+            table.insert(redacted, "-H")
+            table.insert(redacted, "Authorization: Bearer ***")
+            i = i + 2
+          else
+            table.insert(redacted, "-H")
+            table.insert(redacted, header)
+            i = i + 2
+          end
+        elseif val == "-d" and args[i+1] then
+          table.insert(redacted, "-d")
+          table.insert(redacted, "<omitted JSON body>")
+          i = i + 2
+        else
+          table.insert(redacted, val)
+          i = i + 1
+        end
+      end
+      return redacted
+    end
     vim.schedule(function()
-      vim.notify("AI: Curl command: " .. table.concat(curl_args, " "), vim.log.levels.INFO)
+      vim.notify("AI: Curl command: " .. table.concat(redact_args(vim.deepcopy(curl_args)), " "), vim.log.levels.INFO)
     end)
   end
   
@@ -744,13 +822,15 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
             local data_content = line:sub(7)
             
             if data_content == "[DONE]" then
-              if M._active_requests[request_id] then
-                M._active_requests[request_id] = nil
-                vim.schedule(function()
-                  on_complete(accumulated_content, nil)
-                end)
-                pcall(vim.fn.jobstop, job_id)
-              end
+                if M._active_requests[request_id] then
+                  M._active_requests[request_id] = nil
+                  vim.schedule(function()
+                    on_complete(accumulated_content, nil)
+                  end)
+                  if M._active_jobs[request_id] and M._active_jobs[request_id].id then
+                    pcall(vim.fn.jobstop, M._active_jobs[request_id].id)
+                  end
+                end
               return
             end
             
@@ -769,7 +849,9 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
                   vim.schedule(function()
                     on_complete(nil, err_msg)
                   end)
-                  pcall(vim.fn.jobstop, job_id)
+                  if M._active_jobs[request_id] and M._active_jobs[request_id].id then
+                    pcall(vim.fn.jobstop, M._active_jobs[request_id].id)
+                  end
                 end
                 return
               end
@@ -797,7 +879,9 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
                 vim.schedule(function()
                   on_complete(nil, err_msg)
                 end)
-                pcall(vim.fn.jobstop, job_id)
+                if M._active_jobs[request_id] and M._active_jobs[request_id].id then
+                  pcall(vim.fn.jobstop, M._active_jobs[request_id].id)
+                end
               end
               return
             end

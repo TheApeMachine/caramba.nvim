@@ -42,6 +42,8 @@ M.defaults = {
       temperature = 1,
       max_tokens = 4096,
       api_key = vim.env.GOOGLE_API_KEY,
+      -- Experimental compatibility layer with OpenAI format
+      compatibility_mode = false,
       models = { "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite-preview-06-17" },
     }
   },
@@ -130,7 +132,7 @@ M.defaults = {
   },
   
   -- Planning settings
-  debug = true, -- Enable debug logging
+  debug = false, -- Debug logging disabled by default
 }
 
 -- Current configuration
@@ -173,7 +175,11 @@ end
 
 -- Update configuration
 function M.update(path, value)
-  local keys = vim.split(path, ".", { plain = true })
+  -- Split on dots without pattern matching
+  local keys = {}
+  for part in string.gmatch(path, "[^%.]+") do
+    table.insert(keys, part)
+  end
   local current = M.options
   
   for i = 1, #keys - 1 do

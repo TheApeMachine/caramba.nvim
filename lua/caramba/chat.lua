@@ -163,12 +163,14 @@ local function extract_code_blocks(content)
     if code_node and fenced_node and fenced_node.range then
       local lang = "text"
       if captures.language then
-        lang = utils.get_node_text(captures.language, content)
+        -- For string parsers, use Treesitter's get_node_text with source string
+        lang = vim.treesitter.get_node_text(captures.language, content)
       end
       
       local start_line, _, _, _ = fenced_node:range()
       
-      local code_content = utils.get_node_text(code_node, content)
+      -- For string parsers, use Treesitter's get_node_text with source string
+      local code_content = vim.treesitter.get_node_text(code_node, content)
       if code_content then
         table.insert(blocks, {
           language = lang,
