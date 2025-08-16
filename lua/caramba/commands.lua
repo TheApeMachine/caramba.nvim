@@ -62,24 +62,20 @@ function M._do_simple_completion(instruction)
   
   llm.request(prompt, { stream = false }, function(result, err)
     if err then
-      vim.schedule(function()
-        vim.notify("Completion failed: " .. err, vim.log.levels.ERROR)
-      end)
+      vim.notify("Completion failed: " .. err, vim.log.levels.ERROR)
       return
     end
-    
-    vim.schedule(function()
-      local cursor_line = vim.fn.line('.') - 1
-      local lines = vim.split(result, '\n')
-      local end_row = cursor_line + (#lines - 1)
-      edit.show_diff_preview(0, cursor_line, end_row, result, function()
-        local success, err = edit.insert_at_cursor(result)
-        if success then
-          vim.notify("Caramba: Completion applied", vim.log.levels.INFO)
-        else
-          vim.notify("Caramba: Completion failed - " .. err, vim.log.levels.ERROR)
-        end
-      end)
+
+    local cursor_line = vim.fn.line('.') - 1
+    local lines = vim.split(result, '\n')
+    local end_row = cursor_line + (#lines - 1)
+    edit.show_diff_preview(0, cursor_line, end_row, result, function()
+      local success, err2 = edit.insert_at_cursor(result)
+      if success then
+        vim.notify("Caramba: Completion applied", vim.log.levels.INFO)
+      else
+        vim.notify("Caramba: Completion failed - " .. err2, vim.log.levels.ERROR)
+      end
     end)
   end)
 end
