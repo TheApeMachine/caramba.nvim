@@ -112,7 +112,8 @@ M.defaults = {
     max_concurrent_requests = 2, -- Max concurrent LLM requests
     cache_responses = true,      -- Cache LLM responses
     cache_ttl_seconds = 3600,    -- Cache TTL
-    request_timeout_ms = 30000, -- 30 seconds default
+    request_timeout_ms = 30000, -- 30 seconds default (non-stream)
+    request_idle_timeout_ms = 120000, -- Idle timeout for streaming; resets on each chunk
   },
   
   -- Web search settings

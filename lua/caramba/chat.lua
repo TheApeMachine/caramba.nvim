@@ -562,10 +562,10 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
 end
 
 M._start_agentic_response = function(full_content)
-  -- Add placeholder for assistant response
+  -- Add placeholder for assistant response entry with empty content (no emoji)
   table.insert(M._chat_state.history, {
     role = "assistant",
-    content = "🤔",
+    content = "",
     streaming = true,
   })
   start_animation('thinking')
@@ -608,7 +608,7 @@ M._handle_chunk = function(chunk)
   local last_message = M._chat_state.history[#M._chat_state.history]
   if last_message and last_message.role == "assistant" and last_message.streaming then
     -- Ensure content is not nil
-    if last_message.content == "🤔" then
+    if last_message.content == nil then
       last_message.content = ""
     end
     if chunk and chunk.is_tool_feedback and chunk.content then

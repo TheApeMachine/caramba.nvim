@@ -468,12 +468,13 @@ end
 
 -- Make HTTP request with streaming
 M._make_request = function(request_data, on_chunk, on_finish)
+  local idle_timeout_ms = (config.get().performance and config.get().performance.request_idle_timeout_ms) or 120000
+
   local curl_args = {
     "-sS",
     "--no-buffer",
     request_data.url,
     "-X", "POST",
-    "--max-time", "30",
   }
 
   for header, value in pairs(request_data.headers) do
@@ -488,17 +489,33 @@ M._make_request = function(request_data, on_chunk, on_finish)
   local tool_calls = {}
   local stream_finished = false
 
-  local job = Job:new({
+  -- Idle timeout handling: kill the job if no chunks within idle_timeout_ms
+  local job = nil
+  local idle_timer = nil
+  local function reset_idle_timer()
+    if idle_timer then vim.fn.timer_stop(idle_timer) end
+    idle_timer = vim.fn.timer_start(idle_timeout_ms, function()
+      if job then job:shutdown() end
+      if not stream_finished and on_finish then
+        stream_finished = true
+        on_finish(nil, "Idle timeout: no data received for " .. tostring(idle_timeout_ms) .. "ms")
+      end
+    end)
+  end
+
+  job = Job:new({
     command = "curl",
     args = curl_args,
     on_stdout = function(_, data)
         if data then
+            reset_idle_timer()
             for line in string.gmatch(data, "[^\r\n]+") do
                 if line:match("^data: ") then
                     local json_str = line:sub(7)
 
                     if json_str == "[DONE]" then
                         stream_finished = true
+                        if idle_timer then vim.fn.timer_stop(idle_timer) end
                         local final_message = {
                             role = "assistant",
                             content = full_response,
@@ -554,17 +571,23 @@ M._make_request = function(request_data, on_chunk, on_finish)
     on_stderr = function(_, data)
         if data and not stream_finished then
             stream_finished = true
+            if idle_timer then vim.fn.timer_stop(idle_timer) end
             if on_finish then on_finish(nil, "Request error: " .. data) end
         end
     end,
     on_exit = function(_, return_val)
-        if return_val ~= 0 and not stream_finished then
-            stream_finished = true
-            if on_finish then on_finish(nil, "Request exited with code: " .. return_val) end
+        if not stream_finished then
+            if idle_timer then vim.fn.timer_stop(idle_timer) end
+            if return_val ~= 0 then
+                if on_finish then on_finish(nil, "Request exited with code: " .. return_val) end
+            else
+                if on_finish then on_finish({ role = "assistant", content = full_response }, nil) end
+            end
         end
     end,
   })
 
+  reset_idle_timer()
   job:start()
 end
 
