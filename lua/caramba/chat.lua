@@ -14,6 +14,111 @@ local memory = require('caramba.memory')
 local state = require('caramba.state')
 
 local openai_tools = require('caramba.openai_tools')
+-- Add highlight namespace and activity helper
+local chat_hl_ns = vim.api.nvim_create_namespace('CarambaChatHL')
+local function push_activity(text)
+  if not text or text == '' then return end
+  M._chat_state = M._chat_state or {}
+  M._chat_state.activity = M._chat_state.activity or {}
+  table.insert(M._chat_state.activity, text)
+  if #M._chat_state.activity > 100 then
+    table.remove(M._chat_state.activity, 1)
+  end
+end
+
+-- Animation helpers
+local function get_frames_for_mode(mode)
+  if mode == 'tool' then
+    return { '🔧', '🔧.', '🔧..', '🔧...' }
+  elseif mode == 'writing' then
+    return { '✍️', '✍️.', '✍️..', '✍️...' }
+  else
+    return { '🤔', '🤔.', '🤔..', '🤔...' }
+  end
+end
+
+local function get_mode_label(mode)
+  if mode == 'tool' then return 'Using tools' end
+  if mode == 'writing' then return 'Writing' end
+  return 'Thinking'
+end
+
+local spinner_frames = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
+
+local function current_mode_emoji(mode)
+  if mode == 'tool' then return '🔧' end
+  if mode == 'writing' then return '✍️' end
+  return '🤔'
+end
+
+local function update_window_title()
+  if not (M._chat_state and M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid)) then
+    return
+  end
+  local anim = M._chat_state.animation or {}
+  local emoji = current_mode_emoji(anim.mode or 'thinking')
+  local spinner = spinner_frames[(anim.spinner_idx or 1)]
+  local title = string.format(' Caramba Chat  %s %s ', emoji, spinner)
+  local cfg = vim.api.nvim_win_get_config(M._chat_state.winid)
+  cfg.title = title
+  cfg.title_pos = cfg.title_pos or 'center'
+  vim.api.nvim_win_set_config(M._chat_state.winid, cfg)
+end
+
+local function start_animation(mode)
+  M._chat_state.animation = M._chat_state.animation or {}
+  local anim = M._chat_state.animation
+  if anim.timer then
+    vim.fn.timer_stop(anim.timer)
+    anim.timer = nil
+  end
+  anim.mode = mode or 'thinking'
+  anim.frame_idx = 1
+  anim.spinner_idx = 1
+  local frames = get_frames_for_mode(anim.mode)
+  anim.status_text = frames[anim.frame_idx] .. ' ' .. get_mode_label(anim.mode)
+  update_window_title()
+  anim.timer = vim.fn.timer_start(120, function()
+    local s = M._chat_state.animation
+    if not s then return end
+    s.frame_idx = (s.frame_idx % #get_frames_for_mode(s.mode)) + 1
+    s.spinner_idx = ((s.spinner_idx or 1) % #spinner_frames) + 1
+    local f = get_frames_for_mode(s.mode)[s.frame_idx]
+    s.status_text = f .. ' ' .. get_mode_label(s.mode)
+    vim.schedule(function()
+      update_window_title()
+      if M._chat_state and M._chat_state.bufnr and vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
+        M._render_chat()
+      end
+    end)
+  end, { ['repeat'] = -1 })
+end
+
+local function set_animation_mode(mode)
+  local anim = M._chat_state.animation
+  if not anim then return end
+  if anim.mode == mode then return end
+  anim.mode = mode
+  anim.frame_idx = 1
+  update_window_title()
+end
+
+local function stop_animation()
+  local anim = M._chat_state.animation
+  if anim and anim.timer then
+    vim.fn.timer_stop(anim.timer)
+    anim.timer = nil
+  end
+  if anim then
+    anim.status_text = nil
+  end
+  if M._chat_state and M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid) then
+    local cfg = vim.api.nvim_win_get_config(M._chat_state.winid)
+    cfg.title = ' Caramba Chat '
+    cfg.title_pos = cfg.title_pos or 'center'
+    vim.api.nvim_win_set_config(M._chat_state.winid, cfg)
+  end
+end
 
 -- Chat state (centralized via state.lua)
 do
@@ -28,6 +133,8 @@ do
     current_response = "",
     tool_iterations = 0,
     max_tool_iterations = config.get().chat.max_tool_iterations,
+    activity = {},
+    animation = {},
   }
   local s = state.get().chat or {}
   for k, v in pairs(defaults) do
@@ -461,6 +568,7 @@ M._start_agentic_response = function(full_content)
     content = "🤔",
     streaming = true,
   })
+  start_animation('thinking')
   M._render_chat()
 
   local initial_messages = {
@@ -503,6 +611,18 @@ M._handle_chunk = function(chunk)
     if last_message.content == "🤔" then
       last_message.content = ""
     end
+    if chunk and chunk.is_tool_feedback and chunk.content then
+      local one_line = (chunk.content or ''):gsub("\n", " "):gsub("%s+", " ")
+      push_activity(one_line)
+      if one_line:match('Using tool:') then
+        set_animation_mode('tool')
+      elseif one_line:match('Tool .* finished') or one_line:match('finished') then
+        set_animation_mode('thinking')
+      end
+    elseif chunk and chunk.content then
+      -- Switch to writing mode when we start receiving normal content
+      set_animation_mode('writing')
+    end
     last_message.content = (last_message.content or "") .. (chunk.content or "")
     M._render_chat()
   end
@@ -515,6 +635,7 @@ M._handle_response_complete = function(final_response)
   if last_message and last_message.role == "assistant" then
     last_message.content = final_response
     last_message.streaming = false
+    stop_animation()
     M._render_chat()
   end
 end
@@ -525,6 +646,7 @@ M._handle_response_error = function(err)
   if last_message and last_message.role == "assistant" then
     last_message.content = "I'm sorry, I encountered an error: " .. tostring(err)
     last_message.streaming = false
+    stop_animation()
     M._render_chat()
   end
 end
@@ -567,8 +689,28 @@ M._render_chat = function()
   table.insert(lines, "")
   table.insert(lines, "_Commands: (i)nput, (a)pply code, (y)ank code, (d)elete history, (r)evert changes, (q)uit_")
   table.insert(lines, "")
+  
+  -- Status line (animation)
+  if M._chat_state.animation and M._chat_state.animation.status_text then
+    table.insert(lines, "Status: " .. M._chat_state.animation.status_text)
+    table.insert(lines, "")
+  end
+
   table.insert(lines, "---")
   table.insert(lines, "")
+  
+  -- Activity feed
+  if M._chat_state.activity and #M._chat_state.activity > 0 then
+    table.insert(lines, "## Activity")
+    table.insert(lines, "")
+    local from = math.max(1, #M._chat_state.activity - 10 + 1)
+    for i = from, #M._chat_state.activity do
+      table.insert(lines, "- " .. M._chat_state.activity[i])
+    end
+    table.insert(lines, "")
+    table.insert(lines, "---")
+    table.insert(lines, "")
+  end
   
   -- Add messages
   for _, msg in ipairs(M._chat_state.history) do
@@ -596,6 +738,17 @@ M._render_chat = function()
   
   -- Store code blocks for interaction
   M._chat_state.code_blocks = code_blocks
+  
+  -- Highlight sections
+  vim.api.nvim_buf_clear_namespace(M._chat_state.bufnr, chat_hl_ns, 0, -1)
+  local buf_lines = vim.api.nvim_buf_get_lines(M._chat_state.bufnr, 0, -1, false)
+  for i, l in ipairs(buf_lines) do
+    if l:match("^## ") or l:match("^Status:") then
+      vim.api.nvim_buf_add_highlight(M._chat_state.bufnr, chat_hl_ns, 'Title', i - 1, 0, -1)
+    elseif l:match("^%- ") then
+      vim.api.nvim_buf_add_highlight(M._chat_state.bufnr, chat_hl_ns, 'DiagnosticHint', i - 1, 0, -1)
+    end
+  end
   
   -- Scroll to bottom
   if M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid) then
@@ -809,12 +962,11 @@ M.setup_commands = function()
     end
 
     -- Simple non-streaming request first
+    local payload = '{"model":"gpt-5-nano","messages":[{"role":"user","content":"Say hi"}],"max_completion_tokens":10}'
     local curl_cmd = string.format(
-      'curl -sS -X POST https://api.openai.com/v1/chat/completions ' ..
-      '-H "Authorization: Bearer %s" ' ..
-      '-H "Content-Type: application/json" ' ..
-      '-d \'{"model":"gpt-5-nano","messages":[{"role":"user","content":"Say hi"}],"max_completion_tokens":10}\'',
-      api_key
+      'curl -sS -X POST https://api.openai.com/v1/chat/completions -H "Authorization: Bearer %s" -H "Content-Type: application/json" -d %s',
+      api_key,
+      vim.fn.shellescape(payload)
     )
     
     vim.fn.jobstart(curl_cmd, {

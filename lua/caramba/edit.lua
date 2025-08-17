@@ -6,6 +6,22 @@ local ts = vim.treesitter
 local parsers = require("nvim-treesitter.parsers")
 local config = require("caramba.config")
 
+-- Visual namespace for edit highlights
+local edit_hl_ns = vim.api.nvim_create_namespace('CarambaEditHL')
+local function flash_highlight(bufnr, start_row, end_row)
+	bufnr = bufnr or 0
+	start_row = math.max(start_row or 0, 0)
+	end_row = math.max(end_row or start_row, start_row)
+	for l = start_row, end_row do
+		vim.api.nvim_buf_add_highlight(bufnr, edit_hl_ns, 'DiffAdd', l, 0, -1)
+	end
+	vim.defer_fn(function()
+		if vim.api.nvim_buf_is_valid(bufnr) then
+			vim.api.nvim_buf_clear_namespace(bufnr, edit_hl_ns, start_row, end_row + 1)
+		end
+	end, 1200)
+end
+
 -- Edit history for rollback
 M._history = {}
 M._max_history = 10
@@ -14,6 +30,15 @@ M._max_history = 10
 function M.apply_edit(bufnr, start_row, start_col, end_row, end_col, new_text, opts)
   opts = opts or {}
   bufnr = bufnr or 0
+
+  -- Preview support
+  if opts.preview then
+    M.show_diff_preview(bufnr, start_row, end_row, new_text, function()
+      opts.preview = false
+      M.apply_edit(bufnr, start_row, start_col, end_row, end_col, new_text, opts)
+    end)
+    return true, nil
+  end
   
   -- Convert to 0-based indexing if needed
   if opts.one_based then
@@ -76,6 +101,9 @@ function M.apply_edit(bufnr, start_row, start_col, end_row, end_col, new_text, o
   if config.get().editing.auto_format and not opts.skip_format then
     M.format_range(bufnr, start_row, start_row + #new_lines - 1)
   end
+
+  -- Flash highlight of the changed region
+  flash_highlight(bufnr, start_row, start_row + math.max(#new_lines - 1, 0))
   
   return true, nil
 end
@@ -87,6 +115,15 @@ function M.apply_patch(bufnr, new_content, opts)
   
   -- Get current content
   local old_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+  -- Preview support
+  if opts.preview then
+    M.show_diff_preview(bufnr, 0, #old_lines - 1, new_content, function()
+      opts.preview = false
+      M.apply_patch(bufnr, new_content, opts)
+    end)
+    return true, nil
+  end
   
   -- Store in history
   table.insert(M._history, 1, {
@@ -122,6 +159,9 @@ function M.apply_patch(bufnr, new_content, opts)
   if config.get().editing.auto_format and not opts.skip_format then
     M.format_buffer(bufnr)
   end
+
+  -- Flash highlight of the whole buffer (first 200 lines to avoid heavy loops)
+  flash_highlight(bufnr, 0, math.min(#new_lines - 1, 200))
   
   return true, nil
 end

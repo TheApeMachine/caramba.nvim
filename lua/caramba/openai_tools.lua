@@ -291,15 +291,15 @@ M.tool_functions = {
     end
 
     -- Apply the edit using the edit module
-    local edit = require('caramba.edit')
-    local success, error_msg = edit.apply_edit(
+    local edit_mod = require('caramba.edit')
+    local success, error_msg = edit_mod.apply_edit(
       bufnr,
       start_line - 1, -- Convert to 0-based
       0,
       end_line - 1,   -- Convert to 0-based
       -1,
       new_content,
-      { one_based = false }
+      { one_based = false, preview = false }
     )
 
     if not success then
@@ -411,12 +411,19 @@ M.create_chat_session = function(initial_messages, tools)
                         -- Show tool usage feedback
                         if on_chunk then
                             on_chunk({
-                                content = "\n\n🔧 **Using tool:** `" .. tool_call["function"].name .. "`\n\n",
+                                content = "\n\n🔧 Using tool: `" .. tool_call["function"].name .. "`...\n\n",
                                 is_tool_feedback = true
                             })
                         end
-                        
                         local result = M.execute_tool(tool_call["function"])
+                        -- Push completion feedback
+                        if on_chunk then
+                            local status = result and not result.error and "✅" or "❌"
+                            on_chunk({
+                              content = string.format("%s Tool `%s` finished. %s\n\n", status, tool_call["function"].name, result.error and ("Error: " .. result.error) or ""),
+                              is_tool_feedback = true
+                            })
+                        end
                         self:add_message("tool", vim.json.encode(result), nil, tool_call.id)
                     end
                     -- Continue conversation with tool results
