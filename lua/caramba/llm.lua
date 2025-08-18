@@ -5,6 +5,7 @@ local M = {}
 local Job = require("plenary.job")
 local config = require("caramba.config")
 local utils = require("caramba.utils")
+local logger = require("caramba.logger")
 
 -- Response cache
 M._cache = {}
@@ -84,11 +85,11 @@ M.providers.openai = {
       temperature = api_config.temperature,
       max_tokens = api_config.max_tokens,
     }, opts or {})
-    
-    local messages = type(prompt) == "string" 
+
+    local messages = type(prompt) == "string"
       and {{ role = "user", content = prompt }}
       or prompt
-    
+
     local body = {
       model = opts.model,
       messages = messages,
@@ -101,7 +102,7 @@ M.providers.openai = {
     if opts.tools then
       body.tools = opts.tools
     end
-    
+
     -- Handle JSON response format
     if opts.response_format then
       if opts.response_format.type == "json_schema" then
@@ -112,7 +113,7 @@ M.providers.openai = {
         body.response_format = { type = "json_object" }
       end
     end
-    
+
     return {
       url = api_config.endpoint,
       headers = {
@@ -122,21 +123,21 @@ M.providers.openai = {
       body = vim.json.encode(body),
     }
   end,
-  
+
   parse_response = function(response_text)
     local ok, data = pcall(vim.json.decode, response_text)
     if not ok then
       return nil, "Failed to parse response: " .. response_text
     end
-    
+
     if data.error then
       return nil, data.error.message or "Unknown error"
     end
-    
+
     if data.choices and data.choices[1] and data.choices[1].message then
       return data.choices[1].message.content, nil
     end
-    
+
     return nil, "Invalid response format"
   end,
 }
@@ -150,11 +151,11 @@ M.providers.google = {
       temperature = api_config.temperature,
       max_tokens = api_config.max_tokens,
     }, opts or {})
-    
-    local messages = type(prompt) == "string" 
+
+    local messages = type(prompt) == "string"
       and {{ role = "user", content = prompt }}
       or prompt
-    
+
     local body = {
       model = opts.model,
       messages = messages,
@@ -162,7 +163,7 @@ M.providers.google = {
       max_completion_tokens = opts.max_tokens,
       stream = false,
     }
-    
+
     return {
       url = api_config.endpoint .. "/openai/chat/completions",
       headers = {
@@ -172,7 +173,7 @@ M.providers.google = {
       body = vim.json.encode(body),
     }
   end,
-  
+
   -- The response format is OpenAI-compatible
   parse_response = M.providers.openai.parse_response,
 }
@@ -186,11 +187,11 @@ M.providers.anthropic = {
       temperature = api_config.temperature,
       max_tokens = api_config.max_tokens,
     }, opts or {})
-    
+
     local messages = type(prompt) == "string"
       and {{ role = "user", content = prompt }}
       or prompt
-    
+
     -- Convert from OpenAI format if needed
     local anthropic_messages = {}
     for _, msg in ipairs(messages) do
@@ -204,18 +205,18 @@ M.providers.anthropic = {
         })
       end
     end
-    
+
     local body = {
       model = opts.model,
       messages = anthropic_messages,
       temperature = opts.temperature,
       max_tokens = opts.max_tokens,
     }
-    
+
     if opts.system then
       body.system = opts.system
     end
-    
+
     return {
       url = api_config.endpoint,
       headers = {
@@ -226,21 +227,21 @@ M.providers.anthropic = {
       body = vim.json.encode(body),
     }
   end,
-  
+
   parse_response = function(response_text)
     local ok, data = pcall(vim.json.decode, response_text)
     if not ok then
       return nil, "Failed to parse response: " .. response_text
     end
-    
+
     if data.error then
       return nil, data.error.message or "Unknown error"
     end
-    
+
     if data.content and data.content[1] and data.content[1].text then
       return data.content[1].text, nil
     end
-    
+
     return nil, "Invalid response format"
   end,
 }
@@ -253,11 +254,11 @@ M.providers.ollama = {
       model = api_config.model,
       temperature = api_config.temperature,
     }, opts or {})
-    
-    local prompt_text = type(prompt) == "string" 
+
+    local prompt_text = type(prompt) == "string"
       and prompt
       or M._messages_to_text(prompt)
-    
+
     return {
       url = api_config.endpoint,
       headers = {
@@ -271,21 +272,21 @@ M.providers.ollama = {
       }),
     }
   end,
-  
+
   parse_response = function(response_text)
     local ok, data = pcall(vim.json.decode, response_text)
     if not ok then
       return nil, "Failed to parse response: " .. response_text
     end
-    
+
     if data.error then
       return nil, data.error or "Unknown error"
     end
-    
+
     if data.response then
       return data.response, nil
     end
-    
+
     return nil, "Invalid response format"
   end,
 }
@@ -327,7 +328,7 @@ local function process_queue()
       local function on_complete(response)
         queued.callback(response)
       end
-      
+
       -- Re-submit the request
       if queued.stream then
         M.request_stream(queued.prompt, queued.opts, on_complete)
@@ -410,7 +411,7 @@ M.request = function(messages, opts, callback)
 
     return M.request_stream(messages, opts, on_chunk, on_complete)
   end
-  
+
   -- Validate API key for providers that need it
   local api_config = config.get().api[provider]
   if provider == "openai" and not api_config.api_key then
@@ -429,7 +430,7 @@ M.request = function(messages, opts, callback)
     end)
     return
   end
-  
+
   -- Check if we're at the concurrent limit
   if vim.tbl_count(M._active_requests) >= M._max_concurrent then
     -- Queue the request instead of rejecting
@@ -444,7 +445,7 @@ M.request = function(messages, opts, callback)
     end)
     return
   end
-  
+
   -- Check cache if enabled
   local cache_key = nil
   if config.get().performance.cache_responses then
@@ -455,16 +456,16 @@ M.request = function(messages, opts, callback)
       return
     end
   end
-  
+
   -- Prepare request
   local request_data = M.providers[provider].prepare_request(messages, opts)
-  
+
   -- Generate unique request ID
   local request_id = tostring(os.time()) .. "_" .. math.random(10000)
-  
+
   -- Track active request and job
   M._active_requests[request_id] = true
-  
+
   -- Build curl command
   local curl_args = {
     "-sS",
@@ -472,15 +473,15 @@ M.request = function(messages, opts, callback)
     "-X", "POST",
     "--max-time", "30", -- Add timeout to prevent hanging
   }
-  
+
   for header, value in pairs(request_data.headers) do
     table.insert(curl_args, "-H")
     table.insert(curl_args, header .. ": " .. value)
   end
-  
+
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
-  
+
   -- Debug logging (with redaction)
   if config.get().debug then
     local function redact_args(args)
@@ -510,14 +511,12 @@ M.request = function(messages, opts, callback)
       end
       return redacted
     end
-    vim.schedule(function()
-      vim.notify("AI: Curl command: curl " .. table.concat(redact_args(vim.deepcopy(curl_args)), " "), vim.log.levels.INFO)
-      vim.notify("AI: Request URL: " .. request_data.url, vim.log.levels.INFO)
-    end)
+    logger.debug("LLM request curl args", redact_args(vim.deepcopy(curl_args)))
+    logger.debug("LLM request URL", request_data.url)
   end
-  
+
   local buffer = ""
-  
+
   -- Create job
   local job = Job:new({
     command = "curl",
@@ -526,7 +525,7 @@ M.request = function(messages, opts, callback)
       -- Remove from active requests and jobs
       M._active_requests[request_id] = nil
       M._active_jobs[request_id] = nil
-      
+
       if return_val and return_val ~= 0 then
         vim.schedule(function()
           callback(nil, "Request failed with code: " .. tostring(return_val))
@@ -542,10 +541,10 @@ M.request = function(messages, opts, callback)
         process_queue()
         return
       end
-      
+
       local response = table.concat(j:result(), "\n")
       local result, err = M.providers[provider].parse_response(response)
-      
+
       if result and cache_key then
         -- Cache successful response
         M._cache[cache_key] = {
@@ -553,29 +552,25 @@ M.request = function(messages, opts, callback)
           time = os.time(),
         }
       end
-      
+
       vim.schedule(function()
         callback(result, err)
       end)
-      
+
       -- Process any queued requests
       process_queue()
     end,
   })
-  
+
   -- Track the job before starting
   M._active_jobs[request_id] = job
-  
+
   -- Debug logging
-  if config.get().debug then
-    vim.schedule(function()
-      vim.notify(string.format("AI: Starting request to %s (ID: %s)", provider, request_id), vim.log.levels.INFO)
-    end)
-  end
-  
+  logger.info(string.format("LLM request start provider=%s id=%s", provider, request_id))
+
   -- Start job
   job:start()
-  
+
   -- Clear request on timeout
   local timeout_ms = config.get().performance.request_timeout_ms or 30000
   vim.defer_fn(function()
@@ -613,7 +608,7 @@ M.request_sync = function(prompt, opts)
 
   -- Prepare request
   local request_data = M.providers[provider].prepare_request(prompt, opts)
-  
+
   -- Build curl command
   local curl_args = {
     "-sS",
@@ -621,12 +616,12 @@ M.request_sync = function(prompt, opts)
     "-X", "POST",
     "--max-time", "15", -- Shorter timeout for sync requests
   }
-  
+
   for header, value in pairs(request_data.headers) do
     table.insert(curl_args, "-H")
     table.insert(curl_args, header .. ": " .. value)
   end
-  
+
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
 
@@ -634,7 +629,7 @@ M.request_sync = function(prompt, opts)
     command = "curl",
     args = curl_args,
   })
-  
+
   local stdout, stderr, code = job:sync()
 
   if code ~= 0 then
@@ -650,21 +645,21 @@ M.request_sync = function(prompt, opts)
     vim.notify("LLM sync request returned empty response.", vim.log.levels.ERROR)
     return nil
   end
-  
+
   local response_text = table.concat(stdout, "\n")
   local result, err = M.providers[provider].parse_response(response_text)
-  
+
   if err then
     vim.notify("LLM sync request failed to parse response: " .. err, vim.log.levels.ERROR)
     return nil
   end
-  
+
   return result
 end
 
 -- Build a prompt for code completion
 function M.build_completion_prompt(context, instruction)
-  local system_prompt = [[You are an expert programmer providing code completions. 
+  local system_prompt = [[You are an expert programmer providing code completions.
 
 CRITICAL RULES:
 1. Generate ONLY the code to be inserted at the cursor position
@@ -679,7 +674,7 @@ CRITICAL RULES:
    - Language-specific syntax requirements
 
 Follow the existing code style and conventions.]]
-  
+
   local user_prompt = string.format([[
 Context:
 %s
@@ -688,7 +683,7 @@ Instruction: %s
 
 Generate only the code to insert at the cursor position. The cursor is at the end of the provided context.
 ]], context, instruction or "Complete the code at the cursor position")
-  
+
   return {
     { role = "system", content = system_prompt },
     { role = "user", content = user_prompt },
@@ -697,9 +692,9 @@ end
 
 -- Build a prompt for refactoring
 function M.build_refactor_prompt(code, instruction)
-  local system_prompt = [[You are an expert programmer. Refactor the provided code according to the instructions. 
+  local system_prompt = [[You are an expert programmer. Refactor the provided code according to the instructions.
 Maintain the same functionality while improving code quality. Output only the refactored code.]]
-  
+
   return {
     { role = "system", content = system_prompt },
     { role = "user", content = code .. "\n\nRefactoring instruction: " .. instruction },
@@ -710,12 +705,12 @@ end
 function M.build_explanation_prompt(code, question)
   local system_prompt = [[You are an expert programmer and teacher. Explain the code clearly and concisely.
 Use examples when helpful. Format your response in markdown.]]
-  
+
   local user_prompt = code
   if question then
     user_prompt = user_prompt .. "\n\nQuestion: " .. question
   end
-  
+
   return {
     { role = "system", content = system_prompt },
     { role = "user", content = user_prompt },
@@ -760,7 +755,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
   if routed_model then
     opts = vim.tbl_extend('force', opts, { model = routed_model })
   end
-  
+
   -- Guard unsupported/experimental providers
   if provider == "google" then
     local api = config.get().api
@@ -772,7 +767,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       return
     end
   end
-  
+
   -- Validate API key for providers that need it
   local api_config = config.get().api[provider]
   if provider == "openai" and not api_config.api_key then
@@ -791,7 +786,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     end)
     return
   end
-  
+
   -- Only OpenAI and Google (via compatibility layer) support streaming currently
   if provider ~= "openai" and provider ~= "google" then
     -- Fall back to regular request
@@ -803,18 +798,16 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     end)
     return
   end
-  
+
   -- Prepare streaming request
   local request_data = M.providers[provider].prepare_request(messages, opts)
   local body = vim.json.decode(request_data.body)
   body.stream = true
   request_data.body = vim.json.encode(body)
-  
+
   -- Debug logging
-  if config.get().debug then
-    vim.notify("AI: Starting streaming request to " .. provider, vim.log.levels.INFO)
-  end
-  
+  logger.info("LLM stream start provider=" .. provider)
+
   -- Build curl command using table for better shell escaping
   local curl_args = {
     "curl",
@@ -832,7 +825,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
 
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
-  
+
   -- Debug logging (with redaction)
   if config.get().debug then
     local function redact_args(args)
@@ -862,30 +855,28 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       end
       return redacted
     end
-    vim.schedule(function()
-      vim.notify("AI: Curl command: " .. table.concat(redact_args(vim.deepcopy(curl_args)), " "), vim.log.levels.INFO)
-    end)
+    logger.debug("LLM stream curl args", redact_args(vim.deepcopy(curl_args)))
   end
-  
+
   -- Generate unique request ID
   local request_id = tostring(os.time()) .. "_" .. math.random(10000)
-  
+
   -- Track active request
   M._active_requests[request_id] = true
-  
+
   local accumulated_content = ""
   local buffer = ""
-  
+
   -- Use vim's jobstart for better streaming support
   local job_id = vim.fn.jobstart(curl_args, {
     on_stdout = function(_, data, _)
       if not data or not M._active_requests[request_id] then return end
-      
+
       for _, line in ipairs(data) do
         if line and line ~= "" then
           if line:match("^data: ") then
             local data_content = line:sub(7)
-            
+
             if data_content == "[DONE]" then
                 if M._active_requests[request_id] then
                   M._active_requests[request_id] = nil
@@ -898,7 +889,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
                 end
               return
             end
-            
+
             local ok, chunk_data = pcall(vim.json.decode, data_content)
             if ok and chunk_data then
               if chunk_data.choices and chunk_data.choices[1] and chunk_data.choices[1].delta and chunk_data.choices[1].delta.content then
@@ -957,10 +948,8 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     on_stderr = function(_, data, _)
       if data and #data > 0 then
         local error_text = table.concat(data, "\n")
-        if error_text ~= "" and M._active_requests[request_id] and config.get().debug then
-          vim.schedule(function()
-            vim.notify("AI: Curl stderr: " .. error_text, vim.log.levels.ERROR)
-          end)
+        if error_text ~= "" and M._active_requests[request_id] then
+          logger.error("LLM stream curl stderr", error_text)
         end
       end
     end,
@@ -970,18 +959,13 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
         process_queue()
         return
       end
-      
+
       M._active_requests[request_id] = nil
       M._active_jobs[request_id] = nil
-      
+
       -- Debug logging
-      if config.get().debug then
-        vim.schedule(function()
-          vim.notify(string.format("AI: Stream job exited with code: %s", tostring(return_val or "nil")), vim.log.levels.INFO)
-          vim.notify(string.format("AI: Accumulated content length: %d", #accumulated_content), vim.log.levels.INFO)
-        end)
-      end
-      
+      logger.info("LLM stream job exit", { code = return_val, content_len = #accumulated_content })
+
       if return_val and return_val ~= 0 and return_val ~= -15 -- -15 is SIGTERM from jobstop
       then
         vim.schedule(function()
@@ -1005,15 +989,15 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
           on_complete(accumulated_content, nil)
         end)
       end
-      
+
       -- Process any queued requests
       process_queue()
     end,
   })
-  
+
   -- Track the job
   M._active_jobs[request_id] = { id = job_id }
-  
+
   -- Add timeout handling
   local timeout_ms = config.get().performance.request_timeout_ms or 30000
   vim.defer_fn(function()
@@ -1029,14 +1013,14 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
       process_queue()
     end
   end, timeout_ms)
-  
+
   return { id = job_id }
 end
 
 -- Request a conversation (multi-turn chat)
 M.request_conversation = function(messages, opts, callback)
   opts = opts or {}
-  
+
   -- Use streaming if requested
   if opts.stream then
     -- For streaming, we need to wrap the single callback into two separate handlers
@@ -1055,7 +1039,7 @@ M.request_conversation = function(messages, opts, callback)
         callback(nil, true)
       end
     end
-    
+
     return M.request_stream(messages, opts, on_chunk, on_complete)
   else
     return M.request(messages, opts, function(result, err)
@@ -1077,27 +1061,27 @@ M.select_model = function()
   for name, _ in pairs(config.get().api) do
     table.insert(providers, name)
   end
-  
+
   vim.ui.select(providers, {
     prompt = "Select AI Provider:",
   }, function(provider)
     if not provider then return end
-    
+
     local models = config.get().api[provider].models or {}
     if #models == 0 then
       vim.notify("No models configured for provider: " .. provider, vim.log.levels.WARN)
       return
     end
-    
+
     vim.ui.select(models, {
       prompt = "Select Model for " .. provider .. ":",
     }, function(model)
       if not model then return end
-      
+
       -- Update the config
       config.update("provider", provider)
       config.update("api." .. provider .. ".model", model)
-      
+
       vim.notify(string.format("Set AI provider to %s and model to %s", provider, model), vim.log.levels.INFO)
     end)
   end)
@@ -1119,4 +1103,4 @@ M.setup_commands = function()
   })
 end
 
-return M 
+return M

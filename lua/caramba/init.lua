@@ -17,6 +17,7 @@ local modules = {
   "embeddings",
   "git",
   "health",
+  "logger",
   "intelligence",
   "llm",
   "multifile",
@@ -36,10 +37,12 @@ local modules = {
 function M.setup(opts)
   -- 1. Setup configuration first
   require('caramba.config').setup(opts)
+  -- Initialize logger early so other modules can use it
+  pcall(function() require('caramba.logger').setup() end)
   -- Initialize global state namespace for easy debugging
   _G.caramba = _G.caramba or {}
   _G.caramba.state = require('caramba.state').get()
-  
+
   -- 2. Load all modules and register their commands
   for _, name in ipairs(modules) do
     local ok, mod = pcall(require, "caramba." .. name)
@@ -49,10 +52,10 @@ function M.setup(opts)
       vim.notify("Failed to load module: " .. name .. "\n" .. tostring(mod), vim.log.levels.ERROR)
     end
   end
-  
+
   -- 3. Create the user commands from the registry
   require('caramba.core.commands').setup()
-  
+
   -- 4. Initialize other modules that require it
   require('caramba.planner').setup()
   require('caramba.consistency').setup()
@@ -61,7 +64,7 @@ function M.setup(opts)
   pcall(function()
     require('caramba.telescope').setup_commands()
   end)
-  
+
   vim.notify("Caramba.nvim is ready!", vim.log.levels.INFO)
 end
 
@@ -69,4 +72,4 @@ end
 package.loaded['caramba'] = M
 package.loaded['caramba.init'] = M
 
-return M 
+return M

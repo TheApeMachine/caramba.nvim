@@ -13,6 +13,7 @@ local utils = require('caramba.utils')
 local config = require('caramba.config')
 local planner = require('caramba.planner')
 local llm = require('caramba.llm')
+local logger = require('caramba.logger')
 
 -- Configurable limits
 local RESPONSE_STORE_CHAR_LIMIT = ((config.get().performance or {}).response_store_char_limit) or 2000
@@ -273,6 +274,7 @@ end
 -- Merge simple deltas into planner state (set-based uniqueness)
 local function merge_plan_delta(delta)
 	if type(delta) ~= 'table' then return end
+	logger.debug('Merging plan delta', delta)
 	local plan = state.get().planner or {}
 	plan.goals = plan.goals or {}
 	plan.current_tasks = plan.current_tasks or {}
@@ -365,6 +367,7 @@ Return JSON with updated goals, current_tasks, known_issues.]], user_message, co
 		if delta then
 			merge_plan_delta(delta)
 			vim.schedule(function() vim.notify('Planner: pre-send plan updated', vim.log.levels.INFO) end)
+			logger.info('Planner pre-send updated')
 		end
 	end)
 end
@@ -386,6 +389,7 @@ function M.postprocess_response(user_message, assistant_text)
 			prompt = user_message,
 			timestamp = vim.fn.localtime(),
 		}, tags)
+		logger.debug('Stored assistant response to memory')
 	end
 	-- Plan delta from response
 	local plan_summary = summarize_plan() or ''
@@ -403,6 +407,7 @@ Return JSON with updated goals, current_tasks, known_issues.]], user_message or 
 		if delta then
 			merge_plan_delta(delta)
 			vim.schedule(function() vim.notify('Planner: post-response plan updated', vim.log.levels.INFO) end)
+			logger.info('Planner post-response updated')
 		end
 	end)
 end

@@ -15,6 +15,7 @@ local state = require('caramba.state')
 
 local openai_tools = require('caramba.openai_tools')
 local orchestrator = require('caramba.orchestrator')
+local logger = require('caramba.logger')
 -- Add highlight namespace and activity helper
 local chat_hl_ns = vim.api.nvim_create_namespace('CarambaChatHL')
 local function push_activity(text)
@@ -167,7 +168,7 @@ local function parse_context_commands(message)
     end
     cleaned_message = cleaned_message:gsub("@buffer", "")
   end
-  
+
   -- @selection - include visual selection
   if message:match("@selection") then
     -- Get the last visual selection
@@ -188,7 +189,7 @@ local function parse_context_commands(message)
     end
     cleaned_message = cleaned_message:gsub("@selection", "")
   end
-  
+
   -- @file:path - include specific file
   for filepath in message:gmatch("@file:([^%s]+)") do
     local ok, content = pcall(vim.fn.readfile, vim.fn.expand(filepath))
@@ -201,7 +202,7 @@ local function parse_context_commands(message)
     end
     cleaned_message = cleaned_message:gsub("@file:" .. filepath, "")
   end
-  
+
   -- @web:query - search the web
   for query in message:gmatch("@web:([^%s]+)") do
     -- This will be handled separately as it's async
@@ -212,33 +213,33 @@ local function parse_context_commands(message)
     })
     cleaned_message = cleaned_message:gsub("@web:" .. query, "")
   end
-  
+
   return cleaned_message:match("^%s*(.-)%s*$"), contexts
 end
 
 -- Format message for display
 local function format_message(msg)
   local lines = {}
-  
+
   -- Add role header
   if msg.role == "user" then
     table.insert(lines, "## You:")
   else
     table.insert(lines, "## Assistant:")
   end
-  
+
   table.insert(lines, "")
-  
+
   -- Add content, ensuring it's not nil
   local content = msg.content or ""
   for line in content:gmatch("[^\n]+") do
     table.insert(lines, line)
   end
-  
+
   table.insert(lines, "")
   table.insert(lines, "---")
   table.insert(lines, "")
-  
+
   return lines
 end
 
@@ -277,16 +278,16 @@ local function extract_code_blocks(content)
 
     local fenced_node = captures.fenced_code
     local code_node = captures.code
-    
+
     if code_node and fenced_node and fenced_node.range then
       local lang = "text"
       if captures.language then
         -- For string parsers, use Treesitter's get_node_text with source string
         lang = vim.treesitter.get_node_text(captures.language, content)
       end
-      
+
       local start_line, _, _, _ = fenced_node:range()
-      
+
       -- For string parsers, use Treesitter's get_node_text with source string
       local code_content = vim.treesitter.get_node_text(code_node, content)
       if code_content then
@@ -309,7 +310,7 @@ M.open = function()
     vim.api.nvim_set_current_win(M._chat_state.winid)
     return
   end
-  
+
   -- Create chat buffer if needed
   if not M._chat_state.bufnr or not vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
     M._chat_state.bufnr = vim.api.nvim_create_buf(false, true)
@@ -318,12 +319,12 @@ M.open = function()
     vim.api.nvim_buf_set_option(M._chat_state.bufnr, "buftype", "nofile")
     vim.api.nvim_buf_set_option(M._chat_state.bufnr, "modifiable", false)
   end
-  
+
   -- Calculate window size using config (sidebar style)
   local ui = config.get().ui
   local width = math.floor(vim.o.columns * (ui.chat_sidebar_width or 0.4))
   local height = vim.o.lines - 4
-  
+
   -- Create floating window
   M._chat_state.winid = vim.api.nvim_open_win(M._chat_state.bufnr, true, {
     relative = "editor",
@@ -336,15 +337,15 @@ M.open = function()
     title = " Caramba Chat ",
     title_pos = "center",
   })
-  
+
   -- Set window options
   vim.api.nvim_win_set_option(M._chat_state.winid, "wrap", true)
   vim.api.nvim_win_set_option(M._chat_state.winid, "linebreak", true)
   vim.api.nvim_win_set_option(M._chat_state.winid, "cursorline", true)
-  
+
   -- Render existing history
   M._render_chat()
-  
+
   -- Set up keymaps
   local opts = { buffer = M._chat_state.bufnr, silent = true }
   vim.keymap.set("n", "i", M.start_input, opts)
@@ -364,7 +365,7 @@ M.close = function()
   if M._chat_state.input_winid and vim.api.nvim_win_is_valid(M._chat_state.input_winid) then
     vim.api.nvim_win_close(M._chat_state.input_winid, true)
   end
-  
+
   if M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid) then
     vim.api.nvim_win_close(M._chat_state.winid, true)
   end
@@ -376,11 +377,11 @@ M.start_input = function()
   local input_buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_option(input_buf, "buftype", "nofile")
   vim.api.nvim_buf_set_option(input_buf, "modifiable", true)
-  
+
   -- Create input window at bottom of chat
   local chat_config = vim.api.nvim_win_get_config(M._chat_state.winid)
   local input_height = 3
-  
+
   M._chat_state.input_bufnr = input_buf
   local ui = config.get().ui
   M._chat_state.input_winid = vim.api.nvim_open_win(input_buf, true, {
@@ -394,14 +395,14 @@ M.start_input = function()
     title = " Type your message (Enter to send, Esc to cancel) ",
     title_pos = "center",
   })
-  
+
   -- Set up input keymaps
   local opts = { buffer = input_buf, silent = true }
   vim.keymap.set("i", "<CR>", M._send_message, opts)
   vim.keymap.set("n", "<CR>", M._send_message, opts)
   vim.keymap.set("i", "<Esc>", M._cancel_input, opts)
   vim.keymap.set("n", "<Esc>", M._cancel_input, opts)
-  
+
   -- Enter insert mode
   vim.cmd("startinsert")
 end
@@ -409,39 +410,40 @@ end
 -- Send message
 M._send_message = function()
   if not M._chat_state.input_bufnr then return end
-  
+
   -- Get message content
   local lines = vim.api.nvim_buf_get_lines(M._chat_state.input_bufnr, 0, -1, false)
   local message = table.concat(lines, "\n"):match("^%s*(.-)%s*$")
-  
+
   if message == "" then
     M._cancel_input()
+    logger.debug('Empty message ignored')
     return
   end
-  
+
   -- Parse context commands
   local cleaned_message, contexts = parse_context_commands(message)
-  
+
   -- Handle web searches asynchronously
   local pending_searches = 0
   local search_results = {}
-  
+
   for i, ctx in ipairs(contexts) do
     if ctx.type == "web_search" and ctx.pending then
       pending_searches = pending_searches + 1
-      
+
       require('caramba.websearch').search(ctx.query, {
         limit = 3,
         callback = function(results, err)
           pending_searches = pending_searches - 1
-          
+
           if results then
             search_results[i] = {
               query = ctx.query,
               results = results,
             }
           end
-          
+
           -- When all searches complete, continue with message
           if pending_searches == 0 then
             M._send_message_with_context(cleaned_message, contexts, search_results, message)
@@ -450,7 +452,7 @@ M._send_message = function()
       })
     end
   end
-  
+
   -- If no web searches, send immediately
   if pending_searches == 0 then
     M._send_message_with_context(cleaned_message, contexts, {}, message)
@@ -463,7 +465,8 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   if config.get().debug then
     vim.notify("Caramba: Sending message: " .. string.sub(cleaned_message, 1, 50) .. "...", vim.log.levels.INFO)
   end
-  
+  logger.info('Chat send', { preview = string.sub(cleaned_message, 1, 120) })
+
   -- If no context commands were used, automatically add smart context
   if #contexts == 0 and #search_results == 0 then
     local smart_context = context.collect()
@@ -478,7 +481,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
       end
     end
   end
-  
+
   -- Get open buffers for automatic context
   local open_buffers_result = openai_tools.tool_functions.get_open_buffers({})
   local open_buffers = open_buffers_result.buffers or {}
@@ -509,6 +512,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
 
   -- Add open buffers context
   if #open_buffers > 0 then
+    logger.debug('Including open buffers in context', { count = #open_buffers })
     full_content = full_content .. "\n\n## Open Files Context:\n"
     for _, buffer in ipairs(open_buffers) do
       local filename = buffer.path:match("([^/]+)$") or buffer.path
@@ -523,6 +527,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
 
   -- Add memory context
   if #memory_results > 0 then
+    logger.debug('Including memory results', { count = #memory_results })
     full_content = full_content .. "\n\n## Relevant Memory:\n"
     for _, result in ipairs(memory_results) do
       full_content = full_content .. string.format("\n- %s (relevance: %.2f)\n",
@@ -548,7 +553,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
       end
     end
   end
-  
+
   -- Add to history (store original message for display)
   table.insert(M._chat_state.history, {
     role = "user",
@@ -566,6 +571,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     },
     { "caramba", "chat", "user_message" }
   )
+  logger.debug('Stored user message to memory')
 
   -- Close input window
   M._cancel_input()
@@ -577,6 +583,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   push_activity('Updating plan (pre-send)')
   pcall(orchestrator.update_plan_from_prompt, cleaned_message)
   push_activity('Requesting model...')
+  logger.info('Starting agentic response')
   M._start_agentic_response(full_content)
 end
 
@@ -588,6 +595,7 @@ M._start_agentic_response = function(full_content)
     streaming = true,
   })
   start_animation('thinking')
+  logger.debug('Agentic response placeholder added')
   M._render_chat()
 
   local initial_messages = {
@@ -598,7 +606,7 @@ M._start_agentic_response = function(full_content)
   }
 
   local chat_session = openai_tools.create_chat_session(initial_messages, openai_tools.available_tools)
-  
+
   chat_session:send(
     full_content,
     function(chunk, err) -- on_chunk
@@ -620,6 +628,7 @@ M._start_agentic_response = function(full_content)
       end)
     end
   )
+  logger.debug('Chat session send initiated')
 end
 
 -- Handle incoming stream chunk
@@ -631,6 +640,7 @@ M._handle_chunk = function(chunk)
       last_message.content = ""
     end
     if chunk and chunk.is_tool_feedback and chunk.content then
+      logger.debug('Tool feedback chunk', chunk.content)
       local one_line = (chunk.content or ''):gsub("\n", " "):gsub("%s+", " ")
       push_activity(one_line)
       if one_line:match('Using tool:') then
@@ -639,6 +649,7 @@ M._handle_chunk = function(chunk)
         set_animation_mode('thinking')
       end
     elseif chunk and chunk.content then
+      logger.trace('Content chunk', string.sub(chunk.content, 1, 200))
       -- Switch to writing mode when we start receiving normal content
       set_animation_mode('writing')
     end
@@ -665,6 +676,7 @@ M._handle_response_complete = function(final_response)
     end
     push_activity('Storing memory and updating plan (post-response)')
     pcall(orchestrator.postprocess_response, user_text, final_response)
+    logger.info('Response complete', { chars = #tostring(final_response or '') })
     stop_animation()
     M._render_chat()
   end
@@ -676,6 +688,7 @@ M._handle_response_error = function(err)
   if last_message and last_message.role == "assistant" then
     last_message.content = "I'm sorry, I encountered an error: " .. tostring(err)
     last_message.streaming = false
+    logger.error('Response error', err)
     stop_animation()
     M._render_chat()
   end
@@ -704,22 +717,22 @@ M._render_chat = function()
   if config.get().debug then
     vim.notify("Caramba: Rendering chat with " .. #M._chat_state.history .. " messages", vim.log.levels.INFO)
   end
-  
+
   if not M._chat_state.bufnr or not vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
     return
   end
-  
+
   vim.api.nvim_buf_set_option(M._chat_state.bufnr, "modifiable", true)
-  
+
   local lines = {}
   local code_blocks = {}
-  
+
   -- Add title
   table.insert(lines, "# Caramba Chat Session")
   table.insert(lines, "")
   table.insert(lines, "_Commands: (i)nput, (a)pply code, (y)ank code, (d)elete history, (r)evert changes, (q)uit_")
   table.insert(lines, "")
-  
+
   -- Status line (animation)
   if M._chat_state.animation and M._chat_state.animation.status_text then
     table.insert(lines, "Status: " .. M._chat_state.animation.status_text)
@@ -728,7 +741,7 @@ M._render_chat = function()
 
   table.insert(lines, "---")
   table.insert(lines, "")
-  
+
   -- Activity feed
   if M._chat_state.activity and #M._chat_state.activity > 0 then
     table.insert(lines, "## Activity")
@@ -741,12 +754,12 @@ M._render_chat = function()
     table.insert(lines, "---")
     table.insert(lines, "")
   end
-  
+
   -- Add messages
   for _, msg in ipairs(M._chat_state.history) do
     local msg_lines = format_message(msg)
     local line_offset = #lines
-    
+
     -- Track code blocks for this message
     if msg.role == "assistant" and msg.content then
       local blocks = extract_code_blocks(msg.content)
@@ -758,17 +771,17 @@ M._render_chat = function()
         table.insert(code_blocks, block)
       end
     end
-    
+
     vim.list_extend(lines, msg_lines)
   end
-  
+
   -- Update buffer
   vim.api.nvim_buf_set_lines(M._chat_state.bufnr, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(M._chat_state.bufnr, "modifiable", false)
-  
+
   -- Store code blocks for interaction
   M._chat_state.code_blocks = code_blocks
-  
+
   -- Highlight sections
   vim.api.nvim_buf_clear_namespace(M._chat_state.bufnr, chat_hl_ns, 0, -1)
   local buf_lines = vim.api.nvim_buf_get_lines(M._chat_state.bufnr, 0, -1, false)
@@ -779,7 +792,7 @@ M._render_chat = function()
       vim.api.nvim_buf_add_highlight(M._chat_state.bufnr, chat_hl_ns, 'DiagnosticHint', i - 1, 0, -1)
     end
   end
-  
+
   -- Scroll to bottom
   if M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid) then
     local line_count = vim.api.nvim_buf_line_count(M._chat_state.bufnr)
@@ -790,17 +803,17 @@ end
 -- Get code block at cursor
 local function get_code_block_at_cursor()
   if not M._chat_state.code_blocks then return nil end
-  
+
   local cursor = vim.api.nvim_win_get_cursor(M._chat_state.winid)
   local line = cursor[1]
-  
+
   -- Find code block containing current line
   for _, block in ipairs(M._chat_state.code_blocks) do
     if block.start_line and line >= block.start_line then
       -- The block's start_line refers to the opening ```. The actual code content starts on the next line.
       local code_start_line = block.start_line + 1
       local code_end_line = code_start_line + block.line_count - 1
-      
+
       -- Check if the cursor is within the code block boundaries:
       -- - On the opening fence line (block.start_line)
       -- - Within the code content (code_start_line to code_end_line)
@@ -810,7 +823,7 @@ local function get_code_block_at_cursor()
       end
     end
   end
-  
+
   return nil
 end
 
@@ -821,14 +834,14 @@ M._apply_code_at_cursor = function()
     vim.notify("No code block at cursor", vim.log.levels.WARN)
     return
   end
-  
+
   -- Get the last active buffer before chat
   local target_buf = vim.fn.bufnr("#")
   if target_buf < 0 then
     vim.notify("No buffer to apply code to", vim.log.levels.WARN)
     return
   end
-  
+
   -- Apply as a patch
   edit.apply_patch(target_buf, block.code, {
     validate = true,
@@ -843,7 +856,7 @@ M._copy_code_at_cursor = function()
     vim.notify("No code block at cursor", vim.log.levels.WARN)
     return
   end
-  
+
   vim.fn.setreg("+", block.code)
   vim.notify("Code copied to clipboard", vim.log.levels.INFO)
 end
@@ -894,35 +907,35 @@ end
 -- Setup commands for this module
 M.setup_commands = function()
   local commands = require('caramba.core.commands')
-  
+
   -- Open chat window
   commands.register('Chat', M.open, {
     desc = 'Open Caramba chat window',
   })
-  
+
   -- Toggle chat window
   commands.register('ChatToggle', M.toggle, {
     desc = 'Toggle Caramba chat window',
   })
-  
+
   -- Clear chat history
   commands.register('ChatClear', M.clear_history, {
     desc = 'Clear chat history',
   })
-  
+
   -- Approve the last plan
   commands.register('ApprovePlan', M.approve_plan, {
     desc = 'Approve and execute the last plan proposed in the chat',
   })
-  
+
   -- Test LLM connection
   commands.register('TestLLM', function()
     local messages = {
       { role = "user", content = "Say 'Hello, I am working!' if you can see this." }
     }
-    
+
     vim.notify("Testing LLM connection...", vim.log.levels.INFO)
-    
+
     llm.request(messages, {}, function(result, err)
       if err then
         vim.notify("LLM Error: " .. err, vim.log.levels.ERROR)
@@ -935,15 +948,15 @@ M.setup_commands = function()
   end, {
     desc = 'Test LLM connection',
   })
-  
+
   -- Test LLM streaming
   commands.register('TestLLMStream', function()
     local messages = {
       { role = "user", content = "Count from 1 to 10 slowly." }
     }
-    
+
     vim.notify("Testing LLM streaming...", vim.log.levels.INFO)
-    
+
     local chunks = {}
     llm.request_conversation(messages, { stream = true }, function(chunk, is_complete)
       if is_complete then
@@ -958,7 +971,7 @@ M.setup_commands = function()
   end, {
     desc = 'Test LLM streaming',
   })
-  
+
   -- Test OpenAI tools
   commands.register('TestOpenAITools', function()
     vim.notify("Testing OpenAI tools implementation...", vim.log.levels.INFO)
@@ -998,7 +1011,7 @@ M.setup_commands = function()
       api_key,
       vim.fn.shellescape(payload)
     )
-    
+
     vim.fn.jobstart(curl_cmd, {
       on_stdout = function(_, data)
         vim.notify("Curl stdout: " .. vim.inspect(data), vim.log.levels.INFO)
@@ -1013,7 +1026,7 @@ M.setup_commands = function()
   end, {
     desc = 'Test raw curl to OpenAI',
   })
-  
+
   -- Revert AI changes
   commands.register('RevertChanges', function(args)
     local edit = require('caramba.edit')

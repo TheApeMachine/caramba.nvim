@@ -6,7 +6,7 @@ local M = {}
 M.defaults = {
   -- LLM Provider settings
   provider = "openai", -- "openai", "anthropic", "ollama", "custom"
-  
+
   -- API settings
   api = {
     openai = {
@@ -42,7 +42,7 @@ M.defaults = {
       models = { "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite-preview-06-17" },
     }
   },
-  
+
   -- Context extraction settings
   context = {
     max_bytes = 8000,           -- Maximum bytes for context
@@ -52,7 +52,7 @@ M.defaults = {
     include_siblings = false,   -- Include sibling functions/classes
     search_radius = 2,          -- Hops in symbol graph for context
   },
-  
+
   -- Editing settings
   editing = {
     validate_syntax = true,     -- Validate syntax before applying edits
@@ -60,7 +60,7 @@ M.defaults = {
     safe_mode = true,           -- Enable rollback on syntax errors
     diff_preview = true,        -- Preview diffs before applying
   },
-  
+
   -- Search and indexing
   search = {
     enable_index = true,        -- Enable search indexing
@@ -83,7 +83,7 @@ M.defaults = {
     embedding_model = "text-embedding-3-small", -- OpenAI embedding model (3-small or 3-large)
     embedding_dimensions = 512, -- Dimensions for embeddings (lower = faster/cheaper, max: 1536 for small, 3072 for large)
   },
-  
+
   -- Feature toggles
   features = {
     enable_search_index = true,
@@ -94,7 +94,7 @@ M.defaults = {
     enable_explanations = true,
     auto_install_parsers = true, -- Automatically install missing Tree-sitter parsers
   },
-  
+
   -- UI settings
   ui = {
     diff_highlights = true,
@@ -105,7 +105,7 @@ M.defaults = {
     preview_window_height = 0.8,
     chat_sidebar_width = 0.4,
   },
-  
+
   -- Performance settings
   performance = {
     debounce_ms = 150,          -- Debounce for context updates
@@ -115,7 +115,7 @@ M.defaults = {
     request_timeout_ms = 30000, -- 30 seconds default (non-stream)
     request_idle_timeout_ms = 120000, -- Idle timeout for streaming; resets on each chunk
   },
-  
+
   -- Web search settings
   web_search = {
     default_provider = "duckduckgo", -- duckduckgo, google, brave
@@ -127,9 +127,14 @@ M.defaults = {
       brave = nil, -- Uses BRAVE_API_KEY env var if nil
     },
   },
-  
+
   -- Planning settings
   debug = false, -- Debug logging disabled by default
+  logging = {
+    path = nil,            -- Defaults to project_root/.caramba-debug.log
+    level = 'debug',       -- trace|debug|info|warn|error
+    max_size_bytes = 2097152, -- 2MB rotation threshold
+  },
   -- Agent/Chat loop
   chat = {
     max_tool_iterations = 5,
@@ -146,10 +151,10 @@ M.options = {}
 -- Setup configuration
 function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", M.defaults, opts or {})
-  
+
   -- Validate configuration
   M._validate()
-  
+
   -- Set up global namespace
   _G.caramba = _G.caramba or {}
   _G.caramba.config = M.options
@@ -166,7 +171,7 @@ function M._validate()
   elseif provider == "google" and not M.options.api.google.api_key then
     vim.notify("Caramba: Google API key not found. Set GOOGLE_API_KEY environment variable.", vim.log.levels.WARN)
   end
-  
+
   -- Validate numeric values
   assert(M.options.context.max_bytes > 0, "context.max_bytes must be positive")
   assert(M.options.context.max_lines > 0, "context.max_lines must be positive")
@@ -186,15 +191,15 @@ function M.update(path, value)
     table.insert(keys, part)
   end
   local current = M.options
-  
+
   for i = 1, #keys - 1 do
     current = current[keys[i]]
     if not current then
       error("Invalid configuration path: " .. path)
     end
   end
-  
+
   current[keys[#keys]] = value
 end
 
-return M 
+return M
