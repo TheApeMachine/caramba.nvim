@@ -872,7 +872,7 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     on_stdout = function(_, data, _)
       if not data or not M._active_requests[request_id] then return end
 
-      for _, line in ipairs(data) do
+      local function handle_line(line)
         if line and line ~= "" then
           if line:match("^data: ") then
             local data_content = line:sub(7)
@@ -943,6 +943,11 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
             end
           end
         end
+      end
+      if type(data) == 'table' then
+        for _, line in ipairs(data) do handle_line(line) end
+      elseif type(data) == 'string' then
+        for line in string.gmatch(data, "[^\r\n]+") do handle_line(line) end
       end
     end,
     on_stderr = function(_, data, _)

@@ -480,6 +480,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
 
   local curl_args = {
     "-sS",
+    "-N",
     "--no-buffer",
     request_data.url,
     "-X", "POST",
@@ -528,7 +529,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
     on_stdout = function(_, data)
         if data then
             safe_timer_start()
-            for line in string.gmatch(data, "[^\r\n]+") do
+            local function handle_line(line)
                 if line:match("^data: ") then
                     local json_str = line:sub(7)
 
@@ -584,6 +585,15 @@ M._make_request = function(request_data, on_chunk, on_finish)
                         end
                     end
                 end
+            end
+            if type(data) == 'table' then
+              for _, line in ipairs(data) do
+                if line and line ~= '' then handle_line(line) end
+              end
+            elseif type(data) == 'string' then
+              for line in string.gmatch(data, "[^\r\n]+") do
+                handle_line(line)
+              end
             end
         end
     end,

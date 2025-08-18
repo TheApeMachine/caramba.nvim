@@ -196,3 +196,93 @@ Tool edit_file: opening test_example.js
 [2025-08-18 09:48:57] DEBUG Tool feedback chunk | ❌ Tool `edit_file` finished. Error: Function execution failed: ...hare/nvim/lazy/caramba.nvim/lua/caramba/openai_tools.lua:285: Vim:E95: Buffer with this name already exists
 
 
+[2025-08-18 09:56:23] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-18 09:56:32] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-18 09:56:40] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-18 09:56:40] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-18 09:56:40] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-18 09:56:40] DEBUG Stored user message to memory
+[2025-08-18 09:56:40] INFO  LLM stream start provider=openai
+[2025-08-18 09:56:40] INFO  Starting agentic response
+[2025-08-18 09:56:40] DEBUG Agentic response placeholder added
+[2025-08-18 09:56:40] DEBUG Chat session send initiated
+[2025-08-18 09:56:41] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-18 09:56:41] INFO  LLM stream start provider=openai
+[2025-08-18 09:56:41] INFO  Response complete | {
+  chars = 0
+}
+[2025-08-18 09:56:41] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-18 09:56:56] INFO  Chat send | {
+  preview = "Hello?"
+}
+[2025-08-18 09:56:56] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-18 09:56:56] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-18 09:56:56] DEBUG Stored user message to memory
+[2025-08-18 09:56:56] INFO  LLM stream start provider=openai
+[2025-08-18 09:56:56] INFO  Starting agentic response
+[2025-08-18 09:56:56] DEBUG Agentic response placeholder added
+[2025-08-18 09:56:56] DEBUG Chat session send initiated
+[2025-08-18 09:56:56] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-18 09:56:56] INFO  LLM stream start provider=openai
+[2025-08-18 09:56:56] INFO  Response complete | {
+  chars = 0
+}
+[2025-08-18 09:56:56] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-18 10:01:06] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-18 10:01:17] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-18 10:01:17] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-18 10:01:17] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-18 10:01:17] DEBUG Stored user message to memory
+[2025-08-18 10:01:17] INFO  LLM stream start provider=openai
+[2025-08-18 10:01:17] INFO  Starting agentic response
+[2025-08-18 10:01:17] DEBUG Agentic response placeholder added
+[2025-08-18 10:01:17] DEBUG Chat session send initiated
+[2025-08-18 10:01:17] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-18 10:01:17] INFO  LLM stream start provider=openai
+[2025-08-18 10:01:17] INFO  Response complete | {
+  chars = 0
+}
+[2025-08-18 10:01:18] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
