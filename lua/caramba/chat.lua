@@ -643,8 +643,14 @@ M._handle_response_complete = function(final_response)
     last_message.content = final_response
     last_message.streaming = false
     -- Store to memory via orchestrator
-    local prior = M._chat_state.history[#M._chat_state.history - 1]
-    local user_text = prior and prior.role == 'user' and prior.content or ''
+    local user_text = ''
+    for i = #M._chat_state.history - 1, 1, -1 do
+      local msg = M._chat_state.history[i]
+      if msg and msg.role == 'user' and msg.content then
+        user_text = msg.content
+        break
+      end
+    end
     orchestrator.postprocess_response(user_text, final_response)
     stop_animation()
     M._render_chat()

@@ -3,6 +3,9 @@
 
 local M = {}
 
+-- luacheck: globals vim
+local vim = vim
+
 local context = require('caramba.context')
 local memory = require('caramba.memory')
 local state = require('caramba.state')
@@ -11,28 +14,81 @@ local config = require('caramba.config')
 local planner = require('caramba.planner')
 local llm = require('caramba.llm')
 
+-- Configurable limits
+local RESPONSE_STORE_CHAR_LIMIT = ((config.get().performance or {}).response_store_char_limit) or 2000
+
 -- Short-lived cache of recently included related files to avoid repetition
 M._recent_related_files = {}
+M._recent_related_files_count = 0
 local RELATED_TTL_SEC = 300
+
+-- Glob cache to reduce expensive file lookups
+M._glob_cache = {}
+local GLOB_CACHE_TTL_SEC = 90
+local GLOB_CACHE_MAX = 300
 
 local function now_sec()
 	return math.floor(vim.loop.now() / 1000)
 end
 
-local function mark_included(path)
-	M._recent_related_files[path] = now_sec()
-	-- prune entries older than TTL or when table grows too large
+local function prune_glob_cache()
 	local count = 0
-	for _ in pairs(M._recent_related_files) do count = count + 1 end
-	if count > 200 then
+	for _ in pairs(M._glob_cache) do count = count + 1 end
+	if count <= GLOB_CACHE_MAX then return end
+	local cutoff = now_sec() - GLOB_CACHE_TTL_SEC
+	for k, entry in pairs(M._glob_cache) do
+		if (entry.ts or 0) < cutoff then
+			M._glob_cache[k] = nil
+			count = count - 1
+			if count <= GLOB_CACHE_MAX then break end
+		end
+	end
+	-- If still too large, evict arbitrary keys
+	if count > GLOB_CACHE_MAX then
+		for k, _ in pairs(M._glob_cache) do
+			M._glob_cache[k] = nil
+			count = count - 1
+			if count <= GLOB_CACHE_MAX then break end
+		end
+	end
+end
+
+local function mark_included(path)
+	local is_new = (M._recent_related_files[path] == nil)
+	M._recent_related_files[path] = now_sec()
+	if is_new then
+		M._recent_related_files_count = (M._recent_related_files_count or 0) + 1
+	end
+	-- prune entries older than TTL or when table grows too large
+	if (M._recent_related_files_count or 0) > 200 then
 		local cutoff = now_sec() - RELATED_TTL_SEC
 		for p, ts in pairs(M._recent_related_files) do
-			if ts < cutoff then M._recent_related_files[p] = nil end
+			if ts < cutoff then
+				M._recent_related_files[p] = nil
+				M._recent_related_files_count = M._recent_related_files_count - 1
+				if M._recent_related_files_count <= 200 then break end
+			end
+		end
+		-- If still above threshold (no expired entries), evict arbitrary extras
+		if M._recent_related_files_count > 200 then
+			for p, _ in pairs(M._recent_related_files) do
+				M._recent_related_files[p] = nil
+				M._recent_related_files_count = M._recent_related_files_count - 1
+				if M._recent_related_files_count <= 200 then break end
+			end
 		end
 	end
 end
 
 local function was_recently_included(path)
+	-- Opportunistic prune on read for stale entries
+	local cutoff = now_sec() - RELATED_TTL_SEC
+	for p, ts0 in pairs(M._recent_related_files) do
+		if ts0 < cutoff then
+			M._recent_related_files[p] = nil
+			M._recent_related_files_count = math.max(0, (M._recent_related_files_count or 0) - 1)
+		end
+	end
 	local ts = M._recent_related_files[path]
 	if not ts then return false end
 	return (now_sec() - ts) < RELATED_TTL_SEC
@@ -65,12 +121,12 @@ end
 local function extract_module_candidates(imports)
 	local modules = {}
 	for _, line in ipairs(imports or {}) do
-		-- look for import x from 'mod'; require('mod'); from "mod"; @module or plain quotes
-		local m = line:match("from%s+['\"]([^'\"]+)['\"]")
-		m = m or line:match("require%s*%(%s*['\"]([^'\"]+)['\"]%s*%)")
-		m = m or line:match("['\"]([^'\"]+)['\"]")
+		-- Restrictive matches to avoid false positives
+		local m = line:match("%f[%a]from%s+['\"]([^'\"]+)['\"]")
+		m = m or line:match("%f[%a]require%s*%(%s*['\"]([^'\"]+)['\"]%s*%)")
+		m = m or line:match("^%s*import%s+[%w_%s{},*]+%s+from%s+['\"]([^'\"]+)['\"]")
+		m = m or line:match("^%s*import%s*['\"]([^'\"]+)['\"]") -- bare import
 		if m and not m:match('^%a+://') and not m:match('^%s*$') then
-			-- trim loaders like .js, .ts from the module name end
 			m = m:gsub("%.[%w]+$", "")
 			modules[#modules+1] = m
 		end
@@ -84,14 +140,23 @@ local function find_files_for_module(module_name)
 	-- Try several patterns: exact basename match across common code extensions
 	local exts = { 'lua','py','js','ts','tsx','jsx','go','rs','java','c','cpp','h','hpp' }
 	for _, ext in ipairs(exts) do
-		local pattern = string.format("%s/**/*%s%s.%s", root, module_name:sub(1,1) == '/' and '' or '', module_name:gsub('[/\\]', '*'), ext)
-		local matches = vim.fn.glob(pattern, true, true)
+		local pattern = string.format("%s/**/*%s%s.%s", root, (module_name:sub(1,1) == '/' and '' or '/'), module_name:gsub('[/\\]', '*'), ext)
+		local cache_entry = M._glob_cache[pattern]
+		local matches
+		local now = now_sec()
+		if cache_entry and (now - (cache_entry.ts or 0)) < GLOB_CACHE_TTL_SEC then
+			matches = cache_entry.results
+		else
+			matches = vim.fn.glob(pattern, true, true)
+			M._glob_cache[pattern] = { results = matches, ts = now }
+		end
 		for _, p in ipairs(matches) do
 			results[#results+1] = p
 			if #results >= 5 then return results end
 		end
 		if #results >= 5 then break end
 	end
+	prune_glob_cache()
 	return results
 end
 
@@ -183,22 +248,50 @@ function M.build_enriched_prompt(user_message)
 	return table.concat(parts, "\n")
 end
 
--- Merge simple deltas into planner state
+-- Merge simple deltas into planner state (set-based uniqueness)
 local function merge_plan_delta(delta)
 	if type(delta) ~= 'table' then return end
 	local plan = state.get().planner or {}
 	plan.goals = plan.goals or {}
 	plan.current_tasks = plan.current_tasks or {}
 	plan.known_issues = plan.known_issues or {}
-	local function add_unique(list, item)
-		for _, v in ipairs(list) do if v == item or (type(v)=='table' and v.description==item) then return end end
-		list[#list+1] = item
+	-- Sets for uniqueness
+	local goals_set = {}
+	for _, v in ipairs(plan.goals) do goals_set[v] = true end
+	local tasks_set = {}
+	for _, v in ipairs(plan.current_tasks) do
+		if type(v) == 'table' and v.description then tasks_set[v.description] = true end
 	end
-	for _, g in ipairs(delta.goals or {}) do add_unique(plan.goals, g) end
+	local issues_set = {}
+	for _, v in ipairs(plan.known_issues) do issues_set[v] = true end
+	-- Merge goals
+	for _, g in ipairs(delta.goals or {}) do
+		if g and not goals_set[g] then
+			table.insert(plan.goals, g)
+			goals_set[g] = true
+		end
+	end
+	-- Merge current tasks by description
 	for _, t in ipairs(delta.current_tasks or {}) do
-		if type(t) == 'string' then add_unique(plan.current_tasks, { description = t }) else add_unique(plan.current_tasks, t) end
+		local desc
+		if type(t) == 'string' then
+			desc = t
+			t = { description = t }
+		elseif type(t) == 'table' then
+			desc = t.description
+		end
+		if desc and not tasks_set[desc] then
+			table.insert(plan.current_tasks, t)
+			tasks_set[desc] = true
+		end
 	end
-	for _, k in ipairs(delta.known_issues or {}) do add_unique(plan.known_issues, k) end
+	-- Merge known issues
+	for _, k in ipairs(delta.known_issues or {}) do
+		if k and not issues_set[k] then
+			table.insert(plan.known_issues, k)
+			issues_set[k] = true
+		end
+	end
 	-- persist
 	planner.save_project_plan()
 end
@@ -209,7 +302,14 @@ local function request_plan_delta(prompt_text, callback)
 		{ role = 'system', content = [[You maintain a concise implementation plan. Given input, output ONLY JSON with keys: goals[], current_tasks[], known_issues[]. No prose.]] },
 		{ role = 'user', content = prompt_text },
 	}
-	llm.request(messages, {}, function(result)
+	llm.request(messages, {}, function(result, err)
+		if err then
+			vim.schedule(function()
+				vim.notify('Planner delta request failed: ' .. tostring(err), vim.log.levels.WARN)
+			end)
+			callback(nil)
+			return
+		end
 		local decoded = nil
 		if type(result) == 'table' then decoded = result
 		elseif type(result) == 'string' then local ok, obj = pcall(vim.json.decode, result); if ok then decoded = obj end end
@@ -244,13 +344,15 @@ end
 --- @param assistant_text string
 function M.postprocess_response(user_message, assistant_text)
 	if assistant_text and assistant_text ~= '' then
-		local ctx = context.collect({})
+		local ctx = context.collect({}) or {}
+		local ok_ft, ft = pcall(function() return vim.bo.filetype end)
+		local ok_fp, fp = pcall(function() return vim.fn.expand('%:p') end)
 		local tags = { "caramba", "assistant_response" }
 		if ctx and ctx.language then table.insert(tags, ctx.language) end
-		memory.store(assistant_text:sub(1, 2000), { 
+		memory.store(assistant_text:sub(1, RESPONSE_STORE_CHAR_LIMIT), {
 			context = "assistant_response",
-			file_path = ctx and ctx.file_path or vim.fn.expand('%:p'),
-			language = ctx and ctx.language or vim.bo.filetype,
+			file_path = ctx.file_path or (ok_fp and fp or ''),
+			language = ctx.language or (ok_ft and ft or ''),
 			prompt = user_message,
 			timestamp = vim.fn.localtime(),
 		}, tags)
