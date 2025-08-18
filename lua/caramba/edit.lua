@@ -112,19 +112,22 @@ end
 function M.apply_patch(bufnr, new_content, opts)
   opts = opts or {}
   bufnr = bufnr or 0
-  
+
   -- Get current content
   local old_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
-  -- Preview support
+  -- If preview requested, show diff and require accept
   if opts.preview then
     M.show_diff_preview(bufnr, 0, #old_lines - 1, new_content, function()
-      opts.preview = false
-      M.apply_patch(bufnr, new_content, opts)
+      -- Re-enter without preview to actually apply
+      local apply_opts = {}
+      for k, v in pairs(opts) do apply_opts[k] = v end
+      apply_opts.preview = false
+      M.apply_patch(bufnr, new_content, apply_opts)
     end)
     return true, nil
   end
-  
+
   -- Store in history
   table.insert(M._history, 1, {
     bufnr = bufnr,
@@ -134,16 +137,16 @@ function M.apply_patch(bufnr, new_content, opts)
     timestamp = os.time(),
     is_patch = true,
   })
-  
+
   -- Limit history
   while #M._history > M._max_history do
     table.remove(M._history)
   end
-  
+
   -- Apply new content
   local new_lines = vim.split(new_content, "\n")
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-  
+
   -- Validate
   if config.get().editing.validate_syntax then
     local valid, error_msg = M.validate_syntax(bufnr)
@@ -154,16 +157,35 @@ function M.apply_patch(bufnr, new_content, opts)
       return false, error_msg
     end
   end
-  
+
   -- Format if requested
   if config.get().editing.auto_format and not opts.skip_format then
     M.format_buffer(bufnr)
   end
 
   -- Flash highlight of the whole buffer (first 200 lines to avoid heavy loops)
-  flash_highlight(bufnr, 0, math.min(#new_lines - 1, 200))
-  
+  local function flash()
+    local end_line = math.min(#new_lines - 1, 200)
+    local ns = vim.api.nvim_create_namespace('CarambaPatchFlash')
+    for l = 0, end_line do
+      vim.api.nvim_buf_add_highlight(bufnr, ns, 'DiffAdd', l, 0, -1)
+    end
+    vim.defer_fn(function()
+      if vim.api.nvim_buf_is_valid(bufnr) then
+        vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, end_line + 1)
+      end
+    end, 1200)
+  end
+  vim.schedule(flash)
+
   return true, nil
+end
+
+-- Public helper to apply or preview patch depending on config
+function M.apply_patch_with_preview(bufnr, new_content)
+  local cfg = require('caramba.config').get()
+  local want_preview = (cfg.editing and cfg.editing.diff_preview) ~= false
+  return M.apply_patch(bufnr or 0, new_content, { preview = want_preview })
 end
 
 -- Validate syntax using Tree-sitter

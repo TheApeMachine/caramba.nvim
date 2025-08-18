@@ -220,33 +220,28 @@ M.tool_functions = {
       vim.fn.mkdir(dir, "p")
     end
 
-    local lines = vim.split(content, "\n")
-    local ok, err = pcall(vim.fn.writefile, lines, expanded_path)
-
-    if not ok then
-      report('Tool write_file: failed')
-      return { error = "Failed to write file: " .. tostring(err) }
-    end
-
+    -- Always route through buffer patch with preview for user awareness
+    local bufnr = nil
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_loaded(buf) then
-        local buf_name = vim.api.nvim_buf_get_name(buf)
-        if buf_name == expanded_path then
-          report('Tool write_file: reloading open buffer')
-          vim.api.nvim_buf_call(buf, function()
-            vim.cmd("edit!")
-          end)
-          break
-        end
+      if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_name(buf) == expanded_path then
+        bufnr = buf
+        break
       end
     end
-
-    report('Tool write_file: success')
-    return {
-      success = true,
-      path = expanded_path,
-      lines_written = #lines
-    }
+    if not bufnr then
+      bufnr = vim.api.nvim_create_buf(false, false)
+      vim.api.nvim_buf_set_name(bufnr, expanded_path)
+      -- Load file if exists; if not, buffer will be new
+      vim.api.nvim_buf_call(bufnr, function()
+        pcall(vim.cmd, "edit!")
+      end)
+    end
+    report('Tool write_file: presenting diff for approval')
+    local edit_mod = require('caramba.edit')
+    vim.schedule(function()
+      edit_mod.apply_patch_with_preview(bufnr, content)
+    end)
+    return { success = true, path = expanded_path, via = 'buffer_patch' }
   end,
 
   edit_file = function(args)
@@ -295,6 +290,8 @@ M.tool_functions = {
 
     report('Tool edit_file: applying edit lines ' .. tostring(start_line) .. '-' .. tostring(end_line))
     local edit_mod = require('caramba.edit')
+    local cfg = require('caramba.config').get()
+    local want_preview = (cfg.editing and cfg.editing.diff_preview) ~= false
     local success, error_msg = edit_mod.apply_edit(
       bufnr,
       start_line - 1,
@@ -302,7 +299,7 @@ M.tool_functions = {
       end_line - 1,
       -1,
       new_content,
-      { one_based = false, preview = false }
+      { one_based = false, preview = want_preview }
     )
 
     if not success then

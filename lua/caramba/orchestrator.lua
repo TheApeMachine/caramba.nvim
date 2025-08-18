@@ -302,10 +302,18 @@ local function request_plan_delta(prompt_text, callback)
 		{ role = 'system', content = [[You maintain a concise implementation plan. Given input, output ONLY JSON with keys: goals[], current_tasks[], known_issues[]. No prose.]] },
 		{ role = 'user', content = prompt_text },
 	}
-	llm.request(messages, {}, function(result, err)
+	local opts = {}
+	local provider = (config.get() or {}).provider
+	if provider == 'openai' then
+		opts.response_format = { type = 'json_object' }
+	end
+	llm.request(messages, opts, function(result, err)
 		if err then
+			-- Reduce noise: log as warn but don't spam user
 			vim.schedule(function()
-				vim.notify('Planner delta request failed: ' .. tostring(err), vim.log.levels.WARN)
+				if (config.get() or {}).debug then
+					vim.notify('Planner delta request failed: ' .. tostring(err), vim.log.levels.WARN)
+				end
 			end)
 			callback(nil)
 			return
