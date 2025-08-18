@@ -368,26 +368,18 @@ M.open = function()
   vim.keymap.set("n", "r", M._revert_last_change, opts)
   vim.keymap.set("n", "z", function()
     -- Toggle fold on the section under cursor (messages with a title)
-    local line = vim.api.nvim_get_current_line()
-    if line:match('^## ') then
-      -- Find matching message and toggle
-      local idx = 0
-      local seen = 0
-      for _, msg in ipairs(M._chat_state.history) do
-        if msg.title or msg.role then
-          seen = seen + 1
-          if seen == 1 then idx = 1 end
-        end
-      end
-      -- Simple heuristic: toggle last assistant/system tool message
-      for i = #M._chat_state.history, 1, -1 do
-        local m = M._chat_state.history[i]
+    local cursor = vim.api.nvim_win_get_cursor(M._chat_state.winid)
+    local row = cursor[1]
+    local ranges = M._chat_state.msg_ranges or {}
+    for _, r in ipairs(ranges) do
+      if row >= r.start_line and row <= r.end_line then
+        local m = M._chat_state.history[r.index]
         if m and m.title then
           m.folded = not m.folded
-          break
+          M._render_chat()
         end
+        break
       end
-      M._render_chat()
     end
   end, opts)
 end
@@ -629,8 +621,10 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     local idx = #M._chat_state.history + 1
     M._chat_state.history[idx] = { role = 'assistant', title = 'Improved Prompt', content = '', streaming = true, folded = false }
     M._render_chat()
+    logger.info('PE stream start')
     llm.request(pe_msg, { stream = true, task = 'chat' }, function(chunk, is_complete)
       if is_complete then
+        logger.info('PE stream complete')
         M._chat_state.history[idx].streaming = false
         -- Fold the section when complete
         M._chat_state.history[idx].folded = true
@@ -638,6 +632,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
         return
       end
       if type(chunk) == 'string' and chunk ~= '' then
+        logger.debug('PE chunk', chunk:sub(1, 120))
         M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
         M._render_chat()
       end
@@ -683,14 +678,17 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     local idx = #M._chat_state.history + 1
     M._chat_state.history[idx] = { role = 'assistant', title = 'Plan Review', content = '', streaming = true, folded = false }
     M._render_chat()
+    logger.info('Plan Review stream start')
     llm.request(outline_prompt, { stream = true, task = 'plan' }, function(chunk, is_complete)
       if is_complete then
+        logger.info('Plan Review stream complete')
         M._chat_state.history[idx].streaming = false
         M._chat_state.history[idx].folded = true
         M._render_chat()
         return
       end
       if type(chunk) == 'string' and chunk ~= '' then
+        logger.debug('Plan Review chunk', chunk:sub(1, 120))
         M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
         M._render_chat()
       end
@@ -866,6 +864,7 @@ M._render_chat = function()
 
   local lines = {}
   local code_blocks = {}
+  local msg_ranges = {}
 
   -- Add title
   table.insert(lines, "# Caramba Chat Session")
@@ -896,7 +895,7 @@ M._render_chat = function()
   end
 
   -- Add messages
-  for _, msg in ipairs(M._chat_state.history) do
+  for i_msg, msg in ipairs(M._chat_state.history) do
     local msg_lines = format_message(msg)
     local line_offset = #lines
 
@@ -913,6 +912,8 @@ M._render_chat = function()
     end
 
     vim.list_extend(lines, msg_lines)
+    local end_line = #lines
+    table.insert(msg_ranges, { index = i_msg, start_line = line_offset + 1, end_line = end_line })
   end
 
   -- Update buffer
@@ -921,6 +922,7 @@ M._render_chat = function()
 
   -- Store code blocks for interaction
   M._chat_state.code_blocks = code_blocks
+  M._chat_state.msg_ranges = msg_ranges
 
   -- Highlight sections
   vim.api.nvim_buf_clear_namespace(M._chat_state.bufnr, chat_hl_ns, 0, -1)
