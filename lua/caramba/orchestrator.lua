@@ -13,7 +13,6 @@ local utils = require('caramba.utils')
 local config = require('caramba.config')
 local planner = require('caramba.planner')
 local llm = require('caramba.llm')
-local logger = require('caramba.logger')
 
 -- Configurable limits
 local RESPONSE_STORE_CHAR_LIMIT = ((config.get().performance or {}).response_store_char_limit) or 2000
@@ -233,12 +232,10 @@ end
 --- @return string extra_markdown
 function M.build_enriched_prompt(user_message)
 	local parts = {}
-	logger.log('orchestrator', 'Enrichment start')
 
 	-- Primary Tree-sitter context with siblings/imports
 	local target_buf = pick_code_bufnr()
 	local ctx = context.collect({ include_siblings = true, bufnr = target_buf })
-	logger.log_table('orchestrator.ctx', ctx)
 	if ctx then
 		local ctx_md = context.build_context_string(ctx)
 		if ctx_md and ctx_md ~= '' then
@@ -263,7 +260,6 @@ function M.build_enriched_prompt(user_message)
 
 	-- Relevant memory using multiple angles
 	local mem_results = memory.search_multi_angle(user_message, ctx, "coding assistant") or {}
-	logger.log_table('orchestrator.memory', mem_results)
 	if #mem_results > 0 then
 		table.insert(parts, "\n## Relevant Memory (Top)")
 		for _, r in ipairs(mem_results) do
@@ -365,12 +361,9 @@ Current plan (summary):
 %s
 
 Return JSON with updated goals, current_tasks, known_issues.]], user_message, context.build_context_string(ctx or {}), summary)
-	logger.log('planner', 'Pre-send delta prompt')
-	logger.log('planner', prompt)
 	request_plan_delta(prompt, function(delta)
 		if delta then
 			merge_plan_delta(delta)
-			logger.log_table('planner.delta.pre', delta)
 			vim.schedule(function() vim.notify('Planner: pre-send plan updated', vim.log.levels.INFO) end)
 		end
 	end)
@@ -406,12 +399,9 @@ Current plan (summary):
 %s
 
 Return JSON with updated goals, current_tasks, known_issues.]], user_message or '', assistant_text or '', plan_summary)
-	logger.log('planner', 'Post-response delta prompt')
-	logger.log('planner', prompt)
 	request_plan_delta(prompt, function(delta)
 		if delta then
 			merge_plan_delta(delta)
-			logger.log_table('planner.delta.post', delta)
 			vim.schedule(function() vim.notify('Planner: post-response plan updated', vim.log.levels.INFO) end)
 		end
 	end)

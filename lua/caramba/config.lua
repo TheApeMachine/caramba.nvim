@@ -11,7 +11,7 @@ M.defaults = {
   api = {
     openai = {
       endpoint = "https://api.openai.com/v1/chat/completions",
-      model = "gpt-5-nano",
+      model = "o4-mini",
       temperature = 1,
       max_tokens = 4096,
       api_key = vim.env.OPENAI_API_KEY,
@@ -130,7 +130,6 @@ M.defaults = {
   
   -- Planning settings
   debug = false, -- Debug logging disabled by default
-  logging = { file = true },
   -- Agent/Chat loop
   chat = {
     max_tool_iterations = 5,

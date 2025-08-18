@@ -6,7 +6,6 @@ local M = {}
 -- Dependencies
 local config = require('caramba.config')
 local Job = require('plenary.job')
-local logger = require('caramba.logger')
 
 -- Optional reporter for fine-grained tool steps
 M._tool_reporter = nil
@@ -171,7 +170,6 @@ M.tool_functions = {
     end
 
     report('Tool search_files: running ripgrep/grep for "' .. query .. '"')
-    logger.log('tool', 'search_files query=' .. query)
     local cmd = "rg"
     local cmd_args = {"-n", "--type-add", "code:*.{lua,py,js,ts,jsx,tsx,go,rs,java,c,cpp,h,hpp}", "-t", "code", query}
 
@@ -239,7 +237,6 @@ M.tool_functions = {
       end)
     end
     report('Tool write_file: presenting diff for approval')
-    logger.log('tool', 'write_file path=' .. expanded_path)
     local edit_mod = require('caramba.edit')
     vim.schedule(function()
       edit_mod.apply_patch_with_preview(bufnr, content)
@@ -272,7 +269,6 @@ M.tool_functions = {
     end
 
     report('Tool edit_file: opening ' .. expanded_path)
-    logger.log('tool', 'edit_file path=' .. expanded_path .. ' range=' .. tostring(start_line) .. '-' .. tostring(end_line))
     local bufnr = nil
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) then
@@ -486,7 +482,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
   local curl_args = {
     "-sS",
     "--no-buffer",
-    "-N",
     request_data.url,
     "-X", "POST",
   }
@@ -495,9 +490,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
     table.insert(curl_args, "-H")
     table.insert(curl_args, header .. ": " .. value)
   end
-  -- Explicitly accept SSE for streaming
-  table.insert(curl_args, "-H")
-  table.insert(curl_args, "Accept: text/event-stream")
 
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
@@ -521,7 +513,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
       if idle_timer then pcall(vim.fn.timer_stop, idle_timer) end
       idle_timer = vim.fn.timer_start(idle_timeout_ms, function()
         vim.schedule(function()
-          logger.log('stream', 'Idle timeout fired')
           if job then job:shutdown() end
           if not stream_finished and on_finish then
             stream_finished = true
@@ -551,7 +542,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
                             tool_calls = #tool_calls > 0 and tool_calls or nil,
                         }
                         if on_finish then vim.schedule(function() on_finish(final_message, nil) end) end
-                        logger.log('stream', 'DONE received; final len=' .. tostring(#full_response))
                         return
                     end
 
@@ -563,7 +553,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
                             if type(content) == "string" then
                                 full_response = full_response .. content
                                 if on_chunk then vim.schedule(function() on_chunk({ content = content }, nil) end) end
-                                logger.log('stream', 'chunk len=' .. tostring(#content))
                             end
 
                             if delta.tool_calls then
@@ -591,7 +580,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
                                             tool_calls[index]["function"].arguments = tool_calls[index]["function"].arguments .. tool_call_delta["function"].arguments
                                         end
                                     end
-                                    logger.log('stream', string.format('tool_call[%d] name="%s" args_len=%d', index, tool_calls[index]["function"].name, #(tool_calls[index]["function"].arguments or "")))
                                  end
                             end
                         end
@@ -604,7 +592,6 @@ M._make_request = function(request_data, on_chunk, on_finish)
         if data and not stream_finished then
             stream_finished = true
             safe_timer_stop()
-            logger.log('stream', 'stderr: ' .. tostring(data))
             if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end
         end
     end,
@@ -613,12 +600,8 @@ M._make_request = function(request_data, on_chunk, on_finish)
             safe_timer_stop()
             if return_val ~= 0 then
                 if on_finish then vim.schedule(function() on_finish(nil, "Request exited with code: " .. return_val) end) end
-                logger.log('stream', 'exit code ' .. tostring(return_val))
             else
-                -- Fallback finalize: include any accumulated tool_calls even if [DONE] not seen
-                local final_message = { role = "assistant", content = full_response, tool_calls = (#tool_calls > 0) and tool_calls or nil }
-                if on_finish then vim.schedule(function() on_finish(final_message, nil) end) end
-                logger.log('stream', string.format('exit ok; content len=%d tool_calls=%d', #full_response, #tool_calls))
+                if on_finish then vim.schedule(function() on_finish({ role = "assistant", content = full_response }, nil) end) end
             end
         end
     end,
