@@ -498,6 +498,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
   local curl_args = {
     "-sS",
     "--no-buffer",
+    "-N",
     request_data.url,
     "-X", "POST",
   }
@@ -506,6 +507,9 @@ M._make_request = function(request_data, on_chunk, on_finish)
     table.insert(curl_args, "-H")
     table.insert(curl_args, header .. ": " .. value)
   end
+  -- Explicitly accept SSE for streaming
+  table.insert(curl_args, "-H")
+  table.insert(curl_args, "Accept: text/event-stream")
 
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
@@ -599,6 +603,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
                                             tool_calls[index]["function"].arguments = tool_calls[index]["function"].arguments .. tool_call_delta["function"].arguments
                                         end
                                     end
+                                    logger.log('stream', string.format('tool_call[%d] name="%s" args_len=%d', index, tool_calls[index]["function"].name, #(tool_calls[index]["function"].arguments or "")))
                                  end
                             end
                         end
@@ -622,8 +627,10 @@ M._make_request = function(request_data, on_chunk, on_finish)
                 if on_finish then vim.schedule(function() on_finish(nil, "Request exited with code: " .. return_val) end) end
                 logger.log('stream', 'exit code ' .. tostring(return_val))
             else
-                if on_finish then vim.schedule(function() on_finish({ role = "assistant", content = full_response }, nil) end) end
-                logger.log('stream', 'exit ok; content len=' .. tostring(#full_response))
+                -- Fallback finalize: include any accumulated tool_calls even if [DONE] not seen
+                local final_message = { role = "assistant", content = full_response, tool_calls = (#tool_calls > 0) and tool_calls or nil }
+                if on_finish then vim.schedule(function() on_finish(final_message, nil) end) end
+                logger.log('stream', string.format('exit ok; content len=%d tool_calls=%d', #full_response, #tool_calls))
             end
         end
     end,

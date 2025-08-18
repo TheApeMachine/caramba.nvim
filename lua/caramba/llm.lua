@@ -829,6 +829,8 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
     table.insert(curl_args, "-H")
     table.insert(curl_args, header .. ": " .. value)
   end
+  table.insert(curl_args, "-H")
+  table.insert(curl_args, "Accept: text/event-stream")
 
   table.insert(curl_args, "-d")
   table.insert(curl_args, request_data.body)
