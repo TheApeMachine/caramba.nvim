@@ -6,6 +6,8 @@ local M = {}
 -- Dependencies
 local config = require('caramba.config')
 local Job = require('plenary.job')
+local logger = require('caramba.logger')
+local utils = require('caramba.utils')
 
 -- Optional reporter for fine-grained tool steps
 M._tool_reporter = nil
@@ -170,19 +172,30 @@ M.tool_functions = {
     end
 
     report('Tool search_files: running ripgrep/grep for "' .. query .. '"')
+    logger.debug('tool.search_files.start', { query = query, file_pattern = file_pattern })
     local cmd = "rg"
-    local cmd_args = {"-n", "--type-add", "code:*.{lua,py,js,ts,jsx,tsx,go,rs,java,c,cpp,h,hpp}", "-t", "code", query}
+    local cmd_args = {"-n", "--type-add", "code:*.{lua,py,js,ts,jsx,tsx,go,rs,java,c,cpp,h,hpp}", "-t", "code", "-m", "200", query}
+    if file_pattern and file_pattern ~= "*" then
+      table.insert(cmd_args, "--glob")
+      table.insert(cmd_args, file_pattern)
+    end
 
     local rg_available = vim.fn.executable("rg") == 1
     if not rg_available then
       cmd = "grep"
-      cmd_args = {"-rn", query, "."}
+      cmd_args = {"-rn", "-m", "200", query, "."}
     end
 
     local results = {}
+    local root = utils.get_project_root()
+    local stderr_lines = {}
     local job = Job:new({
       command = cmd,
       args = cmd_args,
+      cwd = root,
+      on_stderr = function(_, data)
+        if data and #data > 0 then table.insert(stderr_lines, data) end
+      end,
       on_exit = function(j, return_val)
         if return_val == 0 then
           local output = j:result()
@@ -193,12 +206,16 @@ M.tool_functions = {
       end,
     })
 
-    job:sync(5000)
+    local timeout_ms = 12000
+    local ok, err = pcall(function() job:sync(timeout_ms) end)
+    if not ok then
+      report('Tool search_files: timed out at ' .. tostring(timeout_ms) .. 'ms')
+      logger.warn('tool.search_files.timeout', { query = query, timeout_ms = timeout_ms })
+      return { query = query, results = {}, error = 'timeout' }
+    end
     report('Tool search_files: results ' .. tostring(#results))
-    return {
-      query = query,
-      results = results
-    }
+    logger.debug('tool.search_files.results', { count = #results, stderr = table.concat(stderr_lines, '\n') })
+    return { query = query, results = results }
   end,
 
   write_file = function(args)
@@ -223,19 +240,10 @@ M.tool_functions = {
     -- Always route through buffer patch with preview for user awareness
     local bufnr = nil
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_name(buf) == expanded_path then
-        bufnr = buf
-        break
-      end
+      if vim.api.nvim_buf_get_name(buf) == expanded_path then bufnr = buf break end
     end
-    if not bufnr then
-      bufnr = vim.api.nvim_create_buf(false, false)
-      vim.api.nvim_buf_set_name(bufnr, expanded_path)
-      -- Load file if exists; if not, buffer will be new
-      vim.api.nvim_buf_call(bufnr, function()
-        pcall(vim.cmd, "edit!")
-      end)
-    end
+    if not bufnr then bufnr = vim.fn.bufadd(expanded_path) end
+    vim.fn.bufload(bufnr)
     report('Tool write_file: presenting diff for approval')
     local edit_mod = require('caramba.edit')
     vim.schedule(function()
@@ -269,24 +277,13 @@ M.tool_functions = {
     end
 
     report('Tool edit_file: opening ' .. expanded_path)
+    logger.debug('tool.edit_file.open', { path = expanded_path, start_line = start_line, end_line = end_line })
     local bufnr = nil
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_loaded(buf) then
-        local buf_name = vim.api.nvim_buf_get_name(buf)
-        if buf_name == expanded_path then
-          bufnr = buf
-          break
-        end
-      end
+      if vim.api.nvim_buf_get_name(buf) == expanded_path then bufnr = buf break end
     end
-
-    if not bufnr then
-      bufnr = vim.api.nvim_create_buf(false, false)
-      vim.api.nvim_buf_set_name(bufnr, expanded_path)
-      vim.api.nvim_buf_call(bufnr, function()
-        vim.cmd("edit!")
-      end)
-    end
+    if not bufnr then bufnr = vim.fn.bufadd(expanded_path) end
+    vim.fn.bufload(bufnr)
 
     report('Tool edit_file: applying edit lines ' .. tostring(start_line) .. '-' .. tostring(end_line))
     local edit_mod = require('caramba.edit')
@@ -304,6 +301,7 @@ M.tool_functions = {
 
     if not success then
       report('Tool edit_file: failed to apply edit')
+      logger.error('tool.edit_file.failed', error_msg)
       return { error = "Edit failed: " .. (error_msg or "unknown error") }
     end
 
@@ -313,6 +311,7 @@ M.tool_functions = {
     end)
 
     report('Tool edit_file: success')
+    logger.info('tool.edit_file.success', { path = expanded_path })
     return {
       success = true,
       path = expanded_path,

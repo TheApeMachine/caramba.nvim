@@ -601,7 +601,7 @@ M._start_agentic_response = function(full_content)
   local initial_messages = {
     {
       role = "system",
-      content = "You are a helpful assistant. Use the tools provided to answer the user's question.",
+      content = "You are a helpful AI coding assistant, integrated into the Neovim editor. Use the tools provided to help the user achieve their goals.",
     },
   }
 
