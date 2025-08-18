@@ -390,19 +390,7 @@ M.create_chat_session = function(initial_messages, tools)
       self:add_message("user", user_message)
 
       local function continue_conversation()
-        -- Strengthened system priming to encourage tool-driven code edits
-        local primed_messages = {}
-        for i, m in ipairs(self.messages) do primed_messages[i] = m end
-        table.insert(primed_messages, 1, {
-          role = "system",
-          content = [[You are integrated into Neovim. Your primary job is to make concrete code changes using tools:
-- Prefer tools (edit_file, write_file) over textual suggestions whenever changes are needed
-- Always propose changes as diffs/edits rather than only prose
-- Keep responses concise; if a change is required, use tools and then summarize briefly
-- Maintain syntax/formatting and match project style
-- Ask for missing details only if strictly necessary]]
-        })
-        local request_data = M._prepare_request(primed_messages, self.tools, true)
+        local request_data = M._prepare_request(self.messages, self.tools, true)
 
         M._make_request(request_data, function(chunk, err)
           vim.schedule(function()

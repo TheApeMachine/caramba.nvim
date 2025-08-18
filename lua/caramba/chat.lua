@@ -597,25 +597,30 @@ M._start_agentic_response = function(full_content)
     },
   }
 
-  local chat_session = openai_tools.create_chat_session(initial_messages, openai_tools.available_tools)
-  
-  chat_session:send(
-    full_content,
-    function(chunk, err) -- on_chunk
+  -- Use the proven streaming path
+  local messages = {
+    initial_messages[1],
+    { role = "user", content = full_content },
+  }
+
+  llm.request_stream(
+    messages,
+    {},
+    function(chunk, err)
       vim.schedule(function()
         if err then
           M._handle_response_error(err)
-        else
-          M._handle_chunk(chunk)
+        elseif chunk and chunk ~= '' then
+          M._handle_chunk({ content = chunk })
         end
       end)
     end,
-    function(final_response, err) -- on_finish
+    function(result, err)
       vim.schedule(function()
         if err then
           M._handle_response_error(err)
         else
-          M._handle_response_complete(final_response)
+          M._handle_response_complete(result or '')
         end
       end)
     end
