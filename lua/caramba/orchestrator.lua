@@ -120,23 +120,20 @@ local function summarize_plan()
 end
 
 local function pick_code_bufnr()
-  -- Prefer alternate buffer (#) if it's a real file buffer
+  local function is_file_buf(buf)
+    if not vim.api.nvim_buf_is_valid(buf) then return false end
+    if not vim.api.nvim_buf_is_loaded(buf) then return false end
+    if vim.api.nvim_buf_get_option(buf, 'buftype') ~= '' then return false end
+    local name = vim.api.nvim_buf_get_name(buf)
+    if name == '' then return false end
+    local stat = vim.loop.fs_stat(name)
+    return stat and stat.type == 'file'
+  end
   local alt = vim.fn.bufnr('#')
-  if alt > 0 and vim.api.nvim_buf_is_valid(alt) then
-    local bt = vim.api.nvim_buf_get_option(alt, 'buftype')
-    local name = vim.api.nvim_buf_get_name(alt)
-    if bt == '' and name ~= '' then return alt end
-  end
-  -- Fallback: find any listed, loaded file buffer
+  if alt > 0 and is_file_buf(alt) then return alt end
   for _, b in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(b)
-      and vim.api.nvim_buf_get_option(b, 'buflisted')
-      and vim.api.nvim_buf_get_option(b, 'buftype') == ''
-      and vim.api.nvim_buf_get_name(b) ~= '' then
-      return b
-    end
+    if is_file_buf(b) then return b end
   end
-  -- As a last resort, current buffer
   return vim.api.nvim_get_current_buf()
 end
 
@@ -234,6 +231,7 @@ end
 function M.build_enriched_prompt(user_message)
 	local parts = {}
 	local cfg = config.get() or {}
+	logger.debug('Enrichment start')
 
     -- Prompt Engineering is surfaced in chat for visibility; avoid blocking here.
 
@@ -242,6 +240,7 @@ function M.build_enriched_prompt(user_message)
 	local ctx = context.collect({ include_siblings = true, bufnr = target_buf })
 	if ctx then
 		local ctx_md = context.build_context_string(ctx)
+		logger.debug('Enrichment ctx', { file = ctx.file_path, lang = ctx.language, len = ctx_md and #ctx_md or 0 })
 		if ctx_md and ctx_md ~= '' then
 			table.insert(parts, "## Primary Context (Tree-sitter)")
 			table.insert(parts, "")
@@ -250,6 +249,7 @@ function M.build_enriched_prompt(user_message)
 		-- Related files (based on imports)
 		local related = related_files_section(ctx)
 		if related then
+			logger.debug('Enrichment related files included')
 			table.insert(parts, "")
 			table.insert(parts, related)
 		end
@@ -264,6 +264,7 @@ function M.build_enriched_prompt(user_message)
 
 	-- Relevant memory using multiple angles
 	local mem_results = memory.search_multi_angle(user_message, ctx, "coding assistant") or {}
+	logger.debug('Enrichment memory results', { count = #mem_results })
 	if #mem_results > 0 then
 		table.insert(parts, "\n## Relevant Memory (Top)")
 		for _, r in ipairs(mem_results) do
@@ -274,6 +275,7 @@ function M.build_enriched_prompt(user_message)
 	-- Compact recall pack from memory module
 	local recall = memory.build_recall_pack(user_message, ctx)
 	if recall and recall ~= '' then
+		logger.debug('Enrichment recall pack added', { len = #recall })
 		table.insert(parts, '')
 		table.insert(parts, recall)
 	end
