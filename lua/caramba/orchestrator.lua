@@ -118,6 +118,27 @@ local function summarize_plan()
 	return #lines > 0 and table.concat(lines, "\n") or nil
 end
 
+local function pick_code_bufnr()
+  -- Prefer alternate buffer (#) if it's a real file buffer
+  local alt = vim.fn.bufnr('#')
+  if alt > 0 and vim.api.nvim_buf_is_valid(alt) then
+    local bt = vim.api.nvim_buf_get_option(alt, 'buftype')
+    local name = vim.api.nvim_buf_get_name(alt)
+    if bt == '' and name ~= '' then return alt end
+  end
+  -- Fallback: find any listed, loaded file buffer
+  for _, b in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(b)
+      and vim.api.nvim_buf_get_option(b, 'buflisted')
+      and vim.api.nvim_buf_get_option(b, 'buftype') == ''
+      and vim.api.nvim_buf_get_name(b) ~= '' then
+      return b
+    end
+  end
+  -- As a last resort, current buffer
+  return vim.api.nvim_get_current_buf()
+end
+
 local function extract_module_candidates(imports)
 	local modules = {}
 	for _, line in ipairs(imports or {}) do
@@ -213,7 +234,8 @@ function M.build_enriched_prompt(user_message)
 	local parts = {}
 
 	-- Primary Tree-sitter context with siblings/imports
-	local ctx = context.collect({ include_siblings = true })
+	local target_buf = pick_code_bufnr()
+	local ctx = context.collect({ include_siblings = true, bufnr = target_buf })
 	if ctx then
 		local ctx_md = context.build_context_string(ctx)
 		if ctx_md and ctx_md ~= '' then
@@ -327,7 +349,7 @@ end
 
 --- Update plan before sending a message (asynchronous)
 function M.update_plan_from_prompt(user_message)
-	local ctx = context.collect({ include_siblings = true })
+	local ctx = context.collect({ include_siblings = true, bufnr = pick_code_bufnr() })
 	local summary = summarize_plan() or ''
 	local prompt = string.format([[User message:
 %s
@@ -352,7 +374,7 @@ end
 --- @param assistant_text string
 function M.postprocess_response(user_message, assistant_text)
 	if assistant_text and assistant_text ~= '' then
-		local ctx = context.collect({}) or {}
+		local ctx = context.collect({ bufnr = pick_code_bufnr() }) or {}
 		local ok_ft, ft = pcall(function() return vim.bo.filetype end)
 		local ok_fp, fp = pcall(function() return vim.fn.expand('%:p') end)
 		local tags = { "caramba", "assistant_response" }
