@@ -26,26 +26,26 @@ function validateNumbers(nums) {
  * - errorName: display name in errors
  * - useFirstAsInit: take the first element as init value
  */
-const OPERATIONS = {
-  sum: {
+const OPERATIONS = Object.freeze({
+  sum: Object.freeze({
     init: 0,
     fn: (a, b) => a + b,
-    minArgs: 1,
+    minArgs: 0,
     errorName: 'Sum',
-  },
-  product: {
+  }),
+  product: Object.freeze({
     init: 1,
     fn: (a, b) => a * b,
-    minArgs: 1,
+    minArgs: 0,
     errorName: 'Product',
-  },
-  difference: {
+  }),
+  difference: Object.freeze({
     fn: (a, b) => a - b,
     minArgs: 2,
     errorName: 'Difference',
     useFirstAsInit: true,
-  },
-  quotient: {
+  }),
+  quotient: Object.freeze({
     fn: (a, b, idx) => {
       if (b === 0) {
         throw new Error(`Division by zero at position ${idx + 1}`);
@@ -55,8 +55,8 @@ const OPERATIONS = {
     minArgs: 2,
     errorName: 'Quotient',
     useFirstAsInit: true,
-  },
-};
+  }),
+});
 
 /**
  * Generic calculator function.
@@ -70,10 +70,8 @@ function calculate(operationName, nums) {
     throw new Error(`Unsupported operation: ${operationName}`);
   }
   if (nums.length < op.minArgs) {
-    throw new Error(
-      `${op.errorName} requires at least ${op.minArgs} argument${op.minArgs > 1 ? 's' : ''}.
-    `.trim()
-    );
+    const plural = op.minArgs === 1 ? '' : 's';
+    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);
   }
   validateNumbers(nums);
   let accumulator;
@@ -123,14 +121,14 @@ export class Calculator {
 
   /**
    * Records an operation into history.
-   * @param {string} op
+   * @param {string} opName
    * @param {number[]} args
    * @param {number} result
    */
-  #record(op, args, result) {
+  #record(opName, args, result) {
     const entry = Object.freeze({
-      operation: op,
-      args: Array.from(args),
+      operation: opName,
+      args: [...args],
       result,
       timestamp: new Date(),
     });
@@ -140,28 +138,28 @@ export class Calculator {
   /** @returns {number} */
   add(...nums) {
     const result = calculateSum(...nums);
-    this.#record('add', nums, result);
+    this.#record('sum', nums, result);
     return result;
   }
 
   /** @returns {number} */
   multiply(...nums) {
     const result = calculateProduct(...nums);
-    this.#record('multiply', nums, result);
+    this.#record('product', nums, result);
     return result;
   }
 
   /** @returns {number} */
   subtract(...nums) {
     const result = calculateDifference(...nums);
-    this.#record('subtract', nums, result);
+    this.#record('difference', nums, result);
     return result;
   }
 
   /** @returns {number} */
   divide(...nums) {
     const result = calculateQuotient(...nums);
-    this.#record('divide', nums, result);
+    this.#record('quotient', nums, result);
     return result;
   }
 
@@ -184,12 +182,11 @@ export class Calculator {
         ? operation
         : [operation]
       : null;
-    return this.getHistory().filter(({ operation: op, timestamp: ts }) => {
-      if (ops && !ops.includes(op)) return false;
-      if (from && ts < from) return false;
-      if (to && ts > to) return false;
-      return true;
-    });
+    return this.getHistory().filter(({ operation: opName, timestamp }) =>
+      (!ops || ops.includes(opName)) &&
+      (!from || timestamp >= from) &&
+      (!to || timestamp <= to)
+    );
   }
 
   /**
