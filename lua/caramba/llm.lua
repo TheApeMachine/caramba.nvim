@@ -630,23 +630,38 @@ M.request_sync = function(prompt, opts)
     args = curl_args,
   })
 
+  -- Plenary versions differ: some return (stdout, stderr, code), others (stdout, code)
   local stdout, stderr, code = job:sync()
+  if type(stderr) == 'number' and code == nil then
+    -- Signature was (stdout, code)
+    code = stderr
+    stderr = nil
+  end
+  if type(stdout) == 'number' and code == nil then
+    -- Signature was (code) only; extremely unlikely, but guard anyway
+    code = stdout
+    stdout = {}
+  end
 
   if code ~= 0 then
     local err_msg = "LLM sync request failed with code " .. tostring(code)
-    if stderr and #stderr > 0 and stderr[1] ~= "" then
-      err_msg = err_msg .. ": " .. table.concat(stderr, " ")
+    local stderr_text = ''
+    if type(stderr) == 'table' then
+      if #stderr > 0 and stderr[1] ~= "" then stderr_text = table.concat(stderr, ' ') end
+    elseif type(stderr) == 'string' then
+      stderr_text = stderr
     end
+    if stderr_text ~= '' then err_msg = err_msg .. ": " .. stderr_text end
     vim.notify(err_msg, vim.log.levels.ERROR)
     return nil
   end
 
-  if not stdout or #stdout == 0 then
+  if not stdout or (type(stdout) == 'table' and #stdout == 0) or (type(stdout) == 'string' and stdout == '') then
     vim.notify("LLM sync request returned empty response.", vim.log.levels.ERROR)
     return nil
   end
 
-  local response_text = table.concat(stdout, "\n")
+  local response_text = type(stdout) == 'table' and table.concat(stdout, "\n") or tostring(stdout)
   local result, err = M.providers[provider].parse_response(response_text)
 
   if err then
