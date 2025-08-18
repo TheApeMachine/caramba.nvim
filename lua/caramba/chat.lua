@@ -26,6 +26,7 @@ local function push_activity(text)
     table.remove(M._chat_state.activity, 1)
   end
 end
+M.push_activity = push_activity
 
 -- Animation helpers
 local function get_frames_for_mode(mode)
@@ -493,9 +494,17 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   local full_content = cleaned_message
 
   -- Orchestrator: prepend enriched prompt section
-  local enrich = orchestrator.build_enriched_prompt(cleaned_message)
-  if enrich and enrich ~= '' then
-    full_content = full_content .. "\n\n" .. enrich
+  push_activity('Preparing context and enrichment')
+  local chat_cfg = (config.get().chat or {})
+  if chat_cfg.enable_enrichment ~= false then
+    local enrich = orchestrator.build_enriched_prompt(cleaned_message)
+    if enrich and enrich ~= '' then
+      local max_extra = chat_cfg.max_enrichment_chars or 12000
+      if #enrich > max_extra then
+        enrich = enrich:sub(1, max_extra) .. "\n\n[Enrichment truncated]"
+      end
+      full_content = full_content .. "\n\n" .. enrich
+    end
   end
 
   -- Add open buffers context
@@ -565,6 +574,9 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   M._render_chat()
 
   -- Start agentic response directly
+  push_activity('Updating plan (pre-send)')
+  pcall(orchestrator.update_plan_from_prompt, cleaned_message)
+  push_activity('Requesting model...')
   M._start_agentic_response(full_content)
 end
 
@@ -651,7 +663,8 @@ M._handle_response_complete = function(final_response)
         break
       end
     end
-    orchestrator.postprocess_response(user_text, final_response)
+    push_activity('Storing memory and updating plan (post-response)')
+    pcall(orchestrator.postprocess_response, user_text, final_response)
     stop_animation()
     M._render_chat()
   end

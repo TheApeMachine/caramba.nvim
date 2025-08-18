@@ -7,6 +7,12 @@ local M = {}
 local config = require('caramba.config')
 local Job = require('plenary.job')
 
+-- Optional reporter for fine-grained tool steps
+M._tool_reporter = nil
+local function report(text)
+  if M._tool_reporter then M._tool_reporter(text) end
+end
+
 M.available_tools = {
   {
     type = "function",
@@ -114,8 +120,8 @@ M.available_tools = {
 -- Tool implementations
 M.tool_functions = {
   get_open_buffers = function(args)
-    -- args can be empty object {} since no parameters are required
     args = args or {}
+    report('Tool get_open_buffers: scanning listed buffers')
     local buffers = {}
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_option(buf, 'buflisted') then
@@ -133,6 +139,7 @@ M.tool_functions = {
         end
       end
     end
+    report(string.format('Tool get_open_buffers: found %d buffers', #buffers))
     return { buffers = buffers, count = #buffers }
   end,
 
@@ -141,12 +148,13 @@ M.tool_functions = {
     if not file_path then
       return { error = "file_path is required" }
     end
-
+    report('Tool read_file: reading ' .. file_path)
     local ok, lines = pcall(vim.fn.readfile, file_path)
     if not ok then
+      report('Tool read_file: failed')
       return { error = "Could not read file: " .. file_path }
     end
-
+    report('Tool read_file: success')
     return {
       path = file_path,
       content = table.concat(lines, "\n")
@@ -161,11 +169,10 @@ M.tool_functions = {
       return { error = "query is required" }
     end
 
-    -- Use ripgrep if available, otherwise fallback to grep
+    report('Tool search_files: running ripgrep/grep for "' .. query .. '"')
     local cmd = "rg"
     local cmd_args = {"-n", "--type-add", "code:*.{lua,py,js,ts,jsx,tsx,go,rs,java,c,cpp,h,hpp}", "-t", "code", query}
 
-    -- Check if rg is available
     local rg_available = vim.fn.executable("rg") == 1
     if not rg_available then
       cmd = "grep"
@@ -186,8 +193,8 @@ M.tool_functions = {
       end,
     })
 
-    job:sync(5000) -- 5 second timeout
-
+    job:sync(5000)
+    report('Tool search_files: results ' .. tostring(#results))
     return {
       query = query,
       results = results
@@ -206,28 +213,26 @@ M.tool_functions = {
       return { error = "content is required" }
     end
 
-    -- Expand the path
+    report('Tool write_file: writing ' .. file_path)
     local expanded_path = vim.fn.expand(file_path)
-    
-    -- Create directory if it doesn't exist
     local dir = vim.fn.fnamemodify(expanded_path, ":h")
     if vim.fn.isdirectory(dir) == 0 then
       vim.fn.mkdir(dir, "p")
     end
 
-    -- Write the file
     local lines = vim.split(content, "\n")
     local ok, err = pcall(vim.fn.writefile, lines, expanded_path)
-    
+
     if not ok then
+      report('Tool write_file: failed')
       return { error = "Failed to write file: " .. tostring(err) }
     end
 
-    -- If the file is currently open in a buffer, reload it
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) then
         local buf_name = vim.api.nvim_buf_get_name(buf)
         if buf_name == expanded_path then
+          report('Tool write_file: reloading open buffer')
           vim.api.nvim_buf_call(buf, function()
             vim.cmd("edit!")
           end)
@@ -236,6 +241,7 @@ M.tool_functions = {
       end
     end
 
+    report('Tool write_file: success')
     return {
       success = true,
       path = expanded_path,
@@ -261,15 +267,13 @@ M.tool_functions = {
       return { error = "new_content is required" }
     end
 
-    -- Expand the path
     local expanded_path = vim.fn.expand(file_path)
-    
-    -- Check if file exists
+
     if vim.fn.filereadable(expanded_path) == 0 then
       return { error = "File does not exist: " .. expanded_path }
     end
 
-    -- Find or create buffer for this file
+    report('Tool edit_file: opening ' .. expanded_path)
     local bufnr = nil
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(buf) then
@@ -281,7 +285,6 @@ M.tool_functions = {
       end
     end
 
-    -- If not found in buffers, create a new buffer and load the file
     if not bufnr then
       bufnr = vim.api.nvim_create_buf(false, false)
       vim.api.nvim_buf_set_name(bufnr, expanded_path)
@@ -290,27 +293,29 @@ M.tool_functions = {
       end)
     end
 
-    -- Apply the edit using the edit module
+    report('Tool edit_file: applying edit lines ' .. tostring(start_line) .. '-' .. tostring(end_line))
     local edit_mod = require('caramba.edit')
     local success, error_msg = edit_mod.apply_edit(
       bufnr,
-      start_line - 1, -- Convert to 0-based
+      start_line - 1,
       0,
-      end_line - 1,   -- Convert to 0-based
+      end_line - 1,
       -1,
       new_content,
       { one_based = false, preview = false }
     )
 
     if not success then
+      report('Tool edit_file: failed to apply edit')
       return { error = "Edit failed: " .. (error_msg or "unknown error") }
     end
 
-    -- Save the buffer
+    report('Tool edit_file: saving buffer')
     vim.api.nvim_buf_call(bufnr, function()
       vim.cmd("write")
     end)
 
+    report('Tool edit_file: success')
     return {
       success = true,
       path = expanded_path,
@@ -415,7 +420,14 @@ M.create_chat_session = function(initial_messages, tools)
                                 is_tool_feedback = true
                             })
                         end
+                        -- Install step reporter for fine-grained activity
+                        M._tool_reporter = function(text)
+                          if on_chunk then
+                            on_chunk({ content = "\n\n" .. text .. "\n\n", is_tool_feedback = true })
+                          end
+                        end
                         local result = M.execute_tool(tool_call["function"])
+                        M._tool_reporter = nil
                         -- Push completion feedback
                         if on_chunk then
                             local status = result and not result.error and "✅" or "❌"
@@ -495,11 +507,13 @@ M._make_request = function(request_data, on_chunk, on_finish)
   local function reset_idle_timer()
     if idle_timer then vim.fn.timer_stop(idle_timer) end
     idle_timer = vim.fn.timer_start(idle_timeout_ms, function()
-      if job then job:shutdown() end
-      if not stream_finished and on_finish then
-        stream_finished = true
-        on_finish(nil, "Idle timeout: no data received for " .. tostring(idle_timeout_ms) .. "ms")
-      end
+      vim.schedule(function()
+        if job then job:shutdown() end
+        if not stream_finished and on_finish then
+          stream_finished = true
+          on_finish(nil, "Idle timeout: no data received for " .. tostring(idle_timeout_ms) .. "ms")
+        end
+      end)
     end)
   end
 
@@ -521,7 +535,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
                             content = full_response,
                             tool_calls = #tool_calls > 0 and tool_calls or nil,
                         }
-                        if on_finish then on_finish(final_message, nil) end
+                        if on_finish then vim.schedule(function() on_finish(final_message, nil) end) end
                         return
                     end
 
@@ -532,7 +546,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
                             local content = delta.content
                             if type(content) == "string" then
                                 full_response = full_response .. content
-                                if on_chunk then on_chunk({ content = content }, nil) end
+                                if on_chunk then vim.schedule(function() on_chunk({ content = content }, nil) end) end
                             end
 
                             if delta.tool_calls then
@@ -572,22 +586,21 @@ M._make_request = function(request_data, on_chunk, on_finish)
         if data and not stream_finished then
             stream_finished = true
             if idle_timer then vim.fn.timer_stop(idle_timer) end
-            if on_finish then on_finish(nil, "Request error: " .. data) end
+            if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end
         end
     end,
     on_exit = function(_, return_val)
         if not stream_finished then
             if idle_timer then vim.fn.timer_stop(idle_timer) end
             if return_val ~= 0 then
-                if on_finish then on_finish(nil, "Request exited with code: " .. return_val) end
+                if on_finish then vim.schedule(function() on_finish(nil, "Request exited with code: " .. return_val) end) end
             else
-                if on_finish then on_finish({ role = "assistant", content = full_response }, nil) end
+                if on_finish then vim.schedule(function() on_finish({ role = "assistant", content = full_response }, nil) end) end
             end
         end
     end,
   })
 
-  reset_idle_timer()
   job:start()
 end
 
