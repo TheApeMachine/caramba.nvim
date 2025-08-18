@@ -504,15 +504,24 @@ M._make_request = function(request_data, on_chunk, on_finish)
   -- Idle timeout handling: kill the job if no chunks within idle_timeout_ms
   local job = nil
   local idle_timer = nil
-  local function reset_idle_timer()
-    if idle_timer then vim.fn.timer_stop(idle_timer) end
-    idle_timer = vim.fn.timer_start(idle_timeout_ms, function()
+  local function safe_timer_stop()
+    if idle_timer then
       vim.schedule(function()
-        if job then job:shutdown() end
-        if not stream_finished and on_finish then
-          stream_finished = true
-          on_finish(nil, "Idle timeout: no data received for " .. tostring(idle_timeout_ms) .. "ms")
-        end
+        pcall(vim.fn.timer_stop, idle_timer)
+      end)
+    end
+  end
+  local function safe_timer_start()
+    vim.schedule(function()
+      if idle_timer then pcall(vim.fn.timer_stop, idle_timer) end
+      idle_timer = vim.fn.timer_start(idle_timeout_ms, function()
+        vim.schedule(function()
+          if job then job:shutdown() end
+          if not stream_finished and on_finish then
+            stream_finished = true
+            on_finish(nil, "Idle timeout: no data received for " .. tostring(idle_timeout_ms) .. "ms")
+          end
+        end)
       end)
     end)
   end
@@ -522,14 +531,14 @@ M._make_request = function(request_data, on_chunk, on_finish)
     args = curl_args,
     on_stdout = function(_, data)
         if data then
-            reset_idle_timer()
+            safe_timer_start()
             for line in string.gmatch(data, "[^\r\n]+") do
                 if line:match("^data: ") then
                     local json_str = line:sub(7)
 
                     if json_str == "[DONE]" then
                         stream_finished = true
-                        if idle_timer then vim.fn.timer_stop(idle_timer) end
+                        safe_timer_stop()
                         local final_message = {
                             role = "assistant",
                             content = full_response,
@@ -585,13 +594,13 @@ M._make_request = function(request_data, on_chunk, on_finish)
     on_stderr = function(_, data)
         if data and not stream_finished then
             stream_finished = true
-            if idle_timer then vim.fn.timer_stop(idle_timer) end
+            safe_timer_stop()
             if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end
         end
     end,
     on_exit = function(_, return_val)
         if not stream_finished then
-            if idle_timer then vim.fn.timer_stop(idle_timer) end
+            safe_timer_stop()
             if return_val ~= 0 then
                 if on_finish then vim.schedule(function() on_finish(nil, "Request exited with code: " .. return_val) end) end
             else
