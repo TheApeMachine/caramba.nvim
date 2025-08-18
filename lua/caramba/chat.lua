@@ -222,18 +222,26 @@ local function format_message(msg)
   local lines = {}
 
   -- Add role header
-  if msg.role == "user" then
-    table.insert(lines, "## You:")
+  if msg.title then
+    local hdr = "## " .. msg.title
+    if msg.folded then hdr = hdr .. " (folded)" end
+    table.insert(lines, hdr)
   else
-    table.insert(lines, "## Assistant:")
+    if msg.role == "user" then
+      table.insert(lines, "## You:")
+    else
+      table.insert(lines, "## Assistant:")
+    end
   end
 
   table.insert(lines, "")
 
-  -- Add content, ensuring it's not nil
-  local content = msg.content or ""
-  for line in content:gmatch("[^\n]+") do
-    table.insert(lines, line)
+  -- Add content unless folded; ensure not nil
+  if not msg.folded then
+    local content = msg.content or ""
+    for line in content:gmatch("[^\n]+") do
+      table.insert(lines, line)
+    end
   end
 
   table.insert(lines, "")
@@ -358,6 +366,30 @@ M.open = function()
   vim.keymap.set("n", "y", M._copy_code_at_cursor, opts)
   vim.keymap.set("n", "d", M.clear_history, opts)
   vim.keymap.set("n", "r", M._revert_last_change, opts)
+  vim.keymap.set("n", "z", function()
+    -- Toggle fold on the section under cursor (messages with a title)
+    local line = vim.api.nvim_get_current_line()
+    if line:match('^## ') then
+      -- Find matching message and toggle
+      local idx = 0
+      local seen = 0
+      for _, msg in ipairs(M._chat_state.history) do
+        if msg.title or msg.role then
+          seen = seen + 1
+          if seen == 1 then idx = 1 end
+        end
+      end
+      -- Simple heuristic: toggle last assistant/system tool message
+      for i = #M._chat_state.history, 1, -1 do
+        local m = M._chat_state.history[i]
+        if m and m.title then
+          m.folded = not m.folded
+          break
+        end
+      end
+      M._render_chat()
+    end
+  end, opts)
 end
 
 -- Close chat window
@@ -561,6 +593,57 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     full_content = full_content, -- Full content for API
   })
 
+  -- Context Discovery diagnostics (foldable, non-LLM)
+  do
+    local diag_lines = {}
+    table.insert(diag_lines, "- Open buffers: " .. tostring(#open_buffers))
+    if #open_buffers > 0 then
+      for _, b in ipairs(open_buffers) do
+        local mark = b.modified and "*" or ""
+        table.insert(diag_lines, string.format("  - %s%s (%s)", b.path, mark, b.filetype))
+      end
+    end
+    table.insert(diag_lines, "- Memory results: " .. tostring(#(memory_results or {})))
+    if #memory_results > 0 then
+      for i, r in ipairs(memory_results) do
+        if i > 5 then break end
+        table.insert(diag_lines, string.format("  - %.2f: %s", r.relevance or 0, (r.entry and r.entry.content) and r.entry.content:sub(1, 80) or ""))
+      end
+    end
+    table.insert(M._chat_state.history, {
+      role = 'assistant',
+      title = 'Context Discovery',
+      content = table.concat(diag_lines, "\n"),
+      folded = true,
+    })
+  end
+
+  -- Prompt Engineering: run visibly and append improved prompt as assistant message
+  local cfg = config.get() or {}
+  if (cfg.pipeline and cfg.pipeline.enable_prompt_engineering) ~= false then
+    local pe_msg = {
+      { role = 'system', content = 'Rewrite the following request into a precise, concise engineering task. Keep semantics, remove fluff. Output the improved prompt only.' },
+      { role = 'user', content = cleaned_message },
+    }
+    -- Create a dedicated streaming message with folding support
+    local idx = #M._chat_state.history + 1
+    M._chat_state.history[idx] = { role = 'assistant', title = 'Improved Prompt', content = '', streaming = true, folded = false }
+    M._render_chat()
+    llm.request(pe_msg, { stream = true, task = 'chat' }, function(chunk, is_complete)
+      if is_complete then
+        M._chat_state.history[idx].streaming = false
+        -- Fold the section when complete
+        M._chat_state.history[idx].folded = true
+        M._render_chat()
+        return
+      end
+      if type(chunk) == 'string' and chunk ~= '' then
+        M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
+        M._render_chat()
+      end
+    end)
+  end
+
   -- Store user message in memory
   memory.store(
     original_message,
@@ -585,6 +668,34 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   push_activity('Requesting model...')
   logger.info('Starting agentic response')
   M._start_agentic_response(full_content)
+
+  -- If the instruction looks complex, stream a Plan Review helper (foldable)
+  local lower_instruction = (cleaned_message or ''):lower()
+  local complex = false
+  for _, kw in ipairs({ 'implement','create','build','design','refactor','migrate','convert','add','rewrite' }) do
+    if lower_instruction:match('^%s*' .. kw) then complex = true break end
+  end
+  if complex then
+    local outline_prompt = {
+      { role = 'system', content = 'You are a technical lead. Provide a concise plan review: risks, missing info, and a step-by-step outline (5-10 steps). Keep it actionable.' },
+      { role = 'user', content = string.format('Task:\n%s\n\nContext summary (files open):\n%s', cleaned_message, table.concat(vim.tbl_map(function(b) return b.path end, open_buffers or {}), '\n')) },
+    }
+    local idx = #M._chat_state.history + 1
+    M._chat_state.history[idx] = { role = 'assistant', title = 'Plan Review', content = '', streaming = true, folded = false }
+    M._render_chat()
+    llm.request(outline_prompt, { stream = true, task = 'plan' }, function(chunk, is_complete)
+      if is_complete then
+        M._chat_state.history[idx].streaming = false
+        M._chat_state.history[idx].folded = true
+        M._render_chat()
+        return
+      end
+      if type(chunk) == 'string' and chunk ~= '' then
+        M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
+        M._render_chat()
+      end
+    end)
+  end
 end
 
 M._start_agentic_response = function(full_content)
@@ -623,18 +734,36 @@ M._start_agentic_response = function(full_content)
         if err then
           M._handle_response_error(err)
         else
-          -- Self-reflection pass (optional)
+          -- Self-reflection pass (optional) streamed and foldable
           local last_user = ''
           for i = #M._chat_state.history - 1, 1, -1 do
             local msg = M._chat_state.history[i]
             if msg and msg.role == 'user' and msg.content then last_user = msg.content break end
           end
-          orchestrator.self_reflect(last_user, final_response, function(review)
-            if review and review ~= '' then
-              table.insert(M._chat_state.history, { role = 'assistant', content = "\n\n### Self-Reflection\n" .. review })
-            end
+          local cfg = config.get() or {}
+          if (cfg.pipeline and cfg.pipeline.enable_self_reflection) ~= false then
+            local prompt = {
+              { role = 'system', content = 'You are a strict code reviewer. In 5-8 bullet points, critique the assistant answer for correctness, safety, missing context, and propose 1-2 concrete improvements. Keep it concise.' },
+              { role = 'user', content = string.format('User request:\n%s\n\nAssistant answer:\n%s', last_user or '', final_response or '') }
+            }
+            local idx = #M._chat_state.history + 1
+            M._chat_state.history[idx] = { role = 'assistant', title = 'Self-Reflection', content = '', streaming = true, folded = false }
+            M._render_chat()
+            llm.request(prompt, { stream = true, task = 'chat' }, function(chunk, is_complete)
+              if is_complete then
+                M._chat_state.history[idx].streaming = false
+                M._chat_state.history[idx].folded = true
+                M._handle_response_complete(final_response)
+                return
+              end
+              if type(chunk) == 'string' and chunk ~= '' then
+                M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
+                M._render_chat()
+              end
+            end)
+          else
             M._handle_response_complete(final_response)
-          end)
+          end
         end
       end)
     end

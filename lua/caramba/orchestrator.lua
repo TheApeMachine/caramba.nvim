@@ -235,18 +235,7 @@ function M.build_enriched_prompt(user_message)
 	local parts = {}
 	local cfg = config.get() or {}
 
-	-- Prompt Engineering: transform user message (optional)
-	if (cfg.pipeline and cfg.pipeline.enable_prompt_engineering) ~= false then
-		local pe_msg = {
-			{ role = 'system', content = 'Rewrite the following request into a precise, concise engineering task. Keep semantics, remove fluff. Output the improved prompt only.' },
-			{ role = 'user', content = user_message },
-		}
-		local improved = llm.request_sync(pe_msg, { task = 'chat' })
-		if type(improved) == 'string' and improved ~= '' then
-			parts[#parts+1] = '## Improved Prompt'
-			parts[#parts+1] = improved
-		end
-	end
+    -- Prompt Engineering is surfaced in chat for visibility; avoid blocking here.
 
 	-- Primary Tree-sitter context with siblings/imports
 	local target_buf = pick_code_bufnr()

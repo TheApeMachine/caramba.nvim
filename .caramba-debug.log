@@ -5,3 +5,10 @@
 [2025-08-18 11:48:27] INFO  Chat send | {
   preview = "Please improve this code"
 }
+[2025-08-18 11:52:14] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-18 11:52:24] INFO  Chat send | {
+  preview = "Please improve this code"
+}
