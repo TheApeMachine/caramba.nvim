@@ -14,6 +14,7 @@ local memory = require('caramba.memory')
 local state = require('caramba.state')
 
 local openai_tools = require('caramba.openai_tools')
+local orchestrator = require('caramba.orchestrator')
 -- Add highlight namespace and activity helper
 local chat_hl_ns = vim.api.nvim_create_namespace('CarambaChatHL')
 local function push_activity(text)
@@ -491,6 +492,12 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   -- Build full prompt with contexts
   local full_content = cleaned_message
 
+  -- Orchestrator: prepend enriched prompt section
+  local enrich = orchestrator.build_enriched_prompt(cleaned_message)
+  if enrich and enrich ~= '' then
+    full_content = full_content .. "\n\n" .. enrich
+  end
+
   -- Add open buffers context
   if #open_buffers > 0 then
     full_content = full_content .. "\n\n## Open Files Context:\n"
@@ -635,6 +642,10 @@ M._handle_response_complete = function(final_response)
   if last_message and last_message.role == "assistant" then
     last_message.content = final_response
     last_message.streaming = false
+    -- Store to memory via orchestrator
+    local prior = M._chat_state.history[#M._chat_state.history - 1]
+    local user_text = prior and prior.role == 'user' and prior.content or ''
+    orchestrator.postprocess_response(user_text, final_response)
     stop_animation()
     M._render_chat()
   end

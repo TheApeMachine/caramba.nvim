@@ -65,4 +65,8 @@ function M.setup(opts)
   vim.notify("Caramba.nvim is ready!", vim.log.levels.INFO)
 end
 
+-- Canonicalize module aliases to avoid duplicate-require warnings
+package.loaded['caramba'] = M
+package.loaded['caramba.init'] = M
+
 return M 
