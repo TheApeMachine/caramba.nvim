@@ -233,6 +233,20 @@ end
 --- @return string extra_markdown
 function M.build_enriched_prompt(user_message)
 	local parts = {}
+	local cfg = config.get() or {}
+
+	-- Prompt Engineering: transform user message (optional)
+	if (cfg.pipeline and cfg.pipeline.enable_prompt_engineering) ~= false then
+		local pe_msg = {
+			{ role = 'system', content = 'Rewrite the following request into a precise, concise engineering task. Keep semantics, remove fluff. Output the improved prompt only.' },
+			{ role = 'user', content = user_message },
+		}
+		local improved = llm.request_sync(pe_msg, { task = 'chat' })
+		if type(improved) == 'string' and improved ~= '' then
+			parts[#parts+1] = '## Improved Prompt'
+			parts[#parts+1] = improved
+		end
+	end
 
 	-- Primary Tree-sitter context with siblings/imports
 	local target_buf = pick_code_bufnr()
@@ -268,7 +282,54 @@ function M.build_enriched_prompt(user_message)
 		end
 	end
 
+	-- Compact recall pack from memory module
+	local recall = memory.build_recall_pack(user_message, ctx)
+	if recall and recall ~= '' then
+		table.insert(parts, '')
+		table.insert(parts, recall)
+	end
+
+	-- Optional: lightweight self-reflection scaffolding prompt to guide the model
+	if (cfg.pipeline and cfg.pipeline.enable_self_reflection) ~= false then
+		parts[#parts+1] = '\n## Self-Check Checklist'
+		parts[#parts+1] = '- Verify correctness and edge cases\n- Follow file conventions and style\n- Prefer minimal edits with tests in mind\n- If unsure, propose a plan and ask clarifying questions'
+	end
+
+	-- Recent git changes to provide temporal context (best-effort)
+	local ok_git, recent = pcall(function()
+		local lines = vim.fn.systemlist("git --no-pager log -n 3 --pretty=format:%h %s --name-only")
+		return lines
+	end)
+	if ok_git and recent and #recent > 0 then
+		parts[#parts+1] = '\n## Recent Changes (git)'
+		local count = 0
+		for _, l in ipairs(recent) do
+			if l ~= '' then
+				parts[#parts+1] = ('- ' .. l)
+				count = count + 1
+				if count >= 12 then break end
+			end
+		end
+	end
+
 	return table.concat(parts, "\n")
+end
+
+-- Produce a short self-reflection critique of the assistant reply
+function M.self_reflect(user_message, assistant_text, callback)
+  local cfg = config.get() or {}
+  if (cfg.pipeline and cfg.pipeline.enable_self_reflection) == false then
+    if callback then callback(nil) end
+    return
+  end
+  local prompt = {
+    { role = 'system', content = 'You are a strict code reviewer. In 5-8 bullet points, critique the assistant answer for correctness, safety, missing context, and propose 1-2 concrete improvements. Keep it concise.' },
+    { role = 'user', content = string.format('User request:\n%s\n\nAssistant answer:\n%s', user_message or '', assistant_text or '') }
+  }
+  llm.request(prompt, { task = 'chat' }, function(result, err)
+    if err then logger.warn('self_reflect error', err) end
+    if callback then callback(type(result) == 'string' and result or nil) end
+  end)
 end
 
 -- Merge simple deltas into planner state (set-based uniqueness)
@@ -353,6 +414,8 @@ end
 function M.update_plan_from_prompt(user_message)
 	local ctx = context.collect({ include_siblings = true, bufnr = pick_code_bufnr() })
 	local summary = summarize_plan() or ''
+	local cfg = config.get() or {}
+	if (cfg.pipeline and cfg.pipeline.enable_auto_planning) == false then return end
 	local prompt = string.format([[User message:
 %s
 
@@ -410,6 +473,27 @@ Return JSON with updated goals, current_tasks, known_issues.]], user_message or 
 			logger.info('Planner post-response updated')
 		end
 	end)
+
+	-- Memory extraction from response (entities/decisions/commands)
+	local cfg = config.get() or {}
+	if (cfg.pipeline and cfg.pipeline.enable_memory_extraction) ~= false then
+		local mem_prompt = {
+			{ role = 'system', content = 'Extract up to 5 short memory items from the assistant response (facts, decisions, learned patterns, commands). Return as JSON array of strings.' },
+			{ role = 'user', content = assistant_text or '' },
+		}
+		llm.request(mem_prompt, { response_format = { type = 'json_object' }, task = 'chat' }, function(result)
+			local arr = nil
+			if type(result) == 'table' then arr = result
+			elseif type(result) == 'string' then local ok, obj = pcall(vim.json.decode, result); if ok then arr = obj end end
+			if type(arr) == 'table' then
+				for _, item in ipairs(arr) do
+					if type(item) == 'string' and item ~= '' then
+						memory.store(item, { context = 'extracted_memory', source = 'assistant_response' }, { 'caramba', 'memory', 'extracted' })
+					end
+				end
+			end
+		end)
+	end
 end
 
 return M

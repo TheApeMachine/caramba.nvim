@@ -135,6 +135,16 @@ M.defaults = {
     level = 'debug',       -- trace|debug|info|warn|error
     max_size_bytes = 2097152, -- 2MB rotation threshold
   },
+  pipeline = {
+    enable_prompt_engineering = true,
+    enable_self_reflection = true,
+    enable_memory_extraction = true,
+    enable_auto_planning = true,
+  },
+  memory = {
+    extracted_ttl_days = 30,
+    max_entries = 5000,
+  },
   -- Agent/Chat loop
   chat = {
     max_tool_iterations = 5,

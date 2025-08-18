@@ -623,7 +623,18 @@ M._start_agentic_response = function(full_content)
         if err then
           M._handle_response_error(err)
         else
-          M._handle_response_complete(final_response)
+          -- Self-reflection pass (optional)
+          local last_user = ''
+          for i = #M._chat_state.history - 1, 1, -1 do
+            local msg = M._chat_state.history[i]
+            if msg and msg.role == 'user' and msg.content then last_user = msg.content break end
+          end
+          orchestrator.self_reflect(last_user, final_response, function(review)
+            if review and review ~= '' then
+              table.insert(M._chat_state.history, { role = 'assistant', content = "\n\n### Self-Reflection\n" .. review })
+            end
+            M._handle_response_complete(final_response)
+          end)
         end
       end)
     end
