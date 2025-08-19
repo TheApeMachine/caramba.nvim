@@ -14,6 +14,13 @@ local config = require('caramba.config')
 local planner = require('caramba.planner')
 local llm = require('caramba.llm')
 local logger = require('caramba.logger')
+local memory_vector = require('caramba.memory_vector')
+local memory_vector_bin = require('caramba.memory_vector_bin')
+local utils = require('caramba.utils')
+
+-- Forward declarations
+local request_plan_delta
+local merge_plan_delta
 
 -- Configurable limits
 local RESPONSE_STORE_CHAR_LIMIT = ((config.get().performance or {}).response_store_char_limit) or 2000
@@ -303,7 +310,72 @@ function M.build_enriched_prompt(user_message)
 		end
 	end
 
+	-- Reviewer recommendations file (if present)
+	local rec_path = vim.fn.stdpath('data') .. '/caramba/recommendations.md'
+	if utils.file_exists(rec_path) then
+		local rec = utils.read_file(rec_path)
+		if rec and rec ~= '' then
+			local max = 3000
+			if #rec > max then rec = rec:sub(#rec - max + 1) end -- keep most recent part
+			table.insert(parts, '\n## Reviewer Recommendations (recent)')
+			table.insert(parts, rec)
+		end
+	end
+
 	return table.concat(parts, "\n")
+end
+
+-- Convert a PM markdown summary into plan delta and merge it
+function M.update_plan_from_markdown(markdown_text, context_text)
+  if not markdown_text or markdown_text == '' then return end
+  local prompt = string.format([[You are a planning assistant. Convert the following markdown plan into JSON with keys: goals[], current_tasks[], known_issues[]. No prose.
+
+Context:
+%s
+
+Plan markdown:
+%s
+]], context_text or '', markdown_text)
+  request_plan_delta(prompt, function(delta)
+    if delta then
+      merge_plan_delta(delta)
+      vim.schedule(function() vim.notify('Planner: plan updated from markdown', vim.log.levels.INFO) end)
+    end
+  end)
+end
+
+-- Warm vector store from memory and a small sample of project files
+function M.warm_vector_store()
+  local ok = pcall(function()
+    local entries = (memory._memory_cache or {}).entries or {}
+    local added = 0
+    for i = math.max(1, #entries - 100), #entries do
+      local e = entries[i]
+      if e and e.content then
+        memory_vector_bin.add_from_text(e.content:sub(1, 1000), { snippet = e.content:sub(1, 160), source = 'memory_entry' })
+        added = added + 1
+        if added >= 50 then break end
+      end
+    end
+    local root = utils.get_project_root()
+    local samples = vim.fn.glob(root .. '/lua/**/*.lua', true, true)
+    local count = 0
+    for _, path in ipairs(samples) do
+      local stat = vim.loop.fs_stat(path)
+      if stat and stat.size and stat.size < 20000 then
+        local okr, text = pcall(function() return table.concat(vim.fn.readfile(path), '\n') end)
+        if okr and text and text ~= '' then
+          memory_vector_bin.add_from_text(text:sub(1, 3000), { file = path, source = 'code_sample' })
+          count = count + 1
+          if count >= 25 then break end
+        end
+      end
+    end
+    logger.info('Vector warmup complete', { memory = added, files = count })
+  end)
+  if not ok then
+    logger.warn('Vector warmup failed')
+  end
 end
 
 -- Produce a short self-reflection critique of the assistant reply
@@ -324,7 +396,7 @@ function M.self_reflect(user_message, assistant_text, callback)
 end
 
 -- Merge simple deltas into planner state (set-based uniqueness)
-local function merge_plan_delta(delta)
+merge_plan_delta = function(delta)
 	if type(delta) ~= 'table' then return end
 	logger.debug('Merging plan delta', delta)
 	local plan = state.get().planner or {}
@@ -373,7 +445,7 @@ local function merge_plan_delta(delta)
 end
 
 -- Ask LLM for plan deltas
-local function request_plan_delta(prompt_text, callback)
+request_plan_delta = function(prompt_text, callback)
 	local messages = {
 		{ role = 'system', content = [[You maintain a concise implementation plan. Given input, output ONLY JSON with keys: goals[], current_tasks[], known_issues[]. No prose.]] },
 		{ role = 'user', content = prompt_text },
@@ -436,7 +508,8 @@ function M.postprocess_response(user_message, assistant_text)
 		local ok_fp, fp = pcall(function() return vim.fn.expand('%:p') end)
 		local tags = { "caramba", "assistant_response" }
 		if ctx and ctx.language then table.insert(tags, ctx.language) end
-		memory.store(assistant_text:sub(1, RESPONSE_STORE_CHAR_LIMIT), {
+		local snippet = assistant_text:sub(1, RESPONSE_STORE_CHAR_LIMIT)
+		memory.store(snippet, {
 			context = "assistant_response",
 			file_path = ctx.file_path or (ok_fp and fp or ''),
 			language = ctx.language or (ok_ft and ft or ''),
@@ -444,6 +517,10 @@ function M.postprocess_response(user_message, assistant_text)
 			timestamp = vim.fn.localtime(),
 		}, tags)
 		logger.debug('Stored assistant response to memory')
+		-- Also vectorize a short snippet for future recall
+		pcall(function()
+			memory_vector_bin.add_from_text(snippet, { snippet = snippet, source = 'assistant_response', file = ctx.file_path or '' })
+		end)
 	end
 	-- Plan delta from response
 	local plan_summary = summarize_plan() or ''

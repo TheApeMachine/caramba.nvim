@@ -1,0 +1,82 @@
+[2025-08-19 03:08:29] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-19 03:08:37] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-19 03:08:46] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-19 03:08:46] DEBUG Enrichment start
+[2025-08-19 03:08:46] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-19 03:08:46] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-19 03:08:46] DEBUG Enrichment recall pack added | {
+  len = 6552
+}
+[2025-08-19 03:08:46] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-19 03:08:46] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-19 03:08:46] INFO  PE stream start
+[2025-08-19 03:08:46] INFO  LLM stream start provider=openai
+[2025-08-19 03:08:46] DEBUG Stored user message to memory
+[2025-08-19 03:08:46] INFO  LLM stream start provider=openai
+[2025-08-19 03:08:46] INFO  Starting agentic response
+[2025-08-19 03:08:46] DEBUG Agentic response placeholder added
+[2025-08-19 03:08:46] DEBUG Chat session send initiated
+[2025-08-19 03:08:46] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-19 03:08:46] INFO  PE stream complete
+[2025-08-19 03:08:46] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-19 03:09:07] DEBUG Tool feedback chunk | 
+
+🔧 Using tool: `write_file`...
+
+
+[2025-08-19 03:09:07] DEBUG Tool feedback chunk | 
+
+Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
+
+
+[2025-08-19 03:09:07] DEBUG Tool feedback chunk | 
+
+Tool write_file: presenting diff for approval
+
+
+[2025-08-19 03:09:07] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
+
+
+[2025-08-19 03:09:10] INFO  LLM stream start provider=openai
+[2025-08-19 03:09:11] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-19 03:09:11] DEBUG Stored assistant response to memory
+[2025-08-19 03:09:11] INFO  LLM stream start provider=openai
+[2025-08-19 03:09:11] INFO  LLM stream start provider=openai
+[2025-08-19 03:09:11] INFO  Response complete | {
+  chars = 1005
+}
+[2025-08-19 03:09:11] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-19 03:09:11] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}

@@ -123,6 +123,31 @@ local function stop_animation()
   end
 end
 
+-- Helper: stream an LLM section into a titled, foldable assistant message
+local function stream_section(title, system_prompt, user_text, task, on_done)
+  local idx = #M._chat_state.history + 1
+  M._chat_state.history[idx] = { role = 'assistant', title = title, content = '', streaming = true, folded = false }
+  M._render_chat()
+  local messages = {
+    { role = 'system', content = system_prompt },
+    { role = 'user', content = user_text },
+  }
+  logger.info(title .. ' stream start')
+  llm.request_stream(messages, { task = task or 'chat' }, function(delta)
+    if type(delta) == 'string' and delta ~= '' then
+      logger.debug(title .. ' chunk', delta:sub(1, 160))
+      M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. delta
+      M._render_chat()
+    end
+  end, function(_, err)
+    logger.info(title .. ' stream complete', err or '')
+    M._chat_state.history[idx].streaming = false
+    M._chat_state.history[idx].folded = true
+    M._render_chat()
+    if on_done then on_done(M._chat_state.history[idx].content or '') end
+  end)
+end
+
 -- Chat state (centralized via state.lua)
 do
   local defaults = {
@@ -610,32 +635,54 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     })
   end
 
-  -- Prompt Engineering: run visibly and append improved prompt as assistant message
+  -- Defer main agent until pre-stages complete
   local cfg = config.get() or {}
+  local function start_main_with(improved)
+    local full2 = full_content
+    if improved and improved ~= '' then
+      full2 = '## Improved Prompt\n' .. improved .. '\n\n' .. full2
+    end
+    push_activity('Updating plan (pre-send)')
+    pcall(orchestrator.update_plan_from_prompt, improved and improved or cleaned_message)
+    push_activity('Requesting model...')
+    logger.info('Starting agentic response')
+    M._start_agentic_response(full2)
+  end
+
+  local function run_memory_recall_then_start(improved)
+    if (cfg.pipeline and cfg.pipeline.enable_self_reflection) == nil then end -- no-op keep cfg used
+    -- Simple LLM-driven memory recall on top of local recall (already added separately)
+    local sys = 'You are a memory manager. Given the user request, propose up to 5 brief context additions from long-term memory that would help. Use bullet points only.'
+    stream_section('Memory Manager (Recall)', sys, improved or cleaned_message, 'chat', function(_)
+      start_main_with(improved)
+    end)
+  end
+
   if (cfg.pipeline and cfg.pipeline.enable_prompt_engineering) ~= false then
-    local pe_msg = {
-      { role = 'system', content = 'Rewrite the following request into a precise, concise engineering task. Keep semantics, remove fluff. Output the improved prompt only.' },
-      { role = 'user', content = cleaned_message },
-    }
-    -- Create a dedicated streaming message with folding support
+    local sys = 'Rewrite the following request into a precise, concise engineering task. Keep semantics, remove fluff. Output only the improved prompt.'
+    stream_section('Improved Prompt', sys, cleaned_message, 'chat', function(improved)
+      run_memory_recall_then_start(improved)
+    end)
+  else
+    run_memory_recall_then_start(nil)
+  end
+
+  -- Memory recall (vector store): stream a short note of recalled items
+  do
     local idx = #M._chat_state.history + 1
-    M._chat_state.history[idx] = { role = 'assistant', title = 'Improved Prompt', content = '', streaming = true, folded = false }
+    M._chat_state.history[idx] = { role = 'assistant', title = 'Memory Recall', content = '', streaming = true, folded = false }
     M._render_chat()
-    logger.info('PE stream start')
-    llm.request(pe_msg, { stream = true, task = 'chat' }, function(chunk, is_complete)
-      if is_complete then
-        logger.info('PE stream complete')
-        M._chat_state.history[idx].streaming = false
-        -- Fold the section when complete
-        M._chat_state.history[idx].folded = true
-        M._render_chat()
-        return
+    -- Prefer binary vector store if available
+    local vector_mod = require('caramba.memory_vector_bin')
+    vector_mod.recall(cleaned_message, 5, function(items)
+      local lines = {}
+      for _, it in ipairs(items or {}) do
+        table.insert(lines, string.format('- [%.2f] %s', it.score or 0, (it.meta and it.meta.snippet) or (it.meta and it.meta.content) or ''))
       end
-      if type(chunk) == 'string' and chunk ~= '' then
-        logger.debug('PE chunk', chunk:sub(1, 120))
-        M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
-        M._render_chat()
-      end
+      M._chat_state.history[idx].content = table.concat(lines, '\n')
+      M._chat_state.history[idx].streaming = false
+      M._chat_state.history[idx].folded = true
+      M._render_chat()
     end)
   end
 
@@ -657,14 +704,9 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
   -- Render immediately to show user message
   M._render_chat()
 
-  -- Start agentic response directly
-  push_activity('Updating plan (pre-send)')
-  pcall(orchestrator.update_plan_from_prompt, cleaned_message)
-  push_activity('Requesting model...')
-  logger.info('Starting agentic response')
-  M._start_agentic_response(full_content)
+  -- Main agent start is now triggered after pre-stages
 
-  -- If the instruction looks complex, stream a Plan Review helper (foldable)
+  -- If the instruction looks complex, stream a Plan Review helper (foldable) in background
   local lower_instruction = (cleaned_message or ''):lower()
   local complex = false
   for _, kw in ipairs({ 'implement','create','build','design','refactor','migrate','convert','add','rewrite' }) do
@@ -679,19 +721,17 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     M._chat_state.history[idx] = { role = 'assistant', title = 'Plan Review', content = '', streaming = true, folded = false }
     M._render_chat()
     logger.info('Plan Review stream start')
-    llm.request(outline_prompt, { stream = true, task = 'plan' }, function(chunk, is_complete)
-      if is_complete then
-        logger.info('Plan Review stream complete')
-        M._chat_state.history[idx].streaming = false
-        M._chat_state.history[idx].folded = true
-        M._render_chat()
-        return
-      end
-      if type(chunk) == 'string' and chunk ~= '' then
-        logger.debug('Plan Review chunk', chunk:sub(1, 120))
-        M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
+    llm.request_stream(outline_prompt, { task = 'plan' }, function(delta)
+      if type(delta) == 'string' and delta ~= '' then
+        logger.debug('Plan Review chunk', delta:sub(1, 120))
+        M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. delta
         M._render_chat()
       end
+    end, function(_, err)
+      M._chat_state.history[idx].streaming = false
+      M._chat_state.history[idx].folded = true
+      logger.info('Plan Review stream complete', err or '')
+      M._render_chat()
     end)
   end
 end
@@ -732,36 +772,65 @@ M._start_agentic_response = function(full_content)
         if err then
           M._handle_response_error(err)
         else
-          -- Self-reflection pass (optional) streamed and foldable
+          -- Post-execution pipeline: Self-Reflection -> Reviewer -> PM Update -> Memory Extract
           local last_user = ''
           for i = #M._chat_state.history - 1, 1, -1 do
             local msg = M._chat_state.history[i]
             if msg and msg.role == 'user' and msg.content then last_user = msg.content break end
           end
           local cfg = config.get() or {}
-          if (cfg.pipeline and cfg.pipeline.enable_self_reflection) ~= false then
-            local prompt = {
-              { role = 'system', content = 'You are a strict code reviewer. In 5-8 bullet points, critique the assistant answer for correctness, safety, missing context, and propose 1-2 concrete improvements. Keep it concise.' },
-              { role = 'user', content = string.format('User request:\n%s\n\nAssistant answer:\n%s', last_user or '', final_response or '') }
-            }
-            local idx = #M._chat_state.history + 1
-            M._chat_state.history[idx] = { role = 'assistant', title = 'Self-Reflection', content = '', streaming = true, folded = false }
-            M._render_chat()
-            llm.request(prompt, { stream = true, task = 'chat' }, function(chunk, is_complete)
-              if is_complete then
-                M._chat_state.history[idx].streaming = false
-                M._chat_state.history[idx].folded = true
-                M._handle_response_complete(final_response)
-                return
-              end
-              if type(chunk) == 'string' and chunk ~= '' then
-                M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
-                M._render_chat()
-              end
-            end)
-          else
-            M._handle_response_complete(final_response)
+          local function write_recommendations(md)
+            local dir = vim.fn.stdpath('data') .. '/caramba'
+            vim.fn.mkdir(dir, 'p')
+            local path = dir .. '/recommendations.md'
+            local f = io.open(path, 'a')
+            if f then
+              f:write('\n\n# Review @ ' .. os.date('%Y-%m-%d %H:%M:%S') .. '\n\n')
+              f:write(md)
+              f:write('\n')
+              f:close()
+            end
           end
+          local function memory_extract_and_finish(context_blob)
+            local sys = 'Extract up to 5 short, independent memory items (facts, decisions, lessons). Output as simple bullets, no prose.'
+            stream_section('Memory Extract', sys, context_blob, 'chat', function(mem_md)
+              -- Store each bullet as memory and vector
+              for line in string.gmatch(mem_md or '', '[^\n]+') do
+                local s = line:gsub('^%s*[-*]%s*', '')
+                if s ~= '' then
+                  require('caramba.memory').store(s, { context = 'extracted_memory' }, { 'caramba','memory','extracted' })
+                  require('caramba.memory_vector').add_from_text(s, { snippet = s, source = 'extract' })
+                end
+              end
+              M._handle_response_complete(final_response)
+            end)
+          end
+          local function pm_update_then_extract(context_blob)
+            local sys = 'You are a Project Manager. Update the TODO/DOING/DONE plan based on the execution and review. Output a concise markdown board.'
+            stream_section('Project Manager (Update)', sys, context_blob, 'plan', function(_)
+              memory_extract_and_finish(context_blob)
+            end)
+          end
+          local function reviewer_then_pm(context_blob)
+            local sys = 'You are a Reviewer of the process (not just code). Provide actionable recommendations for Prompt Engineer, Memory Manager, Project Manager, and Developer roles. Use short bullets.'
+            stream_section('Reviewer', sys, context_blob, 'chat', function(review_md)
+              write_recommendations(review_md or '')
+              pm_update_then_extract(context_blob)
+            end)
+          end
+          local function start_post_sequence()
+            local context_blob = string.format('User request:\n%s\n\nAssistant answer:\n%s', last_user or '', final_response or '')
+            if (cfg.pipeline and cfg.pipeline.enable_self_reflection) ~= false then
+              local sys = 'You are a strict code reviewer. In 5-8 bullet points, critique the assistant answer for correctness, safety, missing context, and propose 1-2 concrete improvements. Keep it concise.'
+              stream_section('Self-Reflection', sys, context_blob, 'chat', function(reflect_md)
+                local ctx2 = context_blob .. '\n\nSelf-Reflection:\n' .. (reflect_md or '')
+                reviewer_then_pm(ctx2)
+              end)
+            else
+              reviewer_then_pm(context_blob)
+            end
+          end
+          start_post_sequence()
         end
       end)
     end
