@@ -7,6 +7,7 @@ local logger = require('caramba.logger')
 
 M._path = nil
 M._dim = nil
+local has_pack = type(string.pack) == 'function' and type(string.unpack) == 'function'
 
 local function ensure_file(path, dim)
   local f = io.open(path, 'rb')
@@ -46,7 +47,12 @@ function M.setup(opts)
   vim.fn.mkdir(data_dir, 'p')
   M._path = opts.path or (data_dir .. '/memory_vectors.bin')
   local dim = opts.dim or (require('caramba.config').get().search.embedding_dimensions or 512)
-  M._dim = ensure_file(M._path, dim)
+  if has_pack then
+    M._dim = ensure_file(M._path, dim)
+  else
+    -- Fallback to JSONL store if packing is unavailable (LuaJIT)
+    M._dim = dim
+  end
 end
 
 local function add_record(vec, meta)
@@ -65,6 +71,11 @@ end
 function M.add_from_text(text, meta)
   if not text or text == '' then return end
   if not M._path then M.setup() end
+  if not has_pack then
+    -- Delegate to JSONL store when binary pack/unpack is unavailable
+    pcall(function() require('caramba.memory_vector').add_from_text(text, meta) end)
+    return
+  end
   embeddings.generate_embedding(text, function(vec, err)
     if not vec then
       logger.warn('memory_vector_bin: embedding failed', err)
@@ -90,6 +101,10 @@ end
 function M.recall(query_text, top_k, callback)
   top_k = top_k or 5
   if not M._path then M.setup() end
+  if not has_pack then
+    pcall(function() require('caramba.memory_vector').recall(query_text, top_k, callback) end)
+    return
+  end
   embeddings.generate_embedding(query_text or '', function(qvec, err)
     if not qvec then callback({}, err); return end
     local f = io.open(M._path, 'rb')

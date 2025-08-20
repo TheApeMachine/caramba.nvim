@@ -59,6 +59,8 @@ function M.setup(opts)
   -- 4. Initialize other modules that require it
   require('caramba.planner').setup()
   require('caramba.consistency').setup()
+  -- Warm vector store on startup (non-blocking)
+  pcall(function() require('caramba.orchestrator').warm_vector_store() end)
   require('caramba.chat').setup()
   -- Optional: Telescope helpers (registered as commands even if Telescope absent)
   pcall(function()

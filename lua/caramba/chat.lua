@@ -654,7 +654,21 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     -- Simple LLM-driven memory recall on top of local recall (already added separately)
     local sys = 'You are a memory manager. Given the user request, propose up to 5 brief context additions from long-term memory that would help. Use bullet points only.'
     stream_section('Memory Manager (Recall)', sys, improved or cleaned_message, 'chat', function(_)
-      start_main_with(improved)
+      -- For complex tasks, add PM plan stage before main
+      local lower_instruction = (improved or cleaned_message or ''):lower()
+      local complex = false
+      for _, kw in ipairs({ 'implement','create','build','design','refactor','migrate','convert','add','rewrite' }) do
+        if lower_instruction:match('^%s*' .. kw) then complex = true break end
+      end
+      if complex then
+        local sys_pm = 'You are a Project Manager. Update or create a concise plan (TODO/DOING/DONE) for the task. Return a short markdown summary with priorities.'
+        stream_section('Project Manager (Plan)', sys_pm, improved or cleaned_message, 'plan', function(plan_md)
+          pcall(orchestrator.update_plan_from_markdown, plan_md, improved or cleaned_message)
+          start_main_with(improved)
+        end)
+      else
+        start_main_with(improved)
+      end
     end)
   end
 
