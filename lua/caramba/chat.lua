@@ -791,7 +791,12 @@ M._start_agentic_response = function(full_content)
   local initial_messages = {
     {
       role = "system",
-      content = "You are a helpful AI coding assistant, integrated into the Neovim editor. Use the tools provided to help the user achieve their goals.",
+      content = table.concat({
+        "You are a helpful AI coding assistant embedded in Neovim.",
+        "When the user asks for improvements or help, return concrete code edits or patches whenever possible.",
+        "Prefer minimal, directly appliable diffs and code blocks.",
+        "You can call tools when needed, but the final assistant message should include the improved code if requested.",
+      }, " "),
     },
   }
 

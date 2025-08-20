@@ -462,7 +462,7 @@ M._prepare_request = function(messages, tools, stream)
     stream = stream or false,
   }
 
-  local url = api_config.endpoint or (api_config.base_url .. "/chat/completions")
+  local url = api_config.endpoint or ((api_config.base_url or "https://api.openai.com/v1") .. "/chat/completions")
 
   return {
     url = url,
@@ -484,6 +484,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
     "--no-buffer",
     request_data.url,
     "-X", "POST",
+    "--max-time", "45",
   }
 
   for header, value in pairs(request_data.headers) do
@@ -599,9 +600,12 @@ M._make_request = function(request_data, on_chunk, on_finish)
     end,
     on_stderr = function(_, data)
         if data and not stream_finished then
-            stream_finished = true
-            safe_timer_stop()
-            if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end
+            -- Only abort on clear error signals; OpenAI may write keep-alives
+            if data:match("error") or data:match("\n{\") then
+              stream_finished = true
+              safe_timer_stop()
+              if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end
+            end
         end
     end,
     on_exit = function(_, return_val)

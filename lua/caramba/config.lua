@@ -11,11 +11,11 @@ M.defaults = {
   api = {
     openai = {
       endpoint = "https://api.openai.com/v1/chat/completions",
-      model = "o4-mini",
+      model = "gpt-4o-mini",
       temperature = 1,
       max_tokens = 4096,
       api_key = vim.env.OPENAI_API_KEY,
-      models = { "gpt-5-nano", "gpt-5-mini", "gpt-5" },
+      models = { "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo" },
     },
     anthropic = {
       endpoint = "https://api.anthropic.com/v1/messages",
