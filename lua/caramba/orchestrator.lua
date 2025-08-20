@@ -267,12 +267,10 @@ function M.build_enriched_prompt(user_message)
 		end
 	end
 
-	-- Plan summary (short, if present)
-	local plan_summary = summarize_plan()
-	if plan_summary then
-		table.insert(parts, "\n## Plan Summary")
-		table.insert(parts, plan_summary)
-	end
+	-- Plan summary (short, if present) and always include even if empty placeholder
+	local plan_summary = summarize_plan() or '(No plan yet)'
+	table.insert(parts, "\n## Plan Summary")
+	table.insert(parts, plan_summary)
 
 	-- Relevant memory using multiple angles
 	local mem_results = memory.search_multi_angle(user_message, ctx, "coding assistant") or {}

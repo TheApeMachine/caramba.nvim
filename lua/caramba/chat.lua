@@ -645,10 +645,13 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
 
   -- Defer main agent until pre-stages complete
   local cfg = config.get() or {}
-  local function start_main_with(improved)
+  local function start_main_with(improved, mem_additions)
     local full2 = full_content
     if improved and improved ~= '' then
       full2 = '## Improved Prompt\n' .. improved .. '\n\n' .. full2
+    end
+    if mem_additions and mem_additions ~= '' then
+      full2 = '## Memory Additions\n' .. mem_additions .. '\n\n' .. full2
     end
     push_activity('Updating plan (pre-send)')
     pcall(orchestrator.update_plan_from_prompt, improved and improved or cleaned_message)
@@ -661,21 +664,21 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     if (cfg.pipeline and cfg.pipeline.enable_self_reflection) == nil then end -- no-op keep cfg used
     -- Simple LLM-driven memory recall on top of local recall (already added separately)
     local sys = 'You are a memory manager. Given the user request, propose up to 5 brief context additions from long-term memory that would help. Use bullet points only.'
-    stream_section('Memory Manager (Recall)', sys, improved or cleaned_message, 'chat', function(_)
+    stream_section('Memory Manager (Recall)', sys, improved or cleaned_message, 'chat', function(recall_md)
       -- For complex tasks, add PM plan stage before main
       local lower_instruction = (improved or cleaned_message or ''):lower()
       local complex = false
-      for _, kw in ipairs({ 'implement','create','build','design','refactor','migrate','convert','add','rewrite' }) do
+      for _, kw in ipairs({ 'implement','create','build','design','refactor','migrate','convert','add','rewrite','improve','fix','optimize','enhance','update' }) do
         if lower_instruction:match('^%s*' .. kw) then complex = true break end
       end
       if complex then
         local sys_pm = 'You are a Project Manager. Update or create a concise plan (TODO/DOING/DONE) for the task. Return a short markdown summary with priorities.'
         stream_section('Project Manager (Plan)', sys_pm, improved or cleaned_message, 'plan', function(plan_md)
           pcall(orchestrator.update_plan_from_markdown, plan_md, improved or cleaned_message)
-          start_main_with(improved)
+          start_main_with(improved, recall_md)
         end)
       else
-        start_main_with(improved)
+        start_main_with(improved, recall_md)
       end
     end)
   end
