@@ -128,20 +128,28 @@ local function stream_section(title, system_prompt, user_text, task, on_done)
   local idx = #M._chat_state.history + 1
   M._chat_state.history[idx] = { role = 'assistant', title = title, content = '', streaming = true, folded = false }
   M._render_chat()
-  local messages = {
-    { role = 'system', content = system_prompt },
-    { role = 'user', content = user_text },
-  }
   logger.info(title .. ' stream start')
-  llm.request_stream(messages, { task = task or 'chat' }, function(delta)
-    if type(delta) == 'string' and delta ~= '' then
-      logger.debug(title .. ' chunk', delta:sub(1, 160))
-      M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. delta
+  local session = require('caramba.openai_tools').create_chat_session({ { role = 'system', content = system_prompt } }, require('caramba.openai_tools').available_tools)
+  session:send(user_text, function(chunk, err)
+    if err then
+      logger.info(title .. ' stream complete', err)
+      M._chat_state.history[idx].streaming = false
+      M._chat_state.history[idx].folded = true
+      M._render_chat()
+      if on_done then on_done(M._chat_state.history[idx].content or '') end
+      return
+    end
+    if type(chunk) == 'string' and chunk ~= '' then
+      logger.debug(title .. ' chunk', chunk:sub(1, 160))
+      M._chat_state.history[idx].content = (M._chat_state.history[idx].content or '') .. chunk
       M._render_chat()
     end
-  end, function(_, err)
+  end, function(final_message, err)
     logger.info(title .. ' stream complete', err or '')
     M._chat_state.history[idx].streaming = false
+    if final_message and final_message.content and final_message.content ~= '' then
+      M._chat_state.history[idx].content = final_message.content
+    end
     M._chat_state.history[idx].folded = true
     M._render_chat()
     if on_done then on_done(M._chat_state.history[idx].content or '') end

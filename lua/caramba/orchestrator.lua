@@ -105,6 +105,11 @@ end
 local function summarize_plan()
 	local plan_state = state.get().planner or {}
 	local lines = {}
+  -- Ensure we load plan file if empty
+  if (not plan_state or ((plan_state.goals == nil or #plan_state.goals == 0) and (plan_state.current_tasks == nil or #plan_state.current_tasks == 0))) then
+    pcall(function() require('caramba.planner').load_project_plan() end)
+    plan_state = state.get().planner or {}
+  end
 	if plan_state.goals and #plan_state.goals > 0 then
 		table.insert(lines, "Goals:")
 		for i = 1, math.min(5, #plan_state.goals) do
