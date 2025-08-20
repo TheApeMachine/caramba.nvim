@@ -555,3 +555,85 @@ Tool write_file: presenting diff for approval
   code = 0,
   content_len = 0
 }
+[2025-08-20 11:44:35] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 11:44:35] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-20 11:44:45] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-20 11:44:45] DEBUG Enrichment start
+[2025-08-20 11:44:45] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-20 11:44:45] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-20 11:44:45] DEBUG Enrichment recall pack added | {
+  len = 7862
+}
+[2025-08-20 11:44:45] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-20 11:44:45] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-20 11:44:45] INFO  Improved Prompt stream start
+[2025-08-20 11:44:45] DEBUG Stored user message to memory
+[2025-08-20 11:44:49] INFO  Improved Prompt stream complete | 
+[2025-08-20 11:44:49] INFO  Memory Manager (Recall) stream start
+[2025-08-20 11:44:52] INFO  Memory Manager (Recall) stream complete | 
+[2025-08-20 11:44:52] INFO  LLM stream start provider=openai
+[2025-08-20 11:44:52] INFO  Starting agentic response
+[2025-08-20 11:44:52] DEBUG Agentic response placeholder added
+[2025-08-20 11:44:52] DEBUG Chat session send initiated
+[2025-08-20 11:44:52] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:45:18] DEBUG Tool feedback chunk | 
+
+🔧 Using tool: `write_file`...
+
+
+[2025-08-20 11:45:18] DEBUG Tool feedback chunk | 
+
+Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
+
+
+[2025-08-20 11:45:18] DEBUG Tool feedback chunk | 
+
+Tool write_file: presenting diff for approval
+
+
+[2025-08-20 11:45:18] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
+
+
+[2025-08-20 11:45:20] INFO  Self-Reflection stream start
+[2025-08-20 11:45:30] INFO  Self-Reflection stream complete | 
+[2025-08-20 11:45:30] INFO  Reviewer stream start
+[2025-08-20 11:45:37] INFO  Reviewer stream complete | 
+[2025-08-20 11:45:37] INFO  Project Manager (Update) stream start
+[2025-08-20 11:45:43] INFO  Project Manager (Update) stream complete | 
+[2025-08-20 11:45:43] INFO  Memory Extract stream start
+[2025-08-20 11:45:48] INFO  Memory Extract stream complete | 
+[2025-08-20 11:45:48] DEBUG Stored assistant response to memory
+[2025-08-20 11:45:48] INFO  LLM stream start provider=openai
+[2025-08-20 11:45:48] INFO  LLM stream start provider=openai
+[2025-08-20 11:45:48] INFO  Response complete | {
+  chars = 825
+}
+[2025-08-20 11:45:49] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:45:49] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
