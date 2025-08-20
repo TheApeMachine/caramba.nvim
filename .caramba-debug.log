@@ -189,3 +189,51 @@ Tool write_file: presenting diff for approval
 }
 [2025-08-20 01:34:47] INFO  Improved Prompt stream start
 [2025-08-20 01:34:47] INFO  LLM stream start provider=openai
+[2025-08-20 11:28:58] INFO  Improved Prompt stream complete | Stream timeout
+[2025-08-20 11:28:58] INFO  Memory Manager (Recall) stream start
+[2025-08-20 11:28:58] INFO  LLM stream start provider=openai
+[2025-08-20 11:28:58] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:28:58] INFO  Memory Manager (Recall) stream complete | No response received from API
+[2025-08-20 11:28:58] INFO  LLM stream start provider=openai
+[2025-08-20 11:28:58] INFO  Starting agentic response
+[2025-08-20 11:28:58] DEBUG Agentic response placeholder added
+[2025-08-20 11:28:58] DEBUG Chat session send initiated
+[2025-08-20 11:28:59] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:29:07] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 11:29:07] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-20 11:29:17] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-20 11:29:17] DEBUG Enrichment start
+[2025-08-20 11:29:17] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-20 11:29:17] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-20 11:29:17] DEBUG Enrichment recall pack added | {
+  len = 7864
+}
+[2025-08-20 11:29:17] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-20 11:29:17] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-20 11:29:17] INFO  Improved Prompt stream start
+[2025-08-20 11:29:17] INFO  LLM stream start provider=openai
+[2025-08-20 11:29:17] DEBUG Stored user message to memory
