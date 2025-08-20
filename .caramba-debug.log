@@ -896,3 +896,68 @@ Tool write_file: presenting diff for approval
   code = 0,
   content_len = 0
 }
+[2025-08-20 16:35:32] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 16:35:32] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-20 16:35:56] INFO  Chat send | {
+  preview = "Can you help me improve this code?"
+}
+[2025-08-20 16:35:56] DEBUG Enrichment start
+[2025-08-20 16:35:56] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-20 16:35:56] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-20 16:35:56] DEBUG Enrichment recall pack added | {
+  len = 8320
+}
+[2025-08-20 16:35:56] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-20 16:35:56] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-20 16:35:56] INFO  Improved Prompt stream start
+[2025-08-20 16:35:56] DEBUG Stored user message to memory
+[2025-08-20 16:36:00] INFO  Improved Prompt stream complete | 
+[2025-08-20 16:36:00] INFO  Memory Manager (Recall) stream start
+[2025-08-20 16:36:10] INFO  Memory Manager (Recall) stream complete | 
+[2025-08-20 16:36:10] INFO  Project Manager (Plan) stream start
+[2025-08-20 16:36:15] INFO  Project Manager (Plan) stream complete | 
+[2025-08-20 16:36:15] INFO  LLM stream start provider=openai
+[2025-08-20 16:36:15] INFO  Starting agentic response
+[2025-08-20 16:36:15] DEBUG Agentic response placeholder added
+[2025-08-20 16:36:15] DEBUG Chat session send initiated
+[2025-08-20 16:36:15] INFO  Self-Reflection stream start
+[2025-08-20 16:36:16] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 16:36:20] INFO  Self-Reflection stream complete | 
+[2025-08-20 16:36:20] INFO  Reviewer stream start
+[2025-08-20 16:36:28] INFO  Reviewer stream complete | 
+[2025-08-20 16:36:28] INFO  Project Manager (Update) stream start
+[2025-08-20 16:36:37] INFO  Project Manager (Update) stream complete | 
+[2025-08-20 16:36:37] INFO  Memory Extract stream start
+[2025-08-20 16:36:41] INFO  Memory Extract stream complete | 
+[2025-08-20 16:36:41] INFO  LLM stream start provider=openai
+[2025-08-20 16:36:41] INFO  LLM stream start provider=openai
+[2025-08-20 16:36:41] INFO  Response complete | {
+  chars = 0
+}
+[2025-08-20 16:36:42] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 16:36:42] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}

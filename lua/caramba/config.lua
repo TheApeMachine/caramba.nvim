@@ -104,6 +104,7 @@ M.defaults = {
     preview_window_width = 0.6,
     preview_window_height = 0.8,
     chat_sidebar_width = 0.4,
+    compact_chat = true, -- Compact chat rendering (less padding and separators)
   },
 
   -- Command surface (minimize commands; chat-first UX)

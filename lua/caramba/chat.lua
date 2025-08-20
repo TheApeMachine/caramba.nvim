@@ -87,7 +87,14 @@ local function start_animation(mode)
     s.frame_idx = (s.frame_idx % #get_frames_for_mode(s.mode)) + 1
     s.spinner_idx = ((s.spinner_idx or 1) % #spinner_frames) + 1
     local f = get_frames_for_mode(s.mode)[s.frame_idx]
-    s.status_text = f .. ' ' .. get_mode_label(s.mode)
+    -- Expressive emoji alternation
+    local express = {
+      thinking = { '🤔', '🧠', '💭' },
+      tool = { '🔧', '🧰', '⚙️' },
+      writing = { '✍️', '📝', '💡' },
+    }
+    local ems = express[s.mode] or express.thinking
+    s.status_text = ems[(s.spinner_idx % #ems) + 1] .. '  ' .. f .. '  ' .. get_mode_label(s.mode)
     vim.schedule(function()
       update_window_title()
       if M._chat_state and M._chat_state.bufnr and vim.api.nvim_buf_is_valid(M._chat_state.bufnr) then
@@ -253,21 +260,16 @@ end
 -- Format message for display
 local function format_message(msg)
   local lines = {}
+  local compact = (require('caramba.config').get().ui or {}).compact_chat
 
-  -- Add role header
+  -- Add role header (compact)
   if msg.title then
-    local hdr = "## " .. msg.title
-    if msg.folded then hdr = hdr .. " (folded)" end
+    local hdr = "## " .. msg.title .. (msg.folded and " (folded)" or "")
     table.insert(lines, hdr)
   else
-    if msg.role == "user" then
-      table.insert(lines, "## You:")
-    else
-      table.insert(lines, "## Assistant:")
-    end
+    table.insert(lines, msg.role == "user" and "## You" or "## Assistant")
   end
-
-  table.insert(lines, "")
+  if not compact then table.insert(lines, "") end
 
   -- Add content unless folded; ensure not nil
   if not msg.folded then
@@ -277,9 +279,14 @@ local function format_message(msg)
     end
   end
 
-  table.insert(lines, "")
-  table.insert(lines, "---")
-  table.insert(lines, "")
+  -- Separator (compact single blank, otherwise rule)
+  if compact then
+    table.insert(lines, "")
+  else
+    table.insert(lines, "")
+    table.insert(lines, "---")
+    table.insert(lines, "")
+  end
 
   return lines
 end
@@ -969,20 +976,25 @@ M._render_chat = function()
   local code_blocks = {}
   local msg_ranges = {}
 
+  local compact = (config.get().ui or {}).compact_chat
   -- Header
   table.insert(lines, "# 󱙺  Caramba Chat")
-  table.insert(lines, "")
-  table.insert(lines, "_i: input  ·  a: apply code  ·  y: copy code  ·  d: clear  ·  r: revert  ·  q/esc: close_")
-  table.insert(lines, "")
+  if not compact then
+    table.insert(lines, "")
+    table.insert(lines, "_i: input  ·  a: apply code  ·  y: copy code  ·  d: clear  ·  r: revert  ·  q/esc: close_")
+    table.insert(lines, "")
+  end
 
   -- Status line (animation)
   if M._chat_state.animation and M._chat_state.animation.status_text then
     table.insert(lines, "Status: " .. M._chat_state.animation.status_text)
-    table.insert(lines, "")
+    if not compact then table.insert(lines, "") end
   end
 
-  table.insert(lines, "---")
-  table.insert(lines, "")
+  if not compact then
+    table.insert(lines, "---")
+    table.insert(lines, "")
+  end
 
   -- Activity feed (collapsed when idle)
   if M._chat_state.activity and #M._chat_state.activity > 0 then
