@@ -237,3 +237,321 @@ Tool write_file: presenting diff for approval
 [2025-08-20 11:29:17] INFO  Improved Prompt stream start
 [2025-08-20 11:29:17] INFO  LLM stream start provider=openai
 [2025-08-20 11:29:17] DEBUG Stored user message to memory
+[2025-08-20 11:30:49] INFO  Improved Prompt stream complete | Stream timeout
+[2025-08-20 11:30:49] INFO  Memory Manager (Recall) stream start
+[2025-08-20 11:30:49] INFO  LLM stream start provider=openai
+[2025-08-20 11:30:50] INFO  LLM stream job exit | {
+  code = 143,
+  content_len = 0
+}
+[2025-08-20 11:30:50] INFO  Memory Manager (Recall) stream complete | Stream failed with code: 143
+[2025-08-20 11:30:50] INFO  LLM stream start provider=openai
+[2025-08-20 11:30:50] INFO  Starting agentic response
+[2025-08-20 11:30:50] DEBUG Agentic response placeholder added
+[2025-08-20 11:30:50] DEBUG Chat session send initiated
+[2025-08-20 11:30:50] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:30:51] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 11:30:51] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-20 11:30:59] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 11:30:59] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-20 11:31:11] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-20 11:31:11] DEBUG Enrichment start
+[2025-08-20 11:31:11] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-20 11:31:11] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-20 11:31:11] DEBUG Enrichment recall pack added | {
+  len = 7864
+}
+[2025-08-20 11:31:11] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-20 11:31:11] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-20 11:31:11] INFO  Improved Prompt stream start
+[2025-08-20 11:31:11] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:11] DEBUG Stored user message to memory
+[2025-08-20 11:31:11] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:11] INFO  Improved Prompt stream complete | No response received from API
+[2025-08-20 11:31:11] INFO  Memory Manager (Recall) stream start
+[2025-08-20 11:31:11] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:11] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:11] INFO  Memory Manager (Recall) stream complete | No response received from API
+[2025-08-20 11:31:11] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:11] INFO  Starting agentic response
+[2025-08-20 11:31:11] DEBUG Agentic response placeholder added
+[2025-08-20 11:31:11] DEBUG Chat session send initiated
+[2025-08-20 11:31:12] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:35] DEBUG Tool feedback chunk | 
+
+🔧 Using tool: `write_file`...
+
+
+[2025-08-20 11:31:35] DEBUG Tool feedback chunk | 
+
+Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
+
+
+[2025-08-20 11:31:35] DEBUG Tool feedback chunk | 
+
+Tool write_file: presenting diff for approval
+
+
+[2025-08-20 11:31:35] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
+
+
+[2025-08-20 11:31:39] INFO  Self-Reflection stream start
+[2025-08-20 11:31:39] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:39] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:39] INFO  Self-Reflection stream complete | No response received from API
+[2025-08-20 11:31:39] INFO  Reviewer stream start
+[2025-08-20 11:31:39] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:39] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:39] INFO  Reviewer stream complete | No response received from API
+[2025-08-20 11:31:39] INFO  Project Manager (Update) stream start
+[2025-08-20 11:31:39] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ```
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | markdown
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | #
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Project
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Board
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
+
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ##
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  TODO
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Add
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  unit
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  tests
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Provide
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Type
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | Script
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  definitions
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Implement
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  extra
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  operations
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  (
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | e
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | .g
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | .
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  power
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ,
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  modulo
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | )
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |   
+
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ##
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  DO
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ING
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Await
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ing
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  user
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  feedback
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  on
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  next
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  tweaks
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  (
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | tests
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ,
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  TS
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  typings
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ,
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  more
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  ops
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | )
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |   
+
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ##
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  DONE
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
+
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Ren
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | amed
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  &
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  simplified
+[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | validate
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Numbers
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  →
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ensure
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Numbers
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Coll
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | apsed
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | min
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Args
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | +
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | use
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | First
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | As
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Init
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  into
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | min
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | +
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | first
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | As
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Init
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Ref
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | act
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ored
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | calculate
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ()`
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  with
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  early
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  rejects
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ,
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  plural
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ized
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  errors
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ,
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  accumulator
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  destruct
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | uring
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ,
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  and
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `.
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | reduce
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ()`
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Sw
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | itched
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  divide
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -by
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -zero
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  errors
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  to
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Range
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Error
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Ex
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | posed
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Calculator
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | .history
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  as
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  a
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  getter
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ;
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  unified
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | filter
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | History
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  API
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Ens
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ured
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  history
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  entries
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  are
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  fully
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  immutable
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ;
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  used
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  concise
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  arrow
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  wrappers
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  for
+[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  ops
+[2025-08-20 11:31:46] DEBUG Project Manager (Update) chunk |   
+
+[2025-08-20 11:31:46] DEBUG Project Manager (Update) chunk | ```
+[2025-08-20 11:31:46] INFO  Project Manager (Update) stream complete | 
+[2025-08-20 11:31:46] INFO  Memory Extract stream start
+[2025-08-20 11:31:46] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:46] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:46] INFO  Memory Extract stream complete | No response received from API
+[2025-08-20 11:31:46] DEBUG Stored assistant response to memory
+[2025-08-20 11:31:46] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:46] INFO  LLM stream start provider=openai
+[2025-08-20 11:31:46] INFO  Response complete | {
+  chars = 1003
+}
+[2025-08-20 11:31:46] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 11:31:46] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
