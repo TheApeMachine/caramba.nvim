@@ -803,3 +803,96 @@ Tool write_file: presenting diff for approval
   code = 0,
   content_len = 0
 }
+[2025-08-20 15:21:22] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 15:21:22] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-20 15:21:23] WARN  memory_vector: embedding failed | Failed to parse embedding response
+[2025-08-20 15:21:36] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-20 15:21:36] DEBUG Enrichment start
+[2025-08-20 15:21:36] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-20 15:21:36] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-20 15:21:36] DEBUG Enrichment recall pack added | {
+  len = 8149
+}
+[2025-08-20 15:21:36] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-20 15:21:36] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-20 15:21:36] INFO  Improved Prompt stream start
+[2025-08-20 15:21:36] DEBUG Stored user message to memory
+[2025-08-20 15:21:43] INFO  Improved Prompt stream complete | 
+[2025-08-20 15:21:43] INFO  Memory Manager (Recall) stream start
+[2025-08-20 15:21:49] INFO  Memory Manager (Recall) stream complete | 
+[2025-08-20 15:21:49] INFO  Project Manager (Plan) stream start
+[2025-08-20 15:21:53] INFO  Project Manager (Plan) stream complete | 
+[2025-08-20 15:21:53] INFO  LLM stream start provider=openai
+[2025-08-20 15:21:53] INFO  Starting agentic response
+[2025-08-20 15:21:53] DEBUG Agentic response placeholder added
+[2025-08-20 15:21:53] DEBUG Chat session send initiated
+[2025-08-20 15:21:53] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 15:22:24] DEBUG Tool feedback chunk | 
+
+🔧 Using tool: `write_file`...
+
+
+[2025-08-20 15:22:24] DEBUG Tool feedback chunk | 
+
+Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
+
+
+[2025-08-20 15:22:24] DEBUG Tool feedback chunk | 
+
+Tool write_file: presenting diff for approval
+
+
+[2025-08-20 15:22:24] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
+
+
+[2025-08-20 15:22:28] INFO  Self-Reflection stream start
+[2025-08-20 15:22:36] INFO  Self-Reflection stream complete | 
+[2025-08-20 15:22:36] INFO  Reviewer stream start
+[2025-08-20 15:22:40] INFO  Reviewer stream complete | 
+[2025-08-20 15:22:40] INFO  Project Manager (Update) stream start
+[2025-08-20 15:22:44] DEBUG tool.search_files.start | {
+  file_pattern = "*.md",
+  query = "TODO"
+}
+[2025-08-20 15:22:56] WARN  tool.search_files.timeout | {
+  query = "TODO",
+  timeout_ms = 12000
+}
+[2025-08-20 15:23:03] INFO  Project Manager (Update) stream complete | 
+[2025-08-20 15:23:03] INFO  Memory Extract stream start
+[2025-08-20 15:23:08] INFO  Memory Extract stream complete | 
+[2025-08-20 15:23:08] DEBUG Stored assistant response to memory
+[2025-08-20 15:23:08] INFO  LLM stream start provider=openai
+[2025-08-20 15:23:08] INFO  LLM stream start provider=openai
+[2025-08-20 15:23:08] INFO  Response complete | {
+  chars = 1210
+}
+[2025-08-20 15:23:09] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}
+[2025-08-20 15:23:09] INFO  LLM stream job exit | {
+  code = 0,
+  content_len = 0
+}

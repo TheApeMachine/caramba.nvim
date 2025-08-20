@@ -39,6 +39,14 @@ function M.show_lines_centered(lines, opts)
   if height < 10 then height = math.min(20, suggested_height) end
 
   local winid = utils.create_centered_window(bufnr, width, height, { title = opts.title })
+  -- Soft aesthetics: no signcolumn, linebreak, minimal win highlight
+  pcall(vim.api.nvim_win_set_option, winid, 'signcolumn', 'no')
+  pcall(vim.api.nvim_win_set_option, winid, 'wrap', true)
+  pcall(vim.api.nvim_win_set_option, winid, 'linebreak', true)
+  -- Subtle border title spacing
+  local cfg = vim.api.nvim_win_get_config(winid)
+  cfg.title_pos = 'center'
+  vim.api.nvim_win_set_config(winid, cfg)
   return bufnr, winid
 end
 

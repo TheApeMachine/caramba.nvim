@@ -43,11 +43,36 @@ function M.setup(opts)
   _G.caramba = _G.caramba or {}
   _G.caramba.state = require('caramba.state').get()
 
-  -- 2. Load all modules and register their commands
+  -- 2. Load all modules and register their commands (chat-first; optionally restrict command surface)
+  local cfg = require('caramba.config').get()
+  local allowlist = {}
+  if cfg.commands and cfg.commands.allowed then
+    for _, n in ipairs(cfg.commands.allowed) do allowlist[n] = true end
+  end
+
   for _, name in ipairs(modules) do
     local ok, mod = pcall(require, "caramba." .. name)
     if ok and mod and mod.setup_commands then
-      pcall(mod.setup_commands)
+      if cfg.commands and cfg.commands.enable_legacy_commands == false then
+        -- Wrap registration to enforce allowlist
+        local core = require('caramba.core.commands')
+        local original_register = core.register
+        core.register = function(cmd_name, func, opts)
+          -- Normalize to Caramba* prefix per core.commands
+          local normalized = cmd_name
+          if not normalized:match("^Caramba") then normalized = "Caramba" .. normalized end
+          if allowlist[normalized] then
+            return original_register(cmd_name, func, opts)
+          else
+            -- Skip registering this command
+            return
+          end
+        end
+        pcall(mod.setup_commands)
+        core.register = original_register
+      else
+        pcall(mod.setup_commands)
+      end
     elseif not ok then
       vim.notify("Failed to load module: " .. name .. "\n" .. tostring(mod), vim.log.levels.ERROR)
     end
@@ -66,6 +91,12 @@ function M.setup(opts)
   pcall(function()
     require('caramba.telescope').setup_commands()
   end)
+
+  -- Create a root alias :Caramba to open chat directly
+  local core = require('caramba.core.commands')
+  core.register('Caramba', function()
+    require('caramba.chat').open()
+  end, { desc = 'Open Caramba chat' })
 
   vim.notify("Caramba.nvim is ready!", vim.log.levels.INFO)
 end

@@ -106,6 +106,20 @@ M.defaults = {
     chat_sidebar_width = 0.4,
   },
 
+  -- Command surface (minimize commands; chat-first UX)
+  commands = {
+    enable_legacy_commands = false,
+    allowed = {
+      "Caramba",            -- base alias to open chat
+      "CarambaChat",        -- open chat
+      "CarambaChatToggle",  -- toggle chat
+      "CarambaCancel",      -- cancel active requests
+      "CarambaSetProvider", -- provider/model selection
+      "CarambaSetModel",    -- explicit model selection
+      "CarambaShowConfig",  -- show current config
+    },
+  },
+
   -- Performance settings
   performance = {
     debounce_ms = 150,          -- Debounce for context updates

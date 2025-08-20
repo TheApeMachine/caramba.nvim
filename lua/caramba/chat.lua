@@ -375,7 +375,7 @@ M.open = function()
     height = height,
     style = "minimal",
     border = ui.floating_window_border or "rounded",
-    title = " Caramba Chat ",
+    title = " 󱙺  Caramba  ",
     title_pos = "center",
   })
 
@@ -437,7 +437,7 @@ M.start_input = function()
 
   -- Create input window at bottom of chat
   local chat_config = vim.api.nvim_win_get_config(M._chat_state.winid)
-  local input_height = 3
+  local input_height = 4
 
   M._chat_state.input_bufnr = input_buf
   local ui = config.get().ui
@@ -449,13 +449,20 @@ M.start_input = function()
     height = input_height,
     style = "minimal",
     border = (ui and ui.floating_window_border == 'rounded' and 'single') or (ui and ui.floating_window_border or 'single'),
-    title = " Type your message (Enter to send, Esc to cancel) ",
+    title = " Message  (Enter=send  Shift+Enter=newline  Esc=cancel) ",
     title_pos = "center",
   })
 
   -- Set up input keymaps
   local opts = { buffer = input_buf, silent = true }
-  vim.keymap.set("i", "<CR>", M._send_message, opts)
+  vim.keymap.set("i", "<CR>", function()
+    -- Send on Enter in insert mode unless Shift is held (map Shift+Enter to newline)
+    local keys = vim.fn.getcharstr(0) -- non-blocking peek
+    M._send_message()
+  end, opts)
+  vim.keymap.set("i", "<S-CR>", function()
+    vim.api.nvim_put({""}, "c", true, true)
+  end, opts)
   vim.keymap.set("n", "<CR>", M._send_message, opts)
   vim.keymap.set("i", "<Esc>", M._cancel_input, opts)
   vim.keymap.set("n", "<Esc>", M._cancel_input, opts)
@@ -962,10 +969,10 @@ M._render_chat = function()
   local code_blocks = {}
   local msg_ranges = {}
 
-  -- Add title
-  table.insert(lines, "# Caramba Chat Session")
+  -- Header
+  table.insert(lines, "# 󱙺  Caramba Chat")
   table.insert(lines, "")
-  table.insert(lines, "_Commands: (i)nput, (a)pply code, (y)ank code, (d)elete history, (r)evert changes, (q)uit_")
+  table.insert(lines, "_i: input  ·  a: apply code  ·  y: copy code  ·  d: clear  ·  r: revert  ·  q/esc: close_")
   table.insert(lines, "")
 
   -- Status line (animation)
@@ -977,9 +984,9 @@ M._render_chat = function()
   table.insert(lines, "---")
   table.insert(lines, "")
 
-  -- Activity feed
+  -- Activity feed (collapsed when idle)
   if M._chat_state.activity and #M._chat_state.activity > 0 then
-    table.insert(lines, "## Activity")
+    table.insert(lines, "## Recent Activity")
     table.insert(lines, "")
     local from = math.max(1, #M._chat_state.activity - 10 + 1)
     for i = from, #M._chat_state.activity do
@@ -1156,17 +1163,17 @@ M.setup_commands = function()
     desc = 'Toggle Caramba chat window',
   })
 
-  -- Clear chat history
+  -- Clear chat history (keep for chat-first UX)
   commands.register('ChatClear', M.clear_history, {
     desc = 'Clear chat history',
   })
 
-  -- Approve the last plan
+  -- Approve the last plan (tied to chat loop)
   commands.register('ApprovePlan', M.approve_plan, {
     desc = 'Approve and execute the last plan proposed in the chat',
   })
 
-  -- Test LLM connection
+  -- Test LLM connection (for quick chat diagnostics)
   commands.register('TestLLM', function()
     local messages = {
       { role = "user", content = "Say 'Hello, I am working!' if you can see this." }
