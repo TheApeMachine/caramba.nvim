@@ -671,7 +671,7 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
       for _, kw in ipairs({ 'implement','create','build','design','refactor','migrate','convert','add','rewrite','improve','fix','optimize','enhance','update' }) do
         if lower_instruction:match('^%s*' .. kw) then complex = true break end
       end
-      if complex then
+      if complex or ((config.get().pipeline or {}).enable_pm_pre_step) then
         local sys_pm = 'You are a Project Manager. Update or create a concise plan (TODO/DOING/DONE) for the task. Return a short markdown summary with priorities.'
         stream_section('Project Manager (Plan)', sys_pm, improved or cleaned_message, 'plan', function(plan_md)
           pcall(orchestrator.update_plan_from_markdown, plan_md, improved or cleaned_message)

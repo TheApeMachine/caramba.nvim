@@ -140,6 +140,7 @@ M.defaults = {
     enable_self_reflection = true,
     enable_memory_extraction = true,
     enable_auto_planning = true,
+    enable_pm_pre_step = true, -- Always run pre-send Project Manager step
   },
   memory = {
     extracted_ttl_days = 30,
