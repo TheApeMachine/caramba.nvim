@@ -689,14 +689,16 @@ M._send_message_with_context = function(cleaned_message, contexts, search_result
     -- Prefer binary vector store if available
     local vector_mod = require('caramba.memory_vector_bin')
     vector_mod.recall(cleaned_message, 5, function(items)
-      local lines = {}
-      for _, it in ipairs(items or {}) do
-        table.insert(lines, string.format('- [%.2f] %s', it.score or 0, (it.meta and it.meta.snippet) or (it.meta and it.meta.content) or ''))
-      end
-      M._chat_state.history[idx].content = table.concat(lines, '\n')
-      M._chat_state.history[idx].streaming = false
-      M._chat_state.history[idx].folded = true
-      M._render_chat()
+      vim.schedule(function()
+        local lines = {}
+        for _, it in ipairs(items or {}) do
+          table.insert(lines, string.format('- [%.2f] %s', it.score or 0, (it.meta and it.meta.snippet) or (it.meta and it.meta.content) or ''))
+        end
+        M._chat_state.history[idx].content = table.concat(lines, '\n')
+        M._chat_state.history[idx].streaming = false
+        M._chat_state.history[idx].folded = true
+        M._render_chat()
+      end)
     end)
   end
 
