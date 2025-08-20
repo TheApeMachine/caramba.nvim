@@ -42,6 +42,8 @@ function M.load_project_plan()
       local json_ok, plan = pcall(vim.json.decode, table.concat(content, "\n"))
       if json_ok and type(plan) == "table" then
         M._project_plan = vim.tbl_deep_extend("force", M._project_plan, plan)
+        -- Keep global state in sync so other modules see the latest plan
+        state_store.set_namespace('planner', M._project_plan)
         return true
       else
         vim.notify("Caramba Planner: Failed to parse project plan file", vim.log.levels.WARN)
@@ -54,11 +56,11 @@ end
 -- Save project plan to file
 function M.save_project_plan()
   local plan_file = vim.fn.getcwd() .. "/.caramba-project-plan.json"
-  
+
   -- Update metadata
   M._project_plan.metadata = M._project_plan.metadata or {}
   M._project_plan.metadata.last_updated = os.date("%Y-%m-%d %H:%M:%S")
-  
+
   local ok, content = pcall(vim.json.encode, M._project_plan)
   if ok then
     local write_ok = pcall(vim.fn.writefile, vim.split(content, "\n"), plan_file)
@@ -70,24 +72,37 @@ function M.save_project_plan()
   end
 end
 
+-- Replace the in-memory plan and sync state (used by orchestrator)
+function M.set_project_plan(new_plan)
+  if type(new_plan) == 'table' then
+    M._project_plan = new_plan
+    state_store.set_namespace('planner', M._project_plan)
+  end
+end
+
+-- Expose a readonly view of the current plan
+function M.get_project_plan()
+  return M._project_plan
+end
+
 -- Analyze project structure and conventions
 function M.analyze_project_structure(callback)
   local analysis_prompt = {
     {
       role = "system",
       content = [[You are a software architect analyzing a codebase.
-Analyze the provided project information and identify key aspects of the project structure, 
+Analyze the provided project information and identify key aspects of the project structure,
 patterns, and architecture.]]
     },
     {
-      role = "user", 
+      role = "user",
       content = "Analyze the following project files and structure:\n\n" .. M._get_project_overview()
     }
   }
-  
+
   -- Use structured output with JSON schema for OpenAI
   local opts = { }
-  
+
   if config.get().provider == "openai" then
     opts.response_format = {
       type = "json_schema",
@@ -176,28 +191,28 @@ Return your analysis as a JSON object with this structure:
 }
 ]]
   end
-  
+
   llm.request(analysis_prompt, opts, callback)
 end
 
 -- Get overview of project structure
 function M._get_project_overview()
   local overview = {}
-  
+
   -- Get directory structure
   local dirs = vim.fn.systemlist("find . -type d -name '.git' -prune -o -type d -print | head -50")
   table.insert(overview, "Directory Structure:")
   for _, dir in ipairs(dirs) do
     table.insert(overview, dir)
   end
-  
+
   -- Get key files
   table.insert(overview, "\nKey Files:")
   local key_patterns = {
-    "README*", "package.json", "Cargo.toml", "go.mod", 
+    "README*", "package.json", "Cargo.toml", "go.mod",
     "requirements.txt", "Gemfile", "*.config.*", "Makefile"
   }
-  
+
   for _, pattern in ipairs(key_patterns) do
     local files = vim.fn.glob(pattern, false, true)
     for _, file in ipairs(files) do
@@ -220,7 +235,7 @@ function M._get_project_overview()
       end
     end
   end
-  
+
   return table.concat(overview, "\n")
 end
 
@@ -230,12 +245,12 @@ M._show_questions_window = function(lines, callback)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(buf, 'modifiable', false)
   vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-  
+
   local width = 80
   local height = math.min(#lines + 2, 20)
-  
+
   local win = require('caramba.utils').create_centered_window(buf, width, height, { title = ' Caramba Questions ' })
-  
+
   -- Set up keymaps to close window and continue
   local opts = { buffer = buf, nowait = true }
   vim.keymap.set('n', '<CR>', function()
@@ -256,9 +271,9 @@ end
 function M.interactive_planning_session(task_description, context_info, callback)
   -- Step 1: Create initial plan
   vim.notify("Caramba Planner: Creating initial plan...", vim.log.levels.INFO)
-  
+
   context_info = context_info or context.build_context_string(context.collect())
-  
+
   -- If no context is selected, use the current buffer's content
   if not context_info or context_info:match("^%s*$") then
     vim.schedule(function()
@@ -267,7 +282,7 @@ function M.interactive_planning_session(task_description, context_info, callback
     local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     context_info = table.concat(buffer_lines, "\n")
   end
-  
+
   -- Final fallback: if buffer is also empty, then prompt user.
   if not context_info or context_info:match("^%s*$") then
     vim.schedule(function()
@@ -284,7 +299,7 @@ function M.interactive_planning_session(task_description, context_info, callback
     end)
     return
   end
-  
+
   M.create_task_plan(task_description, context_info, function(plan_result, plan_err)
     if plan_err then
       vim.schedule(function()
@@ -292,7 +307,7 @@ function M.interactive_planning_session(task_description, context_info, callback
       end)
       return
     end
-    
+
     -- Parse the plan, with better error handling
     local ok, plan
     if type(plan_result) == "table" then
@@ -304,7 +319,7 @@ function M.interactive_planning_session(task_description, context_info, callback
       ok = false
       plan = "Invalid response type: " .. type(plan_result)
     end
-    
+
     if not ok then
       vim.schedule(function()
         vim.notify("Failed to parse plan: " .. tostring(plan), vim.log.levels.ERROR)
@@ -317,7 +332,7 @@ function M.interactive_planning_session(task_description, context_info, callback
       end)
       return
     end
-    
+
     vim.schedule(function()
       -- Step 2: Show plan and questions
       if plan.questions and #plan.questions > 0 then
@@ -328,14 +343,14 @@ function M.interactive_planning_session(task_description, context_info, callback
           "The AI has the following questions about your request:",
           ""
         }
-        
+
         for i, question in ipairs(plan.questions) do
           table.insert(question_lines, string.format("%d. %s", i, question))
         end
-        
+
         table.insert(question_lines, "")
         table.insert(question_lines, "Press any key to continue and provide answers...")
-        
+
         -- Show questions in a window
         M._show_questions_window(question_lines, function()
           -- After user acknowledges, prompt for answers
@@ -359,7 +374,7 @@ end
 function M._continue_planning(task_description, plan, callback)
   -- Step 3: Review plan
   vim.notify("Caramba Planner: Reviewing plan...", vim.log.levels.INFO)
-  
+
   M.review_plan(vim.json.encode(plan), task_description, function(review_result, review_err)
     if review_err then
       vim.schedule(function()
@@ -373,7 +388,7 @@ function M._continue_planning(task_description, plan, callback)
       end)
       return
     end
-    
+
     local ok, review = pcall(vim.json.decode, review_result)
     if not ok then
       vim.schedule(function()
@@ -387,7 +402,7 @@ function M._continue_planning(task_description, plan, callback)
       end)
       return
     end
-    
+
     vim.schedule(function()
       if callback then
         callback(plan, review)
@@ -405,7 +420,7 @@ function M.create_task_plan(task_description, context_info, callback)
     {
       role = "system",
       content = [[You are a senior software engineer creating a detailed implementation plan.
-Analyze the task and create a comprehensive plan considering architecture, dependencies, 
+Analyze the task and create a comprehensive plan considering architecture, dependencies,
 and potential issues.]]
     },
     {
@@ -421,15 +436,15 @@ Project Information:
 
 Existing Conventions:
 %s
-]], task_description, context_info, 
+]], task_description, context_info,
     vim.json.encode(M._project_plan.architecture),
     vim.json.encode(M._project_plan.conventions))
     }
   }
-  
+
   -- Use structured output with JSON schema for OpenAI
   local opts = { }
-  
+
   if config.get().provider == "openai" then
     opts.response_format = {
       type = "json_schema",
@@ -471,7 +486,7 @@ Existing Conventions:
               enum = { "low", "medium", "high" }
             }
           },
-          required = { 
+          required = {
             "understanding", "affected_components", "implementation_steps",
             "potential_issues", "questions", "estimated_complexity"
           },
@@ -496,13 +511,13 @@ Return ONLY a valid JSON object with this structure:
 }
 ]]
   end
-  
+
   llm.request(planning_prompt, opts, function(result, err)
     if err then
       callback(nil, err)
       return
     end
-    
+
     -- The llm.request now often returns a parsed table directly
     if type(result) == "table" then
       callback(result, nil)
@@ -541,10 +556,10 @@ Known Issues:
 ]], task_description, plan, vim.json.encode(M._project_plan.known_issues))
     }
   }
-  
+
   -- Use structured output with JSON schema for OpenAI
   local opts = { }
-  
+
   if config.get().provider == "openai" then
     opts.response_format = {
       type = "json_schema",
@@ -589,7 +604,7 @@ Return ONLY a valid JSON object with this structure:
 }
 ]]
   end
-  
+
   opts = opts or {}
   opts.task = 'plan'
   llm.request(review_prompt, opts, callback)
@@ -598,21 +613,21 @@ end
 -- Show result window helper
 function M._show_result_window(content, title)
   local buf = vim.api.nvim_create_buf(false, true)
-  
+
   -- Format content
   local lines = vim.split(content, "\n")
-  
+
   -- Set content
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   vim.api.nvim_buf_set_option(buf, "filetype", "json")
-  
+
   -- Create window
   local width = math.min(100, vim.o.columns - 4)
   local height = math.min(#lines + 2, vim.o.lines - 4)
-  
+
   local win = require('caramba.utils').create_centered_window(buf, width, height, { title = " " .. title .. " " })
-  
+
   -- Set up close keymap
   vim.keymap.set("n", "q", function()
     vim.api.nvim_win_close(win, true)
@@ -623,7 +638,7 @@ end
 function M._show_plan_window(plan, review)
   -- Create buffer
   local buf = vim.api.nvim_create_buf(false, true)
-  
+
   -- Format plan content
   local lines = {
     "=== Caramba Implementation Plan ===",
@@ -634,21 +649,21 @@ function M._show_plan_window(plan, review)
     "",
     "Affected Components:",
   }
-  
+
   for _, component in ipairs(plan.affected_components or {}) do
     table.insert(lines, "  - " .. component)
   end
-  
+
   table.insert(lines, "")
   table.insert(lines, "Implementation Steps:")
-  
+
   for _, step in ipairs(plan.implementation_steps or {}) do
     table.insert(lines, string.format("  %d. %s", step.step, step.action))
     table.insert(lines, string.format("     File: %s", step.file or "N/A"))
     table.insert(lines, string.format("     Reason: %s", step.reason))
     table.insert(lines, "")
   end
-  
+
   if plan.potential_issues and #plan.potential_issues > 0 then
     table.insert(lines, "Potential Issues:")
     for _, issue in ipairs(plan.potential_issues) do
@@ -656,12 +671,12 @@ function M._show_plan_window(plan, review)
     end
     table.insert(lines, "")
   end
-  
+
   -- Add review feedback
   if review then
     table.insert(lines, "=== Review Decision: " .. (review.decision or "PENDING") .. " ===")
     table.insert(lines, "")
-    
+
     if review.feedback and #review.feedback > 0 then
       table.insert(lines, "Feedback:")
       for _, feedback in ipairs(review.feedback) do
@@ -669,7 +684,7 @@ function M._show_plan_window(plan, review)
       end
       table.insert(lines, "")
     end
-    
+
     if review.risks and #review.risks > 0 then
       table.insert(lines, "Identified Risks:")
       for _, risk in ipairs(review.risks) do
@@ -677,37 +692,37 @@ function M._show_plan_window(plan, review)
       end
     end
   end
-  
+
   table.insert(lines, "")
   table.insert(lines, "Press 'y' to execute, 'n' to cancel, 'e' to edit task")
-  
+
   -- Set content
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
-  
+
   -- Create window
   local width = math.min(100, vim.o.columns - 4)
   local height = math.min(#lines + 2, vim.o.lines - 4)
-  
+
   local win = require('caramba.utils').create_centered_window(buf, width, height, { title = " Caramba Planning System " })
-  
+
   -- Store plan for execution
   vim.b[buf].caramba_plan = plan
   vim.b[buf].caramba_review = review
-  
+
   -- Set up keymaps
   local opts = { buffer = buf, silent = true, nowait = true }
   vim.keymap.set("n", "y", function()
     if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     M.execute_plan(plan)
   end, opts)
-  
+
   vim.keymap.set("n", "n", function()
     if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     vim.notify("Plan cancelled", vim.log.levels.INFO)
   end, opts)
-  
+
   vim.keymap.set("n", "q", function()
     if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
   end, opts)
@@ -735,18 +750,18 @@ end
 M.execute_plan = function(plan)
   -- Use provided plan or get current plan
   plan = plan or M.get_current_plan()
-  
+
   if not plan or not plan.steps then
     vim.notify("No plan to execute", vim.log.levels.WARN)
     return
   end
-  
+
   vim.notify("Executing plan: " .. (plan.description or "Implementation plan"), vim.log.levels.INFO)
-  
+
   -- Execute steps sequentially to avoid rate limiting
   local execute_step
   local current_step = 1
-  
+
   execute_step = function()
     if current_step > #plan.steps then
       vim.schedule(function()
@@ -755,21 +770,21 @@ M.execute_plan = function(plan)
       end)
       return
     end
-    
+
     local step = plan.steps[current_step]
     vim.schedule(function()
       vim.notify(string.format("Executing step %d/%d: %s", current_step, #plan.steps, step.description), vim.log.levels.INFO)
     end)
-    
+
     -- Add delay between steps to avoid rate limiting
     vim.defer_fn(function()
       local context = require('caramba.context')
       local llm = require('caramba.llm')
       local edit = require('caramba.edit')
-      
+
       -- Build context for this step
       local ctx = context.collect()
-      
+
       local prompt = {
         {
           role = "system",
@@ -790,7 +805,7 @@ Please provide the code changes needed for this step.
 ]], current_step, step.description, vim.fn.expand('%:p'), vim.bo.filetype, context.build_context_string(ctx))
         }
       }
-      
+
       llm.request(prompt, { temperature = 1 }, function(response)
         if response then
           vim.schedule(function()
@@ -799,7 +814,7 @@ Please provide the code changes needed for this step.
               validate = true,
               preview = false,  -- Don't preview during automated execution
             })
-            
+
             if success then
               vim.notify(string.format("Step %d completed successfully", current_step), vim.log.levels.INFO)
               current_step = current_step + 1
@@ -817,7 +832,7 @@ Please provide the code changes needed for this step.
       end)
     end, 500)  -- Initial delay before starting
   end
-  
+
   -- Start execution
   execute_step()
 end
@@ -832,7 +847,7 @@ end
 -- Initialize planner
 function M.setup()
   M.load_project_plan()
-  
+
   -- Auto-save plan on exit
   vim.api.nvim_create_autocmd("VimLeavePre", {
     callback = function()
@@ -844,7 +859,7 @@ end
 -- Setup commands for this module
 function M.setup_commands()
   local commands = require('caramba.core.commands')
-  
+
   -- Main planning command
   commands.register('Plan', function(opts)
     local task = opts.args
@@ -863,7 +878,7 @@ function M.setup_commands()
     desc = 'Create an Caramba-powered implementation plan',
     nargs = '?',
   })
-  
+
   -- Analyze project structure
   commands.register('AnalyzeProject', function()
     M.analyze_project_structure(function(analysis, err)
@@ -873,7 +888,7 @@ function M.setup_commands()
         end)
         return
       end
-      
+
       if analysis then
         vim.schedule(function()
           M._show_result_window(analysis, "Project Analysis")
@@ -883,19 +898,19 @@ function M.setup_commands()
   end, {
     desc = 'Analyze project structure and architecture',
   })
-  
+
   -- Learn from codebase
   commands.register('LearnFromCodebase', M.learn_from_codebase, {
     desc = 'Learn patterns from successful implementations in codebase',
   })
-  
+
   -- Execute current plan
   commands.register('ExecutePlan', function()
     M.execute_plan()
   end, {
     desc = 'Execute the current implementation plan',
   })
-  
+
   -- Show current plan
   commands.register('ShowPlan', function()
     local plan = M.get_current_plan()
@@ -907,11 +922,11 @@ function M.setup_commands()
   end, {
     desc = 'Show the current implementation plan',
   })
-  
+
   -- Mark plan as complete
   commands.register('MarkPlanComplete', M.mark_complete, {
     desc = 'Mark the current plan as complete',
   })
 end
 
-return M 
+return M

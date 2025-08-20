@@ -444,6 +444,7 @@ merge_plan_delta = function(delta)
 		end
 	end
 	-- persist
+	planner.set_project_plan(plan)
 	planner.save_project_plan()
 end
 
