@@ -37,7 +37,7 @@ M.tools = {
       })
     end,
   },
-  
+
   fetch_url = {
     name = "fetch_url",
     description = "Fetch and extract text content from a URL",
@@ -52,7 +52,7 @@ M.tools = {
       websearch.fetch_url(params.url, callback)
     end,
   },
-  
+
   read_file = {
     name = "read_file",
     description = "Read contents of a local file",
@@ -72,7 +72,7 @@ M.tools = {
       end
     end,
   },
-  
+
   list_files = {
     name = "list_files",
     description = "List files in a directory",
@@ -91,12 +91,19 @@ M.tools = {
     execute = function(params, callback)
       local path = params.path or "."
       local pattern = params.pattern or "*"
-      
-      local cmd = string.format("find %s -name '%s' -type f | head -50",
-        vim.fn.shellescape(path), pattern)
-      
-      local result = vim.fn.system(cmd)
-      callback(result, nil)
+      local lines = {}
+      local co = coroutine.running(); local done = false
+      vim.fn.jobstart({"sh", "-c", string.format("find %s -name '%s' -type f | head -50", vim.fn.shellescape(path), pattern)}, {
+        stdout_buffered = true,
+        on_stdout = function(_, data, _)
+          if type(data) == 'table' then
+            for _, l in ipairs(data) do if l and l ~= '' then table.insert(lines, l) end end
+          end
+        end,
+        on_exit = function() done = true; if co then coroutine.resume(co) end end,
+      })
+      if co then coroutine.yield() end
+      callback(table.concat(lines, "\n"), nil)
     end,
   },
 }
@@ -104,7 +111,7 @@ M.tools = {
 -- Build tool descriptions for the AI
 M.get_tool_descriptions = function()
   local descriptions = {}
-  
+
   for name, tool in pairs(M.tools) do
     local params_desc = {}
     for param_name, param_info in pairs(tool.parameters) do
@@ -116,7 +123,7 @@ M.get_tool_descriptions = function()
         param_info.description
       ))
     end
-    
+
     table.insert(descriptions, string.format(
       "Tool: %s\nDescription: %s\nParameters:\n%s",
       tool.name,
@@ -124,14 +131,14 @@ M.get_tool_descriptions = function()
       table.concat(params_desc, "\n")
     ))
   end
-  
+
   return table.concat(descriptions, "\n\n")
 end
 
 -- Parse tool calls from AI response
 M.parse_tool_calls = function(response)
   local tool_calls = {}
-  
+
   -- Look for tool call patterns
   -- Format: <tool>function_name(params)</tool>
   for tool_call in response:gmatch("<tool>(.-)</tool>") do
@@ -159,7 +166,7 @@ M.parse_tool_calls = function(response)
       end
     end
   end
-  
+
   return tool_calls
 end
 
@@ -167,12 +174,12 @@ end
 M.execute_tool_calls = function(tool_calls, callback)
   local results = {}
   local pending = #tool_calls
-  
+
   if pending == 0 then
     callback({})
     return
   end
-  
+
   for i, call in ipairs(tool_calls) do
     local tool = M.tools[call.name]
     if tool then
@@ -183,7 +190,7 @@ M.execute_tool_calls = function(tool_calls, callback)
           result = result,
           error = err,
         }
-        
+
         pending = pending - 1
         if pending == 0 then
           callback(results)
@@ -205,7 +212,7 @@ end
 -- Request with tool support
 M.request_with_tools = function(prompt, opts, callback)
   opts = opts or {}
-  
+
   -- Build system prompt with tool descriptions
   local system_prompt = [[
 You are an AI assistant with access to the following tools:
@@ -223,27 +230,27 @@ You can use multiple tools in your response. After using tools, provide your ana
     { role = "system", content = system_prompt },
     { role = "user", content = prompt },
   }
-  
+
   llm.request(messages, opts, function(response)
     if not response then
       callback(nil, "Failed to get AI response")
       return
     end
-    
+
     -- Check for tool calls
     local tool_calls = M.parse_tool_calls(response)
-    
+
     if #tool_calls == 0 then
       -- No tools used, return response directly
       callback(response, nil)
       return
     end
-    
+
     -- Execute tools
     M.execute_tool_calls(tool_calls, function(results)
       -- Build follow-up prompt with results
       local follow_up = "Tool results:\n\n"
-      
+
       for _, result in ipairs(results) do
         if result then
           follow_up = follow_up .. string.format(
@@ -254,11 +261,11 @@ You can use multiple tools in your response. After using tools, provide your ana
           )
         end
       end
-      
+
       -- Add tool results to conversation
       table.insert(messages, { role = "assistant", content = response })
       table.insert(messages, { role = "user", content = follow_up .. "\nPlease provide your final response based on these results." })
-      
+
       -- Get final response
       llm.request(messages, opts, callback)
     end)
@@ -268,13 +275,13 @@ end
 -- Interactive tool-assisted query
 M.query_with_tools = function(query)
   vim.notify("Processing query with tools...", vim.log.levels.INFO)
-  
+
   M.request_with_tools(query, { temperature = 1 }, function(response, err)
     if err then
       vim.notify("Error: " .. err, vim.log.levels.ERROR)
       return
     end
-    
+
     vim.schedule(function()
       local ui = require('caramba.ui')
       local lines = vim.split(response, "\n")
@@ -286,7 +293,7 @@ end
 -- Setup commands for this module
 M.setup_commands = function()
   local commands = require('caramba.core.commands')
-  
+
   -- Query with tools command
   commands.register('Query', function(args)
     local query = args.args
@@ -307,4 +314,4 @@ M.setup_commands = function()
   })
 end
 
-return M 
+return M

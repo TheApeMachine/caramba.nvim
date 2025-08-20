@@ -12,7 +12,7 @@ M._cache = {}
 M._active_requests = {}
 M._active_jobs = {}
 M._request_queue = {}
-M._max_concurrent = 3
+M._max_concurrent = require("caramba.config").get().performance.max_concurrent_requests or 2
 M._processing_queue = false
 M._streaming_jobs = {}
 
@@ -543,6 +543,23 @@ M.request = function(messages, opts, callback)
       end
 
       local response = table.concat(j:result(), "\n")
+      -- Basic backoff on 429/5xx
+      local perf = config.get().performance or {}
+      local max_retries = perf.max_retries or 0
+      local base = perf.base_backoff_ms or 300
+      local maxb = perf.max_backoff_ms or 3000
+      if return_val == 0 and (response:find('"status"%s*:%s*429') or response:find('Too Many Requests') or response:find('HTTP/1%.1 5')) then
+        local attempt = (opts.__retry_attempt or 0) + 1
+        if attempt <= max_retries then
+          opts.__retry_attempt = attempt
+          local backoff_ms = math.min(maxb, base * math.pow(2, attempt - 1)) + math.random(0, 250)
+          vim.defer_fn(function()
+            table.insert(M._request_queue, { prompt = messages, opts = opts, callback = callback, stream = false })
+            process_queue()
+          end, backoff_ms)
+          return
+        end
+      end
       local result, err = M.providers[provider].parse_response(response)
 
       if result and cache_key then
@@ -588,88 +605,10 @@ M.request = function(messages, opts, callback)
   end, timeout_ms)
 end
 
--- Synchronous request (blocks until complete)
-M.request_sync = function(prompt, opts)
-  opts = opts or {}
-  local provider = opts.provider or config.get().provider
-
-  -- Validate API key
-  local api_config = config.get().api[provider]
-  if provider == "openai" and not (api_config and api_config.api_key) then
-    vim.notify("OpenAI API key not set.", vim.log.levels.ERROR)
-    return nil
-  elseif provider == "anthropic" and not (api_config and api_config.api_key) then
-    vim.notify("Anthropic API key not set.", vim.log.levels.ERROR)
-    return nil
-  elseif provider == "google" and not (api_config and api_config.api_key) then
-    vim.notify("Google API key not set.", vim.log.levels.ERROR)
-    return nil
-  end
-
-  -- Prepare request
-  local request_data = M.providers[provider].prepare_request(prompt, opts)
-
-  -- Build curl command
-  local curl_args = {
-    "-sS",
-    request_data.url,
-    "-X", "POST",
-    "--max-time", "15", -- Shorter timeout for sync requests
-  }
-
-  for header, value in pairs(request_data.headers) do
-    table.insert(curl_args, "-H")
-    table.insert(curl_args, header .. ": " .. value)
-  end
-
-  table.insert(curl_args, "-d")
-  table.insert(curl_args, request_data.body)
-
-  local job = Job:new({
-    command = "curl",
-    args = curl_args,
-  })
-
-  -- Plenary versions differ: some return (stdout, stderr, code), others (stdout, code)
-  local stdout, stderr, code = job:sync()
-  if type(stderr) == 'number' and code == nil then
-    -- Signature was (stdout, code)
-    code = stderr
-    stderr = nil
-  end
-  if type(stdout) == 'number' and code == nil then
-    -- Signature was (code) only; extremely unlikely, but guard anyway
-    code = stdout
-    stdout = {}
-  end
-
-  if code ~= 0 then
-    local err_msg = "LLM sync request failed with code " .. tostring(code)
-    local stderr_text = ''
-    if type(stderr) == 'table' then
-      if #stderr > 0 and stderr[1] ~= "" then stderr_text = table.concat(stderr, ' ') end
-    elseif type(stderr) == 'string' then
-      stderr_text = stderr
-    end
-    if stderr_text ~= '' then err_msg = err_msg .. ": " .. stderr_text end
-    vim.notify(err_msg, vim.log.levels.ERROR)
-    return nil
-  end
-
-  if not stdout or (type(stdout) == 'table' and #stdout == 0) or (type(stdout) == 'string' and stdout == '') then
-    vim.notify("LLM sync request returned empty response.", vim.log.levels.ERROR)
-    return nil
-  end
-
-  local response_text = type(stdout) == 'table' and table.concat(stdout, "\n") or tostring(stdout)
-  local result, err = M.providers[provider].parse_response(response_text)
-
-  if err then
-    vim.notify("LLM sync request failed to parse response: " .. err, vim.log.levels.ERROR)
-    return nil
-  end
-
-  return result
+-- Synchronous request removed to prevent UI blocking. Use async APIs instead.
+M.request_sync = function()
+  vim.notify("Caramba: llm.request_sync is deprecated and disabled. Use llm.request or llm.request_stream instead.", vim.log.levels.ERROR)
+  return nil
 end
 
 -- Build a prompt for code completion

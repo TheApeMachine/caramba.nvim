@@ -12,14 +12,25 @@ M.operations = {}
 -- Generate semantic commit message
 M.generate_commit_message = function(opts)
   opts = opts or {}
-  
+
   -- Get staged changes
-  local diff = vim.fn.system("git diff --cached")
-  if vim.v.shell_error ~= 0 or diff == "" then
+  local diff = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"git", "diff", "--cached"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then diff = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  if diff == "" then
     vim.notify("No staged changes found", vim.log.levels.WARN)
     return
   end
-  
+
   -- Analyze changes
   local prompt = [[
 Analyze this git diff and generate a conventional commit message.
@@ -64,15 +75,15 @@ end
 M.resolve_conflict = function()
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  
+
   -- Find conflict markers
   local conflicts = M._find_conflicts(lines)
-  
+
   if #conflicts == 0 then
     vim.notify("No merge conflicts found in buffer", vim.log.levels.INFO)
     return
   end
-  
+
   -- Process each conflict
   for _, conflict in ipairs(conflicts) do
     M._resolve_single_conflict(bufnr, conflict)
@@ -83,7 +94,7 @@ end
 M._find_conflicts = function(lines)
   local conflicts = {}
   local current_conflict = nil
-  
+
   for i, line in ipairs(lines) do
     if line:match("^<<<<<<< ") then
       current_conflict = {
@@ -101,28 +112,28 @@ M._find_conflicts = function(lines)
       current_conflict = nil
     end
   end
-  
+
   return conflicts
 end
 
 -- Resolve a single conflict
 M._resolve_single_conflict = function(bufnr, conflict)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  
+
   -- Extract conflict sections
   local ours = {}
   for i = conflict.ours_start, conflict.ours_end do
     table.insert(ours, lines[i])
   end
-  
+
   local theirs = {}
   for i = conflict.theirs_start, conflict.theirs_end do
     table.insert(theirs, lines[i])
   end
-  
+
   -- Get base version if available (3-way merge)
   local base = M._get_base_version(conflict.marker)
-  
+
   -- Use semantic merge
   ast_transform.semantic_merge_async(
     base or "",
@@ -144,8 +155,19 @@ M._get_base_version = function(marker)
   local commit = marker:match("<<<<<<< ([^%s]+)")
   if commit and commit ~= "HEAD" then
     -- Try to get the merge base
-    local base_commit = vim.fn.system("git merge-base HEAD " .. commit)
-    if vim.v.shell_error == 0 then
+    local base_commit = ""
+    do
+      local co = coroutine.running(); local done = false
+      vim.fn.jobstart({"sh", "-c", "git merge-base HEAD " .. commit}, {
+        stdout_buffered = true,
+        on_stdout = function(_, data, _)
+          if type(data) == 'table' then base_commit = table.concat(data, "\n") end
+        end,
+        on_exit = function() done = true; if co then coroutine.resume(co) end end,
+      })
+      if co then coroutine.yield() end
+    end
+    if base_commit ~= "" then
       -- Get the file content at base
       -- This is simplified - would need file path
       return nil
@@ -163,11 +185,11 @@ M._preview_resolution = function(bufnr, conflict, resolution)
     "## Original Conflict:",
     "```",
   }
-  
+
   -- Add original conflict
   local lines = vim.api.nvim_buf_get_lines(bufnr, conflict.start - 1, conflict.end_line, false)
   vim.list_extend(preview_lines, lines)
-  
+
   table.insert(preview_lines, "```")
   table.insert(preview_lines, "")
   table.insert(preview_lines, "## Semantic Resolution:")
@@ -176,10 +198,10 @@ M._preview_resolution = function(bufnr, conflict, resolution)
   table.insert(preview_lines, "```")
   table.insert(preview_lines, "")
   table.insert(preview_lines, "Press 'a' to apply resolution, 'q' to close")
-  
+
   local ui = require('caramba.ui')
   local preview_buf, win = ui.show_lines_centered(preview_lines, { title = ' Conflict Resolution Preview ', filetype = 'markdown' })
-  
+
   -- Add apply command
   vim.keymap.set('n', 'a', function()
     if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
@@ -188,7 +210,7 @@ M._preview_resolution = function(bufnr, conflict, resolution)
     vim.api.nvim_buf_set_lines(bufnr, conflict.start - 1, conflict.end_line, false, resolution_lines)
     vim.notify("Conflict resolved", vim.log.levels.INFO)
   end, { buffer = preview_buf, desc = "Apply resolution" })
-  
+
   vim.keymap.set('n', 'q', function()
     if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
   end, { buffer = preview_buf, desc = "Close" })
@@ -197,23 +219,77 @@ end
 -- Generate PR description
 M.generate_pr_description = function()
   -- Get branch diff
-  local base_branch = vim.fn.system("git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'"):gsub('\n', '')
-  local current_branch = vim.fn.system("git branch --show-current"):gsub('\n', '')
-  
+  local base_branch = ""; local current_branch = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then base_branch = (table.concat(data, "\n") or ''):gsub('\n','') end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"git", "branch", "--show-current"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then current_branch = (table.concat(data, "\n") or ''):gsub('\n','') end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   if vim.v.shell_error ~= 0 then
     vim.notify("Failed to get branch information", vim.log.levels.ERROR)
     return
   end
-  
+
   -- Get commits
-  local commits = vim.fn.system("git log --oneline " .. base_branch .. ".." .. current_branch)
-  
+  local commits = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git log --oneline " .. base_branch .. ".." .. current_branch}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then commits = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   -- Get diff summary
-  local diff_stat = vim.fn.system("git diff --stat " .. base_branch .. ".." .. current_branch)
-  
+  local diff_stat = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git diff --stat " .. base_branch .. ".." .. current_branch}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then diff_stat = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   -- Get detailed diff for context
-  local diff = vim.fn.system("git diff " .. base_branch .. ".." .. current_branch)
-  
+  local diff = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git diff " .. base_branch .. ".." .. current_branch}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then diff = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   local prompt = string.format([[
 Generate a comprehensive pull request description based on these changes:
 
@@ -259,9 +335,30 @@ end
 -- Suggest branch name
 M.suggest_branch_name = function()
   -- Get current changes
-  local status = vim.fn.system("git status --porcelain")
-  local diff = vim.fn.system("git diff")
-  
+  local status = ""; local diff = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"git", "status", "--porcelain"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then status = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"git", "diff"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then diff = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   local prompt = [[
 Based on these changes, suggest a git branch name:
 
@@ -284,7 +381,7 @@ Suggest 3 branch names, one per line.
     if response then
       vim.schedule(function()
         local names = vim.split(response, '\n')
-        
+
         -- Filter empty lines
         local filtered = {}
         for _, name in ipairs(names) do
@@ -292,18 +389,27 @@ Suggest 3 branch names, one per line.
             table.insert(filtered, name)
           end
         end
-        
+
         -- Let user choose
         vim.ui.select(filtered, {
           prompt = "Select branch name:",
         }, function(choice)
           if choice then
             -- Create branch
-            local result = vim.fn.system("git checkout -b " .. choice)
-            if vim.v.shell_error == 0 then
+            local ok_checkout = false
+            local co = coroutine.running(); local done = false
+            vim.fn.jobstart({"git", "checkout", "-b", choice}, {
+              on_exit = function(_, code, _)
+                ok_checkout = (code == 0)
+                done = true
+                if co then coroutine.resume(co) end
+              end,
+            })
+            if co then coroutine.yield() end
+            if ok_checkout then
               vim.notify("Created branch: " .. choice, vim.log.levels.INFO)
             else
-              vim.notify("Failed to create branch: " .. result, vim.log.levels.ERROR)
+              vim.notify("Failed to create branch: " .. choice, vim.log.levels.ERROR)
             end
           end
         end)
@@ -319,17 +425,17 @@ M.interactive_rebase_helper = function()
     vim.notify("Not in an interactive rebase", vim.log.levels.WARN)
     return
   end
-  
+
   -- Get rebase todo
   local todo_file = ".git/rebase-merge/git-rebase-todo"
   if vim.fn.filereadable(todo_file) == 0 then
     return
   end
-  
+
   -- Analyze commits
   local lines = vim.fn.readfile(todo_file)
   local commits = {}
-  
+
   for _, line in ipairs(lines) do
     local action, hash, message = line:match("^(%w+)%s+(%w+)%s+(.+)")
     if action and hash then
@@ -341,10 +447,10 @@ M.interactive_rebase_helper = function()
       })
     end
   end
-  
+
   -- Suggest optimizations
   local suggestions = M._analyze_rebase_commits(commits)
-  
+
   if #suggestions > 0 then
     M._show_rebase_suggestions(suggestions)
   end
@@ -353,7 +459,7 @@ end
 -- Analyze commits for rebase optimization
 M._analyze_rebase_commits = function(commits)
   local suggestions = {}
-  
+
   -- Look for fixup candidates
   for i, commit in ipairs(commits) do
     if commit.message:match("^fix") or commit.message:match("^fixup") then
@@ -371,7 +477,7 @@ M._analyze_rebase_commits = function(commits)
       end
     end
   end
-  
+
   -- Look for squash candidates
   local prev_feature = nil
   for _, commit in ipairs(commits) do
@@ -383,36 +489,36 @@ M._analyze_rebase_commits = function(commits)
       })
     end
   end
-  
+
   return suggestions
 end
 
 -- Show rebase suggestions
 M._show_rebase_suggestions = function(suggestions)
   local buf = vim.api.nvim_create_buf(false, true)
-  
+
   local lines = {
     "# Rebase Optimization Suggestions",
     "",
   }
-  
+
   for _, suggestion in ipairs(suggestions) do
     table.insert(lines, string.format("## %s: %s", suggestion.type, suggestion.commit.message))
     table.insert(lines, "Reason: " .. suggestion.reason)
-    
+
     if suggestion.type == "fixup" and suggestion.target then
       table.insert(lines, "Target: " .. suggestion.target.message)
       table.insert(lines, "Suggested action: `fixup " .. suggestion.commit.hash .. "`")
     elseif suggestion.type == "squash" then
       table.insert(lines, "Suggested action: `squash " .. suggestion.commit.hash .. "`")
     end
-    
+
     table.insert(lines, "")
   end
-  
+
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-  
+
   vim.cmd('split')
   vim.api.nvim_set_current_buf(buf)
 end
@@ -420,18 +526,61 @@ end
 -- Review commit before pushing
 M.pre_push_review = function()
   -- Get unpushed commits
-  local remote = vim.fn.system("git remote"):gsub('\n', '')
-  local branch = vim.fn.system("git branch --show-current"):gsub('\n', '')
-  local commits = vim.fn.system("git log --oneline " .. remote .. "/" .. branch .. "..HEAD")
-  
+  local remote = ""; local branch = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"git", "remote"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then remote = (table.concat(data, "\n") or ''):gsub('\n','') end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"git", "branch", "--show-current"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then branch = (table.concat(data, "\n") or ''):gsub('\n','') end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  local commits = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git log --oneline " .. remote .. "/" .. branch .. "..HEAD"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then commits = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   if commits == "" then
     vim.notify("No unpushed commits", vim.log.levels.INFO)
     return
   end
-  
+
   -- Get full diff
-  local diff = vim.fn.system("git diff " .. remote .. "/" .. branch .. "..HEAD")
-  
+  local diff = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git diff " .. remote .. "/" .. branch .. "..HEAD"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then diff = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+
   local prompt = [[
 Review these commits before pushing:
 
@@ -452,31 +601,40 @@ Provide a brief review with any concerns or suggestions.
     if response then
       vim.schedule(function()
         local buf = vim.api.nvim_create_buf(false, true)
-        
+
         local lines = {
           "# Pre-Push Review",
           "",
           "## Commits to Push:",
           "```",
         }
-        
+
         vim.list_extend(lines, vim.split(commits, '\n'))
         table.insert(lines, "```")
         table.insert(lines, "")
         table.insert(lines, "## AI Review:")
         vim.list_extend(lines, vim.split(response, '\n'))
-        
+
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
         vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-        
+
         vim.cmd('split')
         vim.api.nvim_set_current_buf(buf)
-        
+
         -- Add push command
         vim.keymap.set('n', 'p', function()
           vim.cmd('close')
-          vim.fn.system("git push")
-          if vim.v.shell_error == 0 then
+          local push_ok = false
+          local co = coroutine.running(); local done = false
+          vim.fn.jobstart({"git", "push"}, {
+            on_exit = function(_, code, _)
+              push_ok = (code == 0)
+              done = true
+              if co then coroutine.resume(co) end
+            end,
+          })
+          if co then coroutine.yield() end
+          if push_ok then
             vim.notify("Pushed successfully", vim.log.levels.INFO)
           else
             vim.notify("Push failed", vim.log.levels.ERROR)
@@ -544,13 +702,13 @@ M.review_code = function()
   local context = require("caramba.context")
   local llm = require("caramba.llm")
   local intelligence = require("caramba.intelligence")
-  
+
   -- Get code to review
   local mode = vim.fn.mode()
   local code_to_review
   local review_type
   local start_line = 1
-  
+
   if mode == "v" or mode == "V" then
     -- Visual mode: review selection
     code_to_review = utils.get_visual_selection()
@@ -565,24 +723,24 @@ M.review_code = function()
     code_to_review = table.concat(lines, '\n')
     review_type = "File: " .. vim.fn.expand('%:t')
   end
-  
+
   if not code_to_review or code_to_review == "" then
     vim.notify("No code to review", vim.log.levels.WARN)
     return
   end
-  
+
   -- Collect comprehensive context
   local ctx = context.collect()
   local language = ctx and ctx.language or vim.bo.filetype
-  
+
   -- Build context sections
   local context_sections = {}
-  
+
   -- Add project structure
   if ctx and ctx.project_root then
     table.insert(context_sections, "Project root: " .. ctx.project_root)
   end
-  
+
   -- Add imports/dependencies context
   if ctx and ctx.imports then
     local imports_str = "## Imports and Dependencies:\n"
@@ -591,7 +749,7 @@ M.review_code = function()
     end
     table.insert(context_sections, imports_str)
   end
-  
+
   -- Get semantic context using intelligence module
   local semantic_context = ""
   if intelligence and intelligence.get_semantic_context then
@@ -602,7 +760,7 @@ M.review_code = function()
       semantic_context = "\n## Semantic Context:\n" .. sem_ctx
     end
   end
-  
+
   -- Get related files context
   local related_files = ""
   local related_content = {}
@@ -616,7 +774,7 @@ M.review_code = function()
     local current_file = vim.fn.expand('%:t:r')
     local current_ext = vim.fn.expand('%:e')
     local current_dir = vim.fn.expand('%:h')
-    
+
     -- Language-specific test file patterns
     local test_patterns_by_lang = {
       javascript = {
@@ -658,26 +816,26 @@ M.review_code = function()
         "tests/" .. current_file .. ".rs",
       },
     }
-    
+
     -- Get patterns for current language or fallback to JavaScript patterns
     local patterns = test_patterns_by_lang[language] or test_patterns_by_lang.javascript or {}
-    
+
     -- Add TypeScript definition file for TS/JS files
     if language == "typescript" or language == "javascript" then
       if language == "javascript" then
         table.insert(patterns, current_file .. ".d.ts")
       end
     end
-    
+
     local found_related = false
     local related_files_list = {}
-    
+
     for _, pattern in ipairs(patterns) do
       local full_path = current_dir .. "/" .. pattern
       if vim.fn.filereadable(full_path) == 1 then
         found_related = true
         table.insert(related_files_list, "- " .. pattern .. " (test file)")
-        
+
         -- Read first few lines to understand test structure
         local test_lines = vim.fn.readfile(full_path)
         if #test_lines > 20 then
@@ -699,12 +857,12 @@ M.review_code = function()
         end
       end
     end
-    
+
     if found_related then
       related_files = "\n## Potentially Related Files:\n" .. table.concat(related_files_list, "\n")
     end
   end
-  
+
   -- Get function/class definitions that are referenced
   local references = ""
   if ctx and ctx.symbols then
@@ -715,11 +873,11 @@ M.review_code = function()
       end
     end
   end
-  
+
   -- Detect project conventions and patterns
   local conventions = ""
   local project_root = ctx and ctx.project_root or vim.fn.getcwd()
-  
+
   -- Check for configuration files that indicate conventions
   local config_files = {
     { file = ".eslintrc", type = "ESLint configuration" },
@@ -732,7 +890,7 @@ M.review_code = function()
     { file = "pyproject.toml", type = "Python project configuration" },
     { file = ".flake8", type = "Flake8 configuration" },
   }
-  
+
   local found_configs = {}
   for _, config in ipairs(config_files) do
     local config_path = project_root .. "/" .. config.file
@@ -740,19 +898,30 @@ M.review_code = function()
       table.insert(found_configs, config.type)
     end
   end
-  
+
   if #found_configs > 0 then
     conventions = "\n## Project Configuration:\n"
     for _, config in ipairs(found_configs) do
       conventions = conventions .. "- " .. config .. " detected\n"
     end
   end
-  
+
   -- Get git context if available
   local git_context = ""
   local file_path_escaped = vim.fn.shellescape(vim.fn.expand('%:p'))
-  local git_status = vim.fn.system("git status --porcelain " .. file_path_escaped)
-  if vim.v.shell_error == 0 then
+  local git_status = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git status --porcelain " .. file_path_escaped}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then git_status = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  if git_status ~= "" then
     if git_status ~= "" then
       git_context = "\n## Git Status:\nFile has uncommitted changes"
     end
@@ -760,15 +929,26 @@ M.review_code = function()
     -- Git not available or file not in repository
     git_context = ""
   end
-  
+
   -- Check recent commits affecting this file
-  local recent_commits = vim.fn.system("git log -3 --oneline " .. file_path_escaped)
-  if vim.v.shell_error == 0 then
+  local recent_commits = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git log -3 --oneline " .. file_path_escaped}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then recent_commits = table.concat(data, "\n") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  if recent_commits ~= "" then
     if recent_commits ~= "" then
       git_context = git_context .. "\n\n## Recent commits:\n" .. recent_commits
     end
   end
-  
+
   -- Build comprehensive prompt
   local prompt = M._build_review_prompt({
     language = language,
@@ -787,13 +967,13 @@ M.review_code = function()
   })
 
   vim.notify("AI: Analyzing code with full context...", vim.log.levels.INFO)
-  
+
   llm.request(prompt, { temperature = 0.2 }, function(response)
     if response then
       vim.schedule(function()
         -- Show review in a buffer
         local buf = vim.api.nvim_create_buf(false, true)
-        
+
         local header = {
           "# Code Review with Context",
           "",
@@ -801,7 +981,7 @@ M.review_code = function()
           "**Language:** " .. language,
           "**Date:** " .. os.date("%Y-%m-%d %H:%M"),
         }
-        
+
         -- Add context summary to header
         if ctx and ctx.project_root then
           table.insert(header, "**Project:** " .. vim.fn.fnamemodify(ctx.project_root, ':t'))
@@ -809,28 +989,28 @@ M.review_code = function()
         if ctx and ctx.imports and #ctx.imports > 0 then
           table.insert(header, "**Dependencies:** " .. #ctx.imports .. " imports analyzed")
         end
-        
+
         table.insert(header, "")
         table.insert(header, "---")
         table.insert(header, "")
-        
+
         local lines = {}
         vim.list_extend(lines, header)
         vim.list_extend(lines, vim.split(response, '\n'))
-        
+
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
         vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-        
+
         -- Add keybinding hint at the top
         local hint_lines = {"-- Press <leader>gl on a line number to jump to it --", ""}
         vim.api.nvim_buf_set_lines(buf, 0, 0, false, hint_lines)
-        
+
         vim.api.nvim_buf_set_option(buf, 'modifiable', false)
-        
+
         -- Open in a new split
         vim.cmd('vsplit')
         vim.api.nvim_set_current_buf(buf)
-        
+
         -- Add keymaps
         vim.keymap.set('n', 'q', ':close<CR>', { buffer = buf, desc = "Close review" })
         vim.keymap.set('n', 'y', function()
@@ -838,7 +1018,7 @@ M.review_code = function()
           vim.fn.setreg('+', content)
           vim.notify("Review copied to clipboard", vim.log.levels.INFO)
         end, { buffer = buf, desc = "Copy review to clipboard" })
-        
+
         -- Add keymap to jump to specific line mentioned in review
         -- Use <leader>gl (go to line) to avoid conflicts with built-in gd
         vim.keymap.set('n', '<leader>gl', function()
@@ -850,9 +1030,9 @@ M.review_code = function()
             vim.cmd('normal! zz') -- Center the line
           end
         end, { buffer = buf, desc = "Go to line mentioned in review" })
-        
 
-        
+
+
         vim.notify("AI: Context-aware code review complete", vim.log.levels.INFO)
       end)
     else
@@ -864,41 +1044,41 @@ end
 -- Setup commands for this module
 function M.setup_commands()
   local commands = require('caramba.core.commands')
-  
+
   -- Git commit message generation
   commands.register('CommitMessage', M.generate_commit_message, {
     desc = 'Generate semantic commit message from staged changes',
   })
-  
+
   -- Merge conflict resolution
   commands.register('ResolveConflict', M.resolve_conflict, {
     desc = 'Resolve merge conflicts using semantic understanding',
   })
-  
+
   -- PR description generation
   commands.register('GeneratePR', M.generate_pr_description, {
     desc = 'Generate comprehensive pull request description',
   })
-  
+
   -- Branch naming
   commands.register('SuggestBranch', M.suggest_branch_name, {
     desc = 'Suggest branch name based on changes',
   })
-  
+
   -- Interactive rebase helper
   commands.register('RebaseHelper', M.interactive_rebase_helper, {
     desc = 'Analyze and optimize interactive rebase',
   })
-  
+
   -- Pre-push review
   commands.register('PrePushReview', M.pre_push_review, {
     desc = 'Review commits before pushing',
   })
-  
+
   -- Review current code for quality, bugs, and improvements
   commands.register('ReviewCode', M.review_code, {
     desc = 'Review current code for quality, bugs, and improvements',
   })
 end
 
-return M 
+return M

@@ -297,9 +297,20 @@ function M.build_enriched_prompt(user_message)
 	end
 
 	-- Recent git changes to provide temporal context (best-effort)
-	local ok_git, recent = pcall(function()
-		local lines = vim.fn.systemlist("git --no-pager log -n 3 --pretty=format:%h %s --name-only")
-		return lines
+	local recent = {}
+	local ok_git = pcall(function()
+		local co = coroutine.running(); local done = false
+		vim.fn.jobstart({"sh", "-c", "git --no-pager log -n 3 --pretty=format:%h %s --name-only"}, {
+			stdout_buffered = true,
+			on_stdout = function(_, data, _)
+				if type(data) == 'table' then
+					for _, l in ipairs(data) do if l and l ~= '' then table.insert(recent, l) end end
+				end
+			end,
+			on_exit = function() done = true; if co then coroutine.resume(co) end end,
+		})
+		if co then coroutine.yield() end
+		return true
 	end)
 	if ok_git and recent and #recent > 0 then
 		parts[#parts+1] = '\n## Recent Changes (git)'

@@ -92,7 +92,7 @@ M.defaults = {
     enable_completions = true,
     enable_refactoring = true,
     enable_explanations = true,
-    auto_install_parsers = true, -- Automatically install missing Tree-sitter parsers
+    auto_install_parsers = false, -- Do not auto-install missing Tree-sitter parsers by default
   },
 
   -- UI settings
@@ -114,6 +114,12 @@ M.defaults = {
     cache_ttl_seconds = 3600,    -- Cache TTL
     request_timeout_ms = 30000, -- 30 seconds default (non-stream)
     request_idle_timeout_ms = 120000, -- Idle timeout for streaming; resets on each chunk
+    -- Retry/backoff settings
+    max_retries = 3,
+    base_backoff_ms = 300,
+    max_backoff_ms = 3000,
+    -- Token budgeting
+    enable_token_budget = false,
   },
 
   -- Web search settings

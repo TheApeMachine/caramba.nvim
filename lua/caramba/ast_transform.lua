@@ -19,13 +19,13 @@ end
 M.find_nodes = function(bufnr, query_string)
   local parser = parsers.get_parser(bufnr)
   if not parser then return {} end
-  
+
   local tree = parser:parse()[1]
   local root = tree:root()
-  
+
   local lang = parser:lang()
   local query = vim.treesitter.query.parse(lang, query_string)
-  
+
   local matches = {}
   for pattern, match, metadata in query:iter_matches(root, bufnr) do
     for id, node in pairs(match) do
@@ -36,7 +36,7 @@ M.find_nodes = function(bufnr, query_string)
       })
     end
   end
-  
+
   return matches
 end
 
@@ -46,7 +46,7 @@ end
 M.transformations.callback_to_async = {
   name = "callback_to_async",
   languages = {"javascript", "typescript", "javascriptreact", "typescriptreact"},
-  
+
   detect = function(bufnr)
     -- Find callback patterns
     local query = [[
@@ -58,13 +58,13 @@ M.transformations.callback_to_async = {
               (identifier) @result)
             body: (_) @callback_body) @callback))
     ]]
-    
+
     return M.find_nodes(bufnr, query)
   end,
-  
+
   transform = function(node, bufnr)
     local text = utils.get_node_text(node.node, bufnr)
-    
+
     -- Use AI to transform
     local prompt = string.format([[
 Transform this callback-based code to use async/await:
@@ -80,7 +80,7 @@ Rules:
 4. Preserve the original logic
 5. Return the transformed code only
 ]], text)
-    
+
     return prompt
   end,
 }
@@ -89,7 +89,7 @@ Rules:
 M.transformations.class_to_function = {
   name = "class_to_function",
   languages = {"javascript", "typescript", "javascriptreact", "typescriptreact"},
-  
+
   detect = function(bufnr)
     local query = [[
       (class_declaration
@@ -101,13 +101,13 @@ M.transformations.class_to_function = {
       (#eq? @react "React")
       (#eq? @component "Component")
     ]]
-    
+
     return M.find_nodes(bufnr, query)
   end,
-  
+
   transform = function(node, bufnr)
     local text = utils.get_node_text(node.node, bufnr)
-    
+
     local prompt = string.format([[
 Convert this React class component to a functional component with hooks:
 
@@ -123,7 +123,7 @@ Rules:
 5. Use modern React patterns
 6. Return only the transformed code
 ]], text)
-    
+
     return prompt
   end,
 }
@@ -132,30 +132,30 @@ Rules:
 M.transformations.cjs_to_esm = {
   name = "cjs_to_esm",
   languages = {"javascript", "typescript"},
-  
+
   detect = function(bufnr)
     local require_query = [[(call_expression
       function: (identifier) @require
       (#eq? @require "require"))]]
-    
+
     local export_query = [[(assignment_expression
       left: (member_expression
         object: (identifier) @module
         property: (property_identifier) @exports)
       (#eq? @module "module")
       (#eq? @exports "exports"))]]
-    
+
     local requires = M.find_nodes(bufnr, require_query)
     local exports = M.find_nodes(bufnr, export_query)
-    
+
     return vim.list_extend(requires, exports)
   end,
-  
+
   transform = function(node, bufnr)
     -- Get the entire buffer for context
     local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     local content = table.concat(lines, '\n')
-    
+
     local prompt = [[
 Convert this CommonJS module to ES modules:
 
@@ -169,7 +169,7 @@ Rules:
 5. Use named exports where appropriate
 6. Return only the transformed code
 ]]
-    
+
     return prompt
   end,
 }
@@ -178,23 +178,23 @@ Rules:
 M.transformations.py2_to_py3 = {
   name = "py2_to_py3",
   languages = {"python"},
-  
+
   detect = function(bufnr)
     -- Detect Python 2 patterns
     local print_stmt = [[(print_statement) @print]]
     local old_string = [[(string) @str
       (#match? @str "^u['\"]")]]
-    
+
     local prints = M.find_nodes(bufnr, print_stmt)
     local strings = M.find_nodes(bufnr, old_string)
-    
+
     return vim.list_extend(prints, strings)
   end,
-  
+
   transform = function(node, bufnr)
     local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     local content = table.concat(lines, '\n')
-    
+
     local prompt = [[
 Convert this Python 2 code to Python 3:
 
@@ -210,7 +210,7 @@ Changes to make:
 7. division behavior
 8. Return only the transformed code
 ]]
-    
+
     return prompt
   end,
 }
@@ -218,33 +218,33 @@ Changes to make:
 -- Apply transformation to buffer
 M.apply_transformation = function(transform_name, bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  
+
   local transform = M.transformations[transform_name]
   if not transform then
     vim.notify("Unknown transformation: " .. transform_name, vim.log.levels.ERROR)
     return
   end
-  
+
   -- Check language compatibility
   local parser = parsers.get_parser(bufnr)
   if not parser then
     vim.notify("No parser available for buffer", vim.log.levels.ERROR)
     return
   end
-  
+
   local lang = parser:lang()
   if transform.languages and not vim.tbl_contains(transform.languages, lang) then
     vim.notify("Transformation not available for " .. lang, vim.log.levels.ERROR)
     return
   end
-  
+
   -- Detect applicable nodes
   local nodes = transform.detect(bufnr)
   if #nodes == 0 then
     vim.notify("No applicable code found for transformation", vim.log.levels.INFO)
     return
   end
-  
+
   -- Inform user
   vim.notify("Found " .. #nodes .. " locations to transform", vim.log.levels.INFO)
 
@@ -305,8 +305,25 @@ Instructions:
 6. Return only the merged code
 
 ]], base, ours, theirs)
-  
-  return llm.request_sync(prompt, { temperature = 1 })
+
+  -- Deprecated sync path removed: provide best-effort async result by blocking caller via callback pattern
+  local co = coroutine.running()
+  if co then
+    local result_value
+    local done = false
+    llm.request(prompt, { temperature = 1, task = 'refactor' }, function(result, _)
+      result_value = result
+      done = true
+      coroutine.resume(co)
+    end)
+    -- Yield until callback resumes us
+    if not done then coroutine.yield() end
+    return result_value
+  else
+    -- Fallback: run async and immediately return nil; callers should prefer semantic_merge_async
+    llm.request(prompt, { temperature = 1, task = 'refactor' }, function(_) end)
+    return nil
+  end
 end
 
 -- Async variant (preferred to avoid UI blocking)
@@ -346,20 +363,37 @@ end
 -- Cross-language refactoring
 M.cross_language_rename = function(old_name, new_name, opts)
   opts = opts or {}
-  
+
   -- Find all occurrences across languages
-  local files = vim.fn.systemlist("rg -l " .. vim.fn.shellescape(old_name))
-  
+  local files = {}
+  local co = coroutine.running()
+  local done = false
+  local job_id = vim.fn.jobstart({"rg", "-l", old_name}, {
+    stdout_buffered = true,
+    on_stdout = function(_, data, _)
+      if type(data) == 'table' then
+        for _, line in ipairs(data) do
+          if line and line ~= '' then table.insert(files, line) end
+        end
+      end
+    end,
+    on_exit = function()
+      done = true
+      if co then coroutine.resume(co) end
+    end,
+  })
+  if co then coroutine.yield() end
+
   local changes = {}
   for _, file in ipairs(files) do
     local ext = vim.fn.fnamemodify(file, ':e')
     local lang = M._ext_to_lang(ext)
-    
+
     if lang then
       -- Load file
       local lines = vim.fn.readfile(file)
       local content = table.concat(lines, '\n')
-      
+
       -- Use AI to understand context and rename
       local prompt = string.format([[
 In this %s file, rename '%s' to '%s' intelligently:
@@ -375,17 +409,31 @@ Rules:
 4. Preserve string literals unless they reference the symbol
 5. Return the full file with changes
 ]], lang, old_name, new_name, lang, content)
-      
-      local result = llm.request_sync(prompt, { temperature = 0 })
-      if result then
+
+      local result_collected = nil
+      local co = coroutine.running()
+      if co then
+        local done = false
+        llm.request(prompt, { temperature = 0, task = 'refactor' }, function(result)
+          result_collected = result
+          done = true
+          coroutine.resume(co)
+        end)
+        if not done then coroutine.yield() end
+      else
+        llm.request(prompt, { temperature = 0, task = 'refactor' }, function(result)
+          result_collected = result
+        end)
+      end
+      if result_collected then
         table.insert(changes, {
           file = file,
-          content = result
+          content = result_collected
         })
       end
     end
   end
-  
+
   -- Show preview of all changes
   M._preview_multi_file_changes(changes)
 end
@@ -394,7 +442,7 @@ end
 M._ext_to_lang = function(ext)
   local map = {
     js = "javascript",
-    ts = "typescript", 
+    ts = "typescript",
     jsx = "javascriptreact",
     tsx = "typescriptreact",
     py = "python",
@@ -412,7 +460,7 @@ end
 M._preview_multi_file_changes = function(changes)
   -- Create a buffer showing all changes
   local preview_lines = {"# Cross-Language Refactoring Preview", ""}
-  
+
   for _, change in ipairs(changes) do
     table.insert(preview_lines, "## " .. change.file)
     table.insert(preview_lines, "")
@@ -421,14 +469,14 @@ M._preview_multi_file_changes = function(changes)
     table.insert(preview_lines, "```")
     table.insert(preview_lines, "")
   end
-  
+
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, preview_lines)
   vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-  
+
   vim.cmd('tabnew')
   vim.api.nvim_set_current_buf(buf)
-  
+
   -- Add apply command
   vim.keymap.set('n', 'a', function()
     for _, change in ipairs(changes) do
@@ -437,14 +485,14 @@ M._preview_multi_file_changes = function(changes)
     vim.notify("Applied changes to " .. #changes .. " files", vim.log.levels.INFO)
     vim.cmd('tabclose')
   end, { buffer = buf, desc = "Apply all changes" })
-  
+
   vim.notify("Review changes and press 'a' to apply", vim.log.levels.INFO)
 end
 
 -- Safe migration helper
 M.migrate_pattern = function(pattern_name, opts)
   opts = opts or {}
-  
+
   local patterns = {
     -- Callback to Promise
     callbacks_to_promises = {
@@ -452,14 +500,14 @@ M.migrate_pattern = function(pattern_name, opts)
       detect = "callback pattern: (err, result) =>",
       transform = "wrap in new Promise()",
     },
-    
+
     -- jQuery to Vanilla JS
     jquery_to_vanilla = {
-      description = "Convert jQuery to vanilla JavaScript", 
+      description = "Convert jQuery to vanilla JavaScript",
       detect = "$() or jQuery()",
       transform = "use document.querySelector and native APIs",
     },
-    
+
     -- Class components to Hooks
     class_to_hooks = {
       description = "Convert React class components to function components with hooks",
@@ -467,7 +515,7 @@ M.migrate_pattern = function(pattern_name, opts)
       transform = "useState, useEffect, etc.",
     },
   }
-  
+
   local pattern = patterns[pattern_name]
   if not pattern then
     -- Show available patterns
@@ -475,7 +523,7 @@ M.migrate_pattern = function(pattern_name, opts)
     vim.notify("Available migrations: " .. table.concat(available, ", "), vim.log.levels.INFO)
     return
   end
-  
+
   -- Run migration
   vim.notify("Running migration: " .. pattern.description, vim.log.levels.INFO)
   -- Implementation continues...
@@ -484,7 +532,7 @@ end
 -- Setup commands for this module
 M.setup_commands = function()
   local commands = require('caramba.core.commands')
-  
+
   -- Transform code command
   commands.register('Transform', function(args)
     local transform_name = args.args
@@ -508,7 +556,7 @@ M.setup_commands = function()
       return vim.tbl_keys(M.transformations)
     end,
   })
-  
+
   -- Cross-language rename
   commands.register('CrossRename', function(args)
     local parts = vim.split(args.args, " ")
@@ -521,7 +569,7 @@ M.setup_commands = function()
     desc = 'Rename symbol across multiple languages',
     nargs = '+',
   })
-  
+
   -- Migrate pattern
   commands.register('MigratePattern', function(args)
     M.migrate_pattern(args.args)
@@ -531,4 +579,4 @@ M.setup_commands = function()
   })
 end
 
-return M 
+return M

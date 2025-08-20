@@ -200,7 +200,19 @@ function M._get_project_overview()
   local overview = {}
 
   -- Get directory structure
-  local dirs = vim.fn.systemlist("find . -type d -name '.git' -prune -o -type d -print | head -50")
+  local dirs = {}
+  local co = coroutine.running()
+  local done = false
+  local job_id = vim.fn.jobstart({"sh", "-c", "find . -type d -name '.git' -prune -o -type d -print | head -50"}, {
+    stdout_buffered = true,
+    on_stdout = function(_, data, _)
+      if type(data) == 'table' then
+        for _, line in ipairs(data) do if line and line ~= '' then table.insert(dirs, line) end end
+      end
+    end,
+    on_exit = function() done = true; if co then coroutine.resume(co) end end,
+  })
+  if co then coroutine.yield() end
   table.insert(overview, "Directory Structure:")
   for _, dir in ipairs(dirs) do
     table.insert(overview, dir)

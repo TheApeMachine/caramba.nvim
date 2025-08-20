@@ -8,22 +8,22 @@ local M = {}
 ---@param title string? Optional window title
 function M.show_result_window(content, title)
   title = title or "AI Result"
-  
+
   -- Create buffer
   local buf = vim.api.nvim_create_buf(false, true)
-  
+
   -- Set content
   local lines = vim.split(content, "\n")
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  
+
   -- Calculate window size
   local width = math.min(80, math.max(40, vim.o.columns - 20))
   local height = math.min(30, math.max(10, #lines + 2))
-  
+
   -- Calculate position (centered)
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
-  
+
   -- Create window
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
@@ -36,17 +36,17 @@ function M.show_result_window(content, title)
     title = title,
     title_pos = "center",
   })
-  
+
   -- Set options
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
   vim.api.nvim_win_set_option(win, "wrap", true)
   vim.api.nvim_win_set_option(win, "linebreak", true)
-  
+
   -- Add keymaps
   vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>close<cr>", { noremap = true, silent = true })
   vim.api.nvim_buf_set_keymap(buf, "n", "<esc>", "<cmd>close<cr>", { noremap = true, silent = true })
-  
+
   -- Syntax highlighting for markdown
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
 end
@@ -122,7 +122,7 @@ function M.create_stream_window(title)
     end
     return sliced
   end
-  
+
   local function append(text)
     local lines = vim.split(text, "\n")
     local line_count = vim.api.nvim_buf_line_count(buf)
@@ -158,11 +158,11 @@ end
 function M.ext_to_lang(ext)
   -- Remove leading dot if present
   ext = ext:gsub("^%.", "")
-  
+
   local mappings = {
     js = "javascript",
     jsx = "javascript",
-    ts = "typescript", 
+    ts = "typescript",
     tsx = "typescript",
     py = "python",
     rb = "ruby",
@@ -204,7 +204,7 @@ function M.ext_to_lang(ext)
     tex = "latex",
     rst = "rst",
   }
-  
+
   return mappings[ext:lower()]
 end
 
@@ -215,17 +215,17 @@ function M.get_visual_selection()
   if mode ~= "v" and mode ~= "V" and mode ~= "GV" and mode ~= "\22" then
     return nil
   end
-  
+
   local start_pos = vim.fn.getpos("'<")
   local end_pos = vim.fn.getpos("'>")
   local lines = vim.api.nvim_buf_get_lines(
     0, start_pos[2] - 1, end_pos[2], false
   )
-  
+
   if #lines == 0 then
     return nil
   end
-  
+
   -- Handle single line selection
   if #lines == 1 then
     local line = lines[1]
@@ -233,11 +233,11 @@ function M.get_visual_selection()
     local end_col = end_pos[3]
     return line:sub(start_col, end_col)
   end
-  
+
   -- Handle multi-line selection
   lines[1] = lines[1]:sub(start_pos[3])
   lines[#lines] = lines[#lines]:sub(1, end_pos[3])
-  
+
   return table.concat(lines, "\n")
 end
 
@@ -270,20 +270,20 @@ end
 ---@return number Buffer number
 function M.create_scratch_buffer(content, filetype)
   local buf = vim.api.nvim_create_buf(false, true)
-  
+
   -- Set content
   local lines = vim.split(content, "\n")
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  
+
   -- Set options
   vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
   vim.api.nvim_buf_set_option(buf, "swapfile", false)
   vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe")
-  
+
   if filetype then
     vim.api.nvim_buf_set_option(buf, "filetype", filetype)
   end
-  
+
   return buf
 end
 
@@ -296,7 +296,7 @@ function M.show_search_results(results, title, use_loclist)
     vim.notify("No results found", vim.log.levels.INFO)
     return
   end
-  
+
   -- Convert results to quickfix format
   local qf_list = {}
   for _, result in ipairs(results) do
@@ -307,7 +307,7 @@ function M.show_search_results(results, title, use_loclist)
       text = result.text or result.content or "",
     })
   end
-  
+
   -- Set the list
   if use_loclist then
     vim.fn.setloclist(0, qf_list)
@@ -327,15 +327,15 @@ function M.jump_to_location(location)
     vim.notify("Invalid location", vim.log.levels.ERROR)
     return
   end
-  
+
   -- Open the file
   vim.cmd("edit " .. vim.fn.fnameescape(location.file))
-  
+
   -- Jump to line and column
   if location.line then
     vim.api.nvim_win_set_cursor(0, { location.line, location.col or 0 })
   end
-  
+
   -- Center the screen
   vim.cmd("normal! zz")
 end
@@ -404,11 +404,22 @@ end
 ---@return string Project root path
 function M.get_project_root()
   -- Try to find git root
-  local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
-  if vim.v.shell_error == 0 and git_root ~= "" then
+  local git_root = ""
+  do
+    local co = coroutine.running(); local done = false
+    vim.fn.jobstart({"sh", "-c", "git rev-parse --show-toplevel 2>/dev/null"}, {
+      stdout_buffered = true,
+      on_stdout = function(_, data, _)
+        if type(data) == 'table' then git_root = (table.concat(data, "\n") or ''):gsub("\n", "") end
+      end,
+      on_exit = function() done = true; if co then coroutine.resume(co) end end,
+    })
+    if co then coroutine.yield() end
+  end
+  if git_root ~= "" then
     return git_root
   end
-  
+
   -- Fall back to current working directory
   return vim.fn.getcwd()
 end
@@ -465,4 +476,4 @@ function M.get_node_text(node, source)
   return ""
 end
 
-return M 
+return M

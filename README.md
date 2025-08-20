@@ -48,7 +48,7 @@ Features include intelligent code completion, refactoring, test generation, and 
     'nvim-treesitter/nvim-treesitter',
   },
   config = function()
-    require('ai').setup({
+    require('caramba').setup({
       -- Your configuration here
     })
   end,
@@ -117,10 +117,10 @@ require('caramba').setup({
       model = "codellama",
     },
   },
-  
+
   -- Default provider
   provider = "openai", -- "openai", "anthropic", or "ollama"
-  
+
   -- Feature toggles
   features = {
     auto_complete = true,
@@ -128,14 +128,14 @@ require('caramba').setup({
     pair_programming = false,
     consistency_check = true,
   },
-  
+
   -- Context settings
   context = {
     max_lines = 100,
     include_imports = true,
     include_related = true,
   },
-  
+
   -- Performance settings
   performance = {
     cache_responses = true,
@@ -143,7 +143,7 @@ require('caramba').setup({
     max_concurrent_requests = 3,
     request_timeout_ms = 30000,
   },
-  
+
   -- Search settings
   search = {
     exclude_dirs = {'.git', 'node_modules', 'dist', 'build'},
@@ -153,14 +153,14 @@ require('caramba').setup({
     embedding_model = "text-embedding-3-small",
     embedding_dimensions = 512,
   },
-  
+
   -- TDD settings
   tdd = {
     auto_implement = true,
     watch_on_save = false,
     coverage_threshold = 80,
   },
-  
+
   -- Consistency settings
   consistency = {
     auto_check = false,
@@ -190,14 +190,14 @@ vim.env.ANTHROPIC_API_KEY = "your-anthropic-api-key"
 
 | Command            | Description                  |
 |--------------------|------------------------------|
-| `:AIComplete`      | Complete code at cursor      |
-| `:AIExplain`       | Explain selected code        |
-| `:AIRefactor`      | Refactor code                |
-| `:AISearch`        | Search codebase semantically |
-| `:AIChat`          | Open interactive chat        |
-| `:AIGenerateTests` | Generate tests               |
-| `:AIDebugError`    | Analyze error                |
-| `:AICommitMessage` | Generate commit message      |
+| `:CarambaComplete` | Complete code at cursor      |
+| `:CarambaExplain`  | Explain selected code        |
+| `:CarambaRefactor` | Refactor code                |
+| `:CarambaSearch`   | Search codebase semantically |
+| `:CarambaChat`     | Open interactive chat        |
+| `:CarambaGenerateTests` | Generate tests          |
+| `:CarambaDebugError`    | Analyze error           |
+| `:CarambaCommitMessage` | Generate commit message |
 
 ### All Commands
 
@@ -431,7 +431,7 @@ If Neovim freezes when using the AI chat feature, this is likely due to a networ
 
 If you see "No Tree-sitter parser available for X" warnings:
 
-1. **Parsers are now auto-installed by default!** When you open a file with a missing Tree-sitter parser, caramba.nvim will automatically install it for you.
+1. By default, parsers are NOT auto-installed. You can enable auto-installation, or install manually when prompted.
 
 2. **To disable auto-installation**:
    ```lua
