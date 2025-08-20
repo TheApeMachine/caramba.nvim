@@ -601,7 +601,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
     on_stderr = function(_, data)
         if data and not stream_finished then
             -- Only abort on clear error signals; OpenAI may write keep-alives
-            if data:match("error") or data:match("\n{\") then
+            if data:match("error") or data:find("{", 1, true) then
               stream_finished = true
               safe_timer_stop()
               if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end

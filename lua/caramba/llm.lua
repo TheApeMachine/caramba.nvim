@@ -552,7 +552,8 @@ M.request = function(messages, opts, callback)
         local attempt = (opts.__retry_attempt or 0) + 1
         if attempt <= max_retries then
           opts.__retry_attempt = attempt
-          local backoff_ms = math.min(maxb, base * math.pow(2, attempt - 1)) + math.random(0, 250)
+          -- Use exponentiation operator (^) instead of deprecated math.pow
+          local backoff_ms = math.min(maxb, base * (2 ^ (attempt - 1))) + math.random(0, 250)
           vim.defer_fn(function()
             table.insert(M._request_queue, { prompt = messages, opts = opts, callback = callback, stream = false })
             process_queue()

@@ -8,8 +8,6 @@ local llm = require('caramba.llm')
 local edit = require('caramba.edit')
 local config = require('caramba.config')
 local context = require('caramba.context')
--- local planner = require('caramba.planner') -- not used here
--- local utils = require('caramba.utils') -- not used here
 local memory = require('caramba.memory')
 local state = require('caramba.state')
 
@@ -54,12 +52,22 @@ local function current_mode_emoji(mode)
   return '🤔'
 end
 
+-- Expressive emoji sets for the window-title animation
+local EXPRESS_EMOJIS = {
+  thinking = { '🤔', '🧠', '💭' },
+  tool     = { '🔧', '🧰', '⚙️' },
+  writing  = { '✍️', '📝', '💡' },
+}
+
 local function update_window_title()
   if not (M._chat_state and M._chat_state.winid and vim.api.nvim_win_is_valid(M._chat_state.winid)) then
     return
   end
   local anim = M._chat_state.animation or {}
-  local emoji = current_mode_emoji(anim.mode or 'thinking')
+  local mode = anim.mode or 'thinking'
+  local ems = EXPRESS_EMOJIS[mode] or EXPRESS_EMOJIS.thinking
+  local eidx = ((anim.spinner_idx or 1) % #ems) + 1
+  local emoji = ems[eidx]
   local spinner = spinner_frames[(anim.spinner_idx or 1)]
   local title = string.format(' Caramba Chat  %s %s ', emoji, spinner)
   local cfg = vim.api.nvim_win_get_config(M._chat_state.winid)
@@ -87,13 +95,8 @@ local function start_animation(mode)
     s.frame_idx = (s.frame_idx % #get_frames_for_mode(s.mode)) + 1
     s.spinner_idx = ((s.spinner_idx or 1) % #spinner_frames) + 1
     local f = get_frames_for_mode(s.mode)[s.frame_idx]
-    -- Expressive emoji alternation
-    local express = {
-      thinking = { '🤔', '🧠', '💭' },
-      tool = { '🔧', '🧰', '⚙️' },
-      writing = { '✍️', '📝', '💡' },
-    }
-    local ems = express[s.mode] or express.thinking
+    -- Expressive emoji alternation (used in status_text and window title)
+    local ems = EXPRESS_EMOJIS[s.mode] or EXPRESS_EMOJIS.thinking
     s.status_text = ems[(s.spinner_idx % #ems) + 1] .. '  ' .. f .. '  ' .. get_mode_label(s.mode)
     vim.schedule(function()
       update_window_title()
@@ -136,7 +139,7 @@ local function stream_section(title, system_prompt, user_text, task, on_done)
   M._chat_state.history[idx] = { role = 'assistant', title = title, content = '', streaming = true, folded = false }
   M._render_chat()
   logger.info(title .. ' stream start')
-  local session = require('caramba.openai_tools').create_chat_session({ { role = 'system', content = system_prompt } }, require('caramba.openai_tools').available_tools)
+  local session = openai_tools.create_chat_session({ { role = 'system', content = system_prompt } }, openai_tools.available_tools)
   session:send(user_text, function(chunk, err)
     if err then
       logger.info(title .. ' stream complete', err)
@@ -990,11 +993,8 @@ M._render_chat = function()
     table.insert(lines, "")
   end
 
-  -- Status line (animation)
-  if M._chat_state.animation and M._chat_state.animation.status_text then
-    table.insert(lines, "Status: " .. M._chat_state.animation.status_text)
-    if not compact then table.insert(lines, "") end
-  end
+  -- Optional textual status (kept minimal or omitted to reduce clutter)
+  -- We rely on the animated window title emoji/spinner now.
 
   if not compact then
     table.insert(lines, "---")

@@ -135,7 +135,7 @@ Add to your Neovim configuration:
 
 The TDD Assistant helps you write code by implementing functionality from test specifications:
 
-### Features
+### Test-Driven Development Features
 
 - **Test-First Implementation** - Write tests, then let AI implement the code
 - **Property-Based Testing** - Generate comprehensive property tests
@@ -170,7 +170,7 @@ The TDD Assistant helps you write code by implementing functionality from test s
 
 The Consistency Enforcer learns your project's coding patterns and helps maintain them:
 
-### Features
+### Consistency Enforcer Features
 
 - **Pattern Learning** - Analyzes your codebase to learn conventions
 - **Real-time Checking** - Validates code against learned patterns
@@ -203,7 +203,7 @@ The Consistency Enforcer learns your project's coding patterns and helps maintai
    - Module boundaries
    - Anti-pattern detection
 
-### Usage
+### Project-Wide Consistency Enforcer Usage
 
 1. **Learn Project Patterns**:
 
@@ -237,7 +237,7 @@ The Consistency Enforcer learns your project's coding patterns and helps maintai
 
 ### Example Consistency Report
 
-```
+```text
 # Consistency Report
 
 Found 3 consistency issues
@@ -271,7 +271,7 @@ require('caramba').setup({
       model = "claude-3-opus-20240229",
     },
   },
-  
+
   -- Feature toggles
   features = {
     auto_complete = true,
@@ -279,21 +279,21 @@ require('caramba').setup({
     pair_programming = false,
     consistency_check = true,
   },
-  
+
   -- Context settings
   context = {
     max_lines = 100,
     include_imports = true,
     include_related = true,
   },
-  
+
   -- TDD settings
   tdd = {
     auto_implement = true,
     watch_on_save = false,
     coverage_threshold = 80,
   },
-  
+
   -- Consistency settings
   consistency = {
     auto_check = false,
@@ -310,7 +310,7 @@ require('caramba').setup({
 
 Default mappings under `<leader>a`:
 
-```
+```text
 <leader>ac - Complete code
 <leader>ae - Explain code
 <leader>ar - Refactor code
@@ -331,7 +331,7 @@ Default mappings under `<leader>a`:
 
 The AI assistant is modular and extensible:
 
-```
+```text
 ai/
 ├── init.lua           # Main module loader
 ├── config.lua         # Configuration management
