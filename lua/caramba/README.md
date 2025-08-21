@@ -52,84 +52,25 @@ Add to your Neovim configuration:
 }
 ```
 
-## Commands
+## Commands (Chat-first)
 
-### Basic Commands
+This plugin is chat-first. Most features are accessed by opening chat and describing your intent in natural language. The model uses tools under the hood to read/write files, search, run tests, and perform Git operations.
 
-- `:CarambaComplete` - Complete code at cursor
-- `:CarambaExplain` - Explain selected code
-- `:CarambaRefactor <type>` - Refactor code (extract/inline/simplify)
-- `:CarambaSearch <query>` - Search codebase semantically
-- `:CarambaChat` - Open interactive chat
+### Minimal command surface
 
-### Planning & Architecture
+- `:Caramba` / `:CarambaChat` — Open chat
+- `:CarambaChatToggle` — Toggle chat
+- `:CarambaCancel` — Cancel active operation
+- `:CarambaSetProvider` — Switch provider
+- `:CarambaSetModel` — Switch model
+- `:CarambaShowConfig` — Show current config
 
-- `:CarambaPlan` - Create implementation plan
-- `:CarambaShowPlan` - Show current plan
-- `:CarambaAnalyzeProject` - Analyze project structure
-- `:CarambaLearnPatterns` - Learn project patterns
+All other features are invoked through chat. Examples:
 
-### Testing & Debugging
-
-- `:CarambaGenerateTests` - Generate tests for current code
-- `:CarambaDebugError` - Analyze error at cursor
-- `:CarambaImplementFromTest` - Implement code from test specification
-- `:CarambaGeneratePropertyTests` - Generate property-based tests
-- `:CarambaWatchTests` - Watch tests and suggest fixes
-- `:CarambaImplementUncovered` - Implement uncovered code paths
-
-### Multi-File & Refactoring
-
-- `:CarambaRenameSymbol` - Rename across project
-- `:CarambaExtractModule` - Extract code to new module
-- `:CarambaTransform` - Transform code using AST
-- `:CarambaTransformCallback` - Convert callbacks to async/await
-- `:CarambaMigratePattern` - Apply migration pattern
-
-### Git Integration
-
-- `:CarambaCommitMessage` - Generate commit message
-- `:CarambaReviewCode` - Review current changes
-- `:CarambaReviewPR` - Review pull request
-- `:CarambaExplainDiff` - Explain current diff
-- `:CarambaResolveConflict` - Help resolve merge conflicts
-- `:CarambaGitBlame` - Explain git blame
-
-### Code Intelligence
-
-- `:CarambaIndexProject` - Index project for navigation
-- `:CarambaFindDefinition` - Find symbol definition
-- `:CarambaFindReferences` - Find symbol references
-- `:CarambaFindRelated` - Find related code
-- `:CarambaCallHierarchy` - Show call hierarchy
-- `:CarambaFindSimilar` - Find similar functions
-
-### Consistency & Quality
-
-- `:CarambaCheckConsistency` - Check file for consistency issues
-- `:CarambaLearnPatterns` - Learn coding patterns from codebase
-- `:CarambaEnableConsistencyCheck` - Auto-check on save
-
-### Pair Programming
-
-- `:CarambaPairStart` - Start pair programming session
-- `:CarambaPairStop` - Stop pair programming session
-- `:CarambaPairToggle` - Toggle pair programming
-- `:CarambaPairStatus` - Show session status
-
-### Web & Research
-
-- `:CarambaWebSearch <query>` - Search the web
-- `:CarambaWebSummary <url>` - Summarize web page
-- `:CarambaResearch <topic>` - Research topic online
-- `:CarambaQuery <question>` - Query with tool access
-
-### Utility Commands
-
-- `:CarambaCancel` - Cancel current operation
-- `:CarambaSetModel <model>` - Change AI model
-- `:CarambaSetProvider <provider>` - Change provider
-- `:CarambaShowContext` - Show current context
+- “Generate a semantic commit message from staged changes.”
+- “Run the quick test suite and summarize failures.”
+- “List project `.lua` files and open the ones touching `openai_tools`.”
+- “Refactor current function to be async and show a diff preview.”
 
 ## Test-Driven Development Assistant
 
@@ -259,49 +200,39 @@ Found 3 consistency issues
 
 ```lua
 require('caramba').setup({
-  -- Provider settings
-  providers = {
+  -- Provider settings (OpenAI shown; others supported via config.lua)
+  api = {
     openai = {
       api_key = vim.env.OPENAI_API_KEY,
-      model = "gpt-4-turbo-preview",
-      temperature = 0.7,
-    },
-    anthropic = {
-      api_key = vim.env.ANTHROPIC_API_KEY,
-      model = "claude-3-opus-20240229",
+      model = "gpt-4o-mini",
+      temperature = 1,
+      max_tokens = 4096,
     },
   },
 
-  -- Feature toggles
-  features = {
-    auto_complete = true,
-    context_tracking = true,
-    pair_programming = false,
-    consistency_check = true,
+  -- Chat-first: keep legacy commands disabled by default
+  commands = {
+    enable_legacy_commands = false,
   },
 
-  -- Context settings
+  -- Context limits
   context = {
-    max_lines = 100,
+    max_lines = 200,
     include_imports = true,
-    include_related = true,
+    include_siblings = false,
   },
 
-  -- TDD settings
-  tdd = {
-    auto_implement = true,
-    watch_on_save = false,
-    coverage_threshold = 80,
+  -- Editing safety
+  editing = {
+    validate_syntax = true,
+    auto_format = true,
+    diff_preview = true,
   },
 
-  -- Consistency settings
-  consistency = {
-    auto_check = false,
-    severity = "warning", -- hint, warning, error
-    ignore_patterns = {
-      "test_*",
-      "*.spec.js",
-    },
+  -- UI tweaks
+  ui = {
+    chat_sidebar_width = 0.4,
+    compact_chat = true,
   },
 })
 ```
@@ -347,7 +278,8 @@ ai/
 ├── planner.lua       # Planning system
 ├── embeddings.lua    # Embedding management
 ├── websearch.lua     # Web search integration
-├── tools.lua         # Tool calling system
+├── openai_tools.lua  # Tool-calling/chat session with function calling
+├── agent_tools/      # Small tool modules (git, files, testing, ...)
 ├── ast_transform.lua # AST transformations
 ├── intelligence.lua  # Code intelligence
 ├── pair.lua          # Pair programming

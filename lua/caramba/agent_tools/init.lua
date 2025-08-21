@@ -14,6 +14,7 @@ function M.collect_all()
   local modules = {
     safe_require('caramba.agent_tools.git'),
     safe_require('caramba.agent_tools.testing'),
+    safe_require('caramba.agent_tools.files'),
   }
 
   local tools = {}
