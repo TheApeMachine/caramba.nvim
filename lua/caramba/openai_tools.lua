@@ -478,6 +478,29 @@ end
 M._make_request = function(request_data, on_chunk, on_finish)
   local idle_timeout_ms = (config.get().performance and config.get().performance.request_idle_timeout_ms) or 120000
 
+  -- Assign a request id for correlation in logs
+  local request_id = tostring(os.time()) .. "_tools_" .. math.random(10000)
+
+  -- Log request (redacted)
+  local function sanitize_headers(h)
+    local out = {}
+    for k, v in pairs(h or {}) do
+      if type(k) == "string" and k:lower() == "authorization" then
+        out[k] = "Bearer ***"
+      else
+        out[k] = v
+      end
+    end
+    return out
+  end
+  local ok_body, body_tbl = pcall(vim.json.decode, request_data.body)
+  logger.info("OpenAI tools request", {
+    id = request_id,
+    url = request_data.url,
+    headers = sanitize_headers(request_data.headers),
+    body = ok_body and body_tbl or request_data.body,
+  })
+
   local curl_args = {
     "-sS",
     "-N",
@@ -542,6 +565,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
                             content = full_response,
                             tool_calls = #tool_calls > 0 and tool_calls or nil,
                         }
+                        logger.info("OpenAI tools response", { id = request_id, content_preview = full_response:sub(1, 4000) })
                         if on_finish then vim.schedule(function() on_finish(final_message, nil) end) end
                         return
                     end
@@ -604,6 +628,7 @@ M._make_request = function(request_data, on_chunk, on_finish)
             if data:match("error") or data:find("{", 1, true) then
               stream_finished = true
               safe_timer_stop()
+              logger.error("OpenAI tools error", { id = request_id, stderr = data })
               if on_finish then vim.schedule(function() on_finish(nil, "Request error: " .. data) end) end
             end
         end
@@ -612,8 +637,10 @@ M._make_request = function(request_data, on_chunk, on_finish)
         if not stream_finished then
             safe_timer_stop()
             if return_val ~= 0 then
+                logger.error("OpenAI tools exit", { id = request_id, code = return_val })
                 if on_finish then vim.schedule(function() on_finish(nil, "Request exited with code: " .. return_val) end) end
             else
+                logger.info("OpenAI tools response", { id = request_id, content_preview = full_response:sub(1, 4000) })
                 if on_finish then vim.schedule(function() on_finish({ role = "assistant", content = full_response }, nil) end) end
             end
         end

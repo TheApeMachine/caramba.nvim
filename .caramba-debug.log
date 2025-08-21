@@ -1034,3 +1034,76 @@ Tool write_file: presenting diff for approval
   code = 0,
   content_len = 0
 }
+[2025-08-20 20:20:50] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-20 20:20:50] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-21 00:21:52] INFO  Logger initialized | {
+  level = "debug",
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+}
+[2025-08-21 00:21:52] INFO  Vector warmup complete | {
+  files = 25,
+  memory = 0
+}
+[2025-08-21 00:22:03] INFO  Chat send | {
+  preview = "Please improve this code"
+}
+[2025-08-21 00:22:03] DEBUG Enrichment start
+[2025-08-21 00:22:03] DEBUG Enrichment ctx | {
+  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  lang = "javascript",
+  len = 5114
+}
+[2025-08-21 00:22:03] DEBUG Enrichment memory results | {
+  count = 5
+}
+[2025-08-21 00:22:03] DEBUG Enrichment recall pack added | {
+  len = 8320
+}
+[2025-08-21 00:22:03] DEBUG Including open buffers in context | {
+  count = 2
+}
+[2025-08-21 00:22:03] DEBUG Including memory results | {
+  count = 5
+}
+[2025-08-21 00:22:03] INFO  Improved Prompt stream start
+[2025-08-21 00:22:03] DEBUG Stored user message to memory
+[2025-08-21 00:22:04] INFO  Improved Prompt stream complete | 
+[2025-08-21 00:22:04] INFO  Memory Manager (Recall) stream start
+[2025-08-21 00:22:06] INFO  Memory Manager (Recall) stream complete | 
+[2025-08-21 00:22:06] INFO  Project Manager (Plan) stream start
+[2025-08-21 00:22:10] INFO  Project Manager (Plan) stream complete | 
+[2025-08-21 00:22:10] INFO  LLM stream start provider=openai
+[2025-08-21 00:22:10] INFO  Starting agentic response
+[2025-08-21 00:22:10] DEBUG Agentic response placeholder added
+[2025-08-21 00:22:10] DEBUG Chat session send initiated
+[2025-08-21 00:22:10] INFO  Self-Reflection stream start
+[2025-08-21 00:22:11] DEBUG Merging plan delta | {
+  current_tasks = {},
+  goals = {},
+  known_issues = { "Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace." }
+}
+[2025-08-21 00:22:11] INFO  Planner pre-send updated
+[2025-08-21 00:22:14] INFO  Self-Reflection stream complete | 
+[2025-08-21 00:22:14] INFO  Reviewer stream start
+[2025-08-21 00:22:20] INFO  Reviewer stream complete | 
+[2025-08-21 00:22:20] INFO  Project Manager (Update) stream start
+[2025-08-21 00:22:23] INFO  Project Manager (Update) stream complete | 
+[2025-08-21 00:22:23] INFO  Memory Extract stream start
+[2025-08-21 00:22:26] INFO  Memory Extract stream complete | 
+[2025-08-21 00:22:26] INFO  LLM stream start provider=openai
+[2025-08-21 00:22:26] INFO  LLM stream start provider=openai
+[2025-08-21 00:22:26] INFO  Response complete | {
+  chars = 0
+}
+[2025-08-21 00:22:28] DEBUG Merging plan delta | {
+  current_tasks = { "Identify and correct the unmatched closing brace.", "Refactor the code for improved readability.", "Run tests to ensure functionality remains intact." },
+  goals = { "Fix syntax errors in the JavaScript file.", "Improve code readability and maintainability.", "Implement optimized logic for better performance." },
+  known_issues = { "Syntax error due to unmatched closing brace." }
+}
+[2025-08-21 00:22:28] INFO  Planner post-response updated

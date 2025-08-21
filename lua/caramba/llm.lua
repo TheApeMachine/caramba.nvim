@@ -463,6 +463,28 @@ M.request = function(messages, opts, callback)
   -- Generate unique request ID
   local request_id = tostring(os.time()) .. "_" .. math.random(10000)
 
+  -- Log OpenAI request details with redaction
+  if provider == "openai" then
+    local function sanitize_headers(h)
+      local out = {}
+      for k, v in pairs(h or {}) do
+        if type(k) == "string" and k:lower() == "authorization" then
+          out[k] = "Bearer ***"
+        else
+          out[k] = v
+        end
+      end
+      return out
+    end
+    local ok_body, body_tbl = pcall(vim.json.decode, request_data.body)
+    logger.info("OpenAI request", {
+      id = request_id,
+      url = request_data.url,
+      headers = sanitize_headers(request_data.headers),
+      body = ok_body and body_tbl or request_data.body,
+    })
+  end
+
   -- Track active request and job
   M._active_requests[request_id] = true
 
@@ -543,6 +565,12 @@ M.request = function(messages, opts, callback)
       end
 
       local response = table.concat(j:result(), "\n")
+
+      -- Log OpenAI raw response (truncated) prior to parsing
+      if provider == "openai" then
+        local preview = response and response:sub(1, 8000) or ""
+        logger.info("OpenAI response", { id = request_id, raw_len = #(response or ""), raw_preview = preview })
+      end
       -- Basic backoff on 429/5xx
       local perf = config.get().performance or {}
       local max_retries = perf.max_retries or 0
@@ -562,6 +590,16 @@ M.request = function(messages, opts, callback)
         end
       end
       local result, err = M.providers[provider].parse_response(response)
+
+      -- Log parsed content/error summary for OpenAI
+      if provider == "openai" then
+        logger.info("OpenAI parsed", {
+          id = request_id,
+          ok = result ~= nil and err == nil,
+          content_preview = type(result) == "string" and result:sub(1, 4000) or nil,
+          error = err,
+        })
+      end
 
       if result and cache_key then
         -- Cache successful response
@@ -762,6 +800,25 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
 
   -- Debug logging
   logger.info("LLM stream start provider=" .. provider)
+  if provider == "openai" then
+    local function sanitize_headers(h)
+      local out = {}
+      for k, v in pairs(h or {}) do
+        if type(k) == "string" and k:lower() == "authorization" then
+          out[k] = "Bearer ***"
+        else
+          out[k] = v
+        end
+      end
+      return out
+    end
+    local ok_body, body_tbl = pcall(vim.json.decode, request_data.body)
+    logger.info("OpenAI stream request", {
+      url = request_data.url,
+      headers = sanitize_headers(request_data.headers),
+      body = ok_body and body_tbl or request_data.body,
+    })
+  end
 
   -- Build curl command using table for better shell escaping
   local curl_args = {
@@ -835,6 +892,9 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
             if data_content == "[DONE]" then
                 if M._active_requests[request_id] then
                   M._active_requests[request_id] = nil
+                  if provider == "openai" then
+                    logger.info("OpenAI stream response", { content_preview = accumulated_content:sub(1, 4000) })
+                  end
                   vim.schedule(function()
                     on_complete(accumulated_content, nil)
                   end)
@@ -857,6 +917,9 @@ M.request_stream = function(messages, opts, on_chunk, on_complete)
                 if M._active_requests[request_id] then
                   M._active_requests[request_id] = nil
                   local err_msg = chunk_data.error.message or "Unknown API error in stream"
+                  if provider == "openai" then
+                    logger.error("OpenAI stream error", { error = err_msg })
+                  end
                   vim.schedule(function()
                     on_complete(nil, err_msg)
                   end)
