@@ -1,1109 +1,1321 @@
-[2025-08-19 03:08:29] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-19 03:08:37] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-19 03:08:46] INFO  Chat send | {
+[2025-08-21 03:20:24] INFO  Chat send | {
   preview = "Please improve this code"
 }
-[2025-08-19 03:08:46] DEBUG Enrichment start
-[2025-08-19 03:08:46] DEBUG Enrichment ctx | {
+[2025-08-21 03:20:24] DEBUG Enrichment start
+[2025-08-21 03:20:24] DEBUG Enrichment ctx | {
   file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
   lang = "javascript",
   len = 5114
 }
-[2025-08-19 03:08:46] DEBUG Enrichment memory results | {
+[2025-08-21 03:20:24] DEBUG Enrichment memory results | {
   count = 5
 }
-[2025-08-19 03:08:46] DEBUG Enrichment recall pack added | {
-  len = 6552
-}
-[2025-08-19 03:08:46] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-19 03:08:46] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-19 03:08:46] INFO  PE stream start
-[2025-08-19 03:08:46] INFO  LLM stream start provider=openai
-[2025-08-19 03:08:46] DEBUG Stored user message to memory
-[2025-08-19 03:08:46] INFO  LLM stream start provider=openai
-[2025-08-19 03:08:46] INFO  Starting agentic response
-[2025-08-19 03:08:46] DEBUG Agentic response placeholder added
-[2025-08-19 03:08:46] DEBUG Chat session send initiated
-[2025-08-19 03:08:46] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-19 03:08:46] INFO  PE stream complete
-[2025-08-19 03:08:46] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-19 03:09:07] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-19 03:09:07] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-19 03:09:07] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-19 03:09:07] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-19 03:09:10] INFO  LLM stream start provider=openai
-[2025-08-19 03:09:11] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-19 03:09:11] DEBUG Stored assistant response to memory
-[2025-08-19 03:09:11] INFO  LLM stream start provider=openai
-[2025-08-19 03:09:11] INFO  LLM stream start provider=openai
-[2025-08-19 03:09:11] INFO  Response complete | {
-  chars = 1005
-}
-[2025-08-19 03:09:11] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-19 03:09:11] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 01:33:51] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 01:34:02] INFO  Chat send | {
-  preview = "Improve this code"
-}
-[2025-08-20 01:34:02] DEBUG Enrichment start
-[2025-08-20 01:34:02] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 01:34:02] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 01:34:02] DEBUG Enrichment recall pack added | {
-  len = 7533
-}
-[2025-08-20 01:34:02] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 01:34:02] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 01:34:02] INFO  PE stream start
-[2025-08-20 01:34:02] INFO  LLM stream start provider=openai
-[2025-08-20 01:34:02] DEBUG Stored user message to memory
-[2025-08-20 01:34:02] INFO  LLM stream start provider=openai
-[2025-08-20 01:34:02] INFO  Starting agentic response
-[2025-08-20 01:34:02] DEBUG Agentic response placeholder added
-[2025-08-20 01:34:02] DEBUG Chat session send initiated
-[2025-08-20 01:34:03] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 01:34:03] INFO  PE stream complete
-[2025-08-20 01:34:03] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 01:34:21] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-20 01:34:21] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-20 01:34:21] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-20 01:34:21] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-20 01:34:24] INFO  LLM stream start provider=openai
-[2025-08-20 01:34:24] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 01:34:24] DEBUG Stored assistant response to memory
-[2025-08-20 01:34:24] INFO  LLM stream start provider=openai
-[2025-08-20 01:34:24] INFO  LLM stream start provider=openai
-[2025-08-20 01:34:24] INFO  Response complete | {
-  chars = 830
-}
-[2025-08-20 01:34:24] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 01:34:25] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 01:34:26] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 01:34:39] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 01:34:47] INFO  Chat send | {
-  preview = "Improve this code"
-}
-[2025-08-20 01:34:47] DEBUG Enrichment start
-[2025-08-20 01:34:47] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 01:34:47] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 01:34:47] DEBUG Enrichment recall pack added | {
-  len = 7864
-}
-[2025-08-20 01:34:47] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 01:34:47] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 01:34:47] INFO  Improved Prompt stream start
-[2025-08-20 01:34:47] INFO  LLM stream start provider=openai
-[2025-08-20 11:28:58] INFO  Improved Prompt stream complete | Stream timeout
-[2025-08-20 11:28:58] INFO  Memory Manager (Recall) stream start
-[2025-08-20 11:28:58] INFO  LLM stream start provider=openai
-[2025-08-20 11:28:58] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:28:58] INFO  Memory Manager (Recall) stream complete | No response received from API
-[2025-08-20 11:28:58] INFO  LLM stream start provider=openai
-[2025-08-20 11:28:58] INFO  Starting agentic response
-[2025-08-20 11:28:58] DEBUG Agentic response placeholder added
-[2025-08-20 11:28:58] DEBUG Chat session send initiated
-[2025-08-20 11:28:59] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:29:07] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 11:29:07] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 11:29:17] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-20 11:29:17] DEBUG Enrichment start
-[2025-08-20 11:29:17] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 11:29:17] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 11:29:17] DEBUG Enrichment recall pack added | {
-  len = 7864
-}
-[2025-08-20 11:29:17] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 11:29:17] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 11:29:17] INFO  Improved Prompt stream start
-[2025-08-20 11:29:17] INFO  LLM stream start provider=openai
-[2025-08-20 11:29:17] DEBUG Stored user message to memory
-[2025-08-20 11:30:49] INFO  Improved Prompt stream complete | Stream timeout
-[2025-08-20 11:30:49] INFO  Memory Manager (Recall) stream start
-[2025-08-20 11:30:49] INFO  LLM stream start provider=openai
-[2025-08-20 11:30:50] INFO  LLM stream job exit | {
-  code = 143,
-  content_len = 0
-}
-[2025-08-20 11:30:50] INFO  Memory Manager (Recall) stream complete | Stream failed with code: 143
-[2025-08-20 11:30:50] INFO  LLM stream start provider=openai
-[2025-08-20 11:30:50] INFO  Starting agentic response
-[2025-08-20 11:30:50] DEBUG Agentic response placeholder added
-[2025-08-20 11:30:50] DEBUG Chat session send initiated
-[2025-08-20 11:30:50] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:30:51] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 11:30:51] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 11:30:59] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 11:30:59] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 11:31:11] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-20 11:31:11] DEBUG Enrichment start
-[2025-08-20 11:31:11] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 11:31:11] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 11:31:11] DEBUG Enrichment recall pack added | {
-  len = 7864
-}
-[2025-08-20 11:31:11] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 11:31:11] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 11:31:11] INFO  Improved Prompt stream start
-[2025-08-20 11:31:11] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:11] DEBUG Stored user message to memory
-[2025-08-20 11:31:11] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:11] INFO  Improved Prompt stream complete | No response received from API
-[2025-08-20 11:31:11] INFO  Memory Manager (Recall) stream start
-[2025-08-20 11:31:11] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:11] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:11] INFO  Memory Manager (Recall) stream complete | No response received from API
-[2025-08-20 11:31:11] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:11] INFO  Starting agentic response
-[2025-08-20 11:31:11] DEBUG Agentic response placeholder added
-[2025-08-20 11:31:11] DEBUG Chat session send initiated
-[2025-08-20 11:31:12] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:35] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-20 11:31:35] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-20 11:31:35] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-20 11:31:35] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-20 11:31:39] INFO  Self-Reflection stream start
-[2025-08-20 11:31:39] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:39] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:39] INFO  Self-Reflection stream complete | No response received from API
-[2025-08-20 11:31:39] INFO  Reviewer stream start
-[2025-08-20 11:31:39] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:39] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:39] INFO  Reviewer stream complete | No response received from API
-[2025-08-20 11:31:39] INFO  Project Manager (Update) stream start
-[2025-08-20 11:31:39] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ```
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | markdown
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | #
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Project
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Board
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
-
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ##
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  TODO
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Add
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  unit
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  tests
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Provide
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Type
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | Script
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  definitions
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Implement
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  extra
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  operations
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  (
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | e
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | .g
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | .
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  power
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ,
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  modulo
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | )
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |   
-
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ##
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  DO
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ING
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Await
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ing
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  user
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  feedback
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  on
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  next
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  tweaks
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  (
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | tests
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ,
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  TS
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  typings
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ,
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  more
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  ops
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | )
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |   
-
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | ##
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  DONE
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | 
-
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  Ren
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk | amed
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  &
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  simplified
-[2025-08-20 11:31:44] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | validate
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Numbers
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  →
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ensure
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Numbers
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Coll
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | apsed
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | min
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Args
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | +
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | use
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | First
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | As
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Init
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  into
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | min
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | +
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | first
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | As
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Init
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Ref
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | act
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ored
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | calculate
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ()`
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  with
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  early
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  rejects
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ,
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  plural
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ized
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  errors
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ,
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  accumulator
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  destruct
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | uring
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ,
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  and
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `.
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | reduce
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ()`
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Sw
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | itched
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  divide
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -by
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -zero
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  errors
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  to
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Range
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Error
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Ex
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | posed
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | Calculator
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | .history
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  as
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  a
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  getter
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ;
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  unified
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | filter
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | History
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | `
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  API
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | -
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  Ens
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ured
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  history
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  entries
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  are
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  fully
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  immutable
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk | ;
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  used
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  concise
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  arrow
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  wrappers
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  for
-[2025-08-20 11:31:45] DEBUG Project Manager (Update) chunk |  ops
-[2025-08-20 11:31:46] DEBUG Project Manager (Update) chunk |   
-
-[2025-08-20 11:31:46] DEBUG Project Manager (Update) chunk | ```
-[2025-08-20 11:31:46] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 11:31:46] INFO  Memory Extract stream start
-[2025-08-20 11:31:46] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:46] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:46] INFO  Memory Extract stream complete | No response received from API
-[2025-08-20 11:31:46] DEBUG Stored assistant response to memory
-[2025-08-20 11:31:46] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:46] INFO  LLM stream start provider=openai
-[2025-08-20 11:31:46] INFO  Response complete | {
-  chars = 1003
-}
-[2025-08-20 11:31:46] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:31:46] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:44:35] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 11:44:35] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 11:44:45] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-20 11:44:45] DEBUG Enrichment start
-[2025-08-20 11:44:45] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 11:44:45] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 11:44:45] DEBUG Enrichment recall pack added | {
-  len = 7862
-}
-[2025-08-20 11:44:45] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 11:44:45] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 11:44:45] INFO  Improved Prompt stream start
-[2025-08-20 11:44:45] DEBUG Stored user message to memory
-[2025-08-20 11:44:49] INFO  Improved Prompt stream complete | 
-[2025-08-20 11:44:49] INFO  Memory Manager (Recall) stream start
-[2025-08-20 11:44:52] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-20 11:44:52] INFO  LLM stream start provider=openai
-[2025-08-20 11:44:52] INFO  Starting agentic response
-[2025-08-20 11:44:52] DEBUG Agentic response placeholder added
-[2025-08-20 11:44:52] DEBUG Chat session send initiated
-[2025-08-20 11:44:52] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:45:18] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-20 11:45:18] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-20 11:45:18] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-20 11:45:18] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-20 11:45:20] INFO  Self-Reflection stream start
-[2025-08-20 11:45:30] INFO  Self-Reflection stream complete | 
-[2025-08-20 11:45:30] INFO  Reviewer stream start
-[2025-08-20 11:45:37] INFO  Reviewer stream complete | 
-[2025-08-20 11:45:37] INFO  Project Manager (Update) stream start
-[2025-08-20 11:45:43] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 11:45:43] INFO  Memory Extract stream start
-[2025-08-20 11:45:48] INFO  Memory Extract stream complete | 
-[2025-08-20 11:45:48] DEBUG Stored assistant response to memory
-[2025-08-20 11:45:48] INFO  LLM stream start provider=openai
-[2025-08-20 11:45:48] INFO  LLM stream start provider=openai
-[2025-08-20 11:45:48] INFO  Response complete | {
-  chars = 825
-}
-[2025-08-20 11:45:49] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:45:49] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:55:13] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 11:55:13] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 11:55:26] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-20 11:55:26] DEBUG Enrichment start
-[2025-08-20 11:55:26] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 11:55:26] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 11:55:26] DEBUG Enrichment recall pack added | {
-  len = 7857
-}
-[2025-08-20 11:55:26] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 11:55:26] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 11:55:26] INFO  Improved Prompt stream start
-[2025-08-20 11:55:26] DEBUG Stored user message to memory
-[2025-08-20 11:55:29] INFO  Improved Prompt stream complete | 
-[2025-08-20 11:55:29] INFO  Memory Manager (Recall) stream start
-[2025-08-20 11:55:31] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-20 11:55:31] INFO  LLM stream start provider=openai
-[2025-08-20 11:55:31] INFO  Starting agentic response
-[2025-08-20 11:55:31] DEBUG Agentic response placeholder added
-[2025-08-20 11:55:31] DEBUG Chat session send initiated
-[2025-08-20 11:55:31] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:56:04] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-20 11:56:04] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-20 11:56:04] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-20 11:56:04] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-20 11:56:07] INFO  Self-Reflection stream start
-[2025-08-20 11:56:19] INFO  Self-Reflection stream complete | 
-[2025-08-20 11:56:19] INFO  Reviewer stream start
-[2025-08-20 11:56:25] INFO  Reviewer stream complete | 
-[2025-08-20 11:56:25] INFO  Project Manager (Update) stream start
-[2025-08-20 11:56:35] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 11:56:35] INFO  Memory Extract stream start
-[2025-08-20 11:56:40] INFO  Memory Extract stream complete | 
-[2025-08-20 11:56:40] DEBUG Stored assistant response to memory
-[2025-08-20 11:56:40] INFO  LLM stream start provider=openai
-[2025-08-20 11:56:40] INFO  LLM stream start provider=openai
-[2025-08-20 11:56:40] INFO  Response complete | {
-  chars = 1039
-}
-[2025-08-20 11:56:40] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 11:56:40] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 12:06:37] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 12:06:37] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 12:06:49] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-20 12:06:49] DEBUG Enrichment start
-[2025-08-20 12:06:49] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 12:06:49] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 12:06:49] DEBUG Enrichment recall pack added | {
-  len = 7893
-}
-[2025-08-20 12:06:49] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 12:06:49] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 12:06:49] INFO  Improved Prompt stream start
-[2025-08-20 12:06:49] DEBUG Stored user message to memory
-[2025-08-20 12:06:58] INFO  Improved Prompt stream complete | 
-[2025-08-20 12:06:58] INFO  Memory Manager (Recall) stream start
-[2025-08-20 12:07:02] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-20 12:07:02] INFO  Project Manager (Plan) stream start
-[2025-08-20 12:07:06] INFO  Project Manager (Plan) stream complete | 
-[2025-08-20 12:07:06] INFO  LLM stream start provider=openai
-[2025-08-20 12:07:06] INFO  Starting agentic response
-[2025-08-20 12:07:06] DEBUG Agentic response placeholder added
-[2025-08-20 12:07:06] DEBUG Chat session send initiated
-[2025-08-20 12:07:07] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 12:07:46] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-20 12:07:46] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-20 12:07:46] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-20 12:07:46] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-20 12:07:50] INFO  Self-Reflection stream start
-[2025-08-20 12:07:57] INFO  Self-Reflection stream complete | 
-[2025-08-20 12:07:57] INFO  Reviewer stream start
-[2025-08-20 12:08:03] INFO  Reviewer stream complete | 
-[2025-08-20 12:08:03] INFO  Project Manager (Update) stream start
-[2025-08-20 12:08:10] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 12:08:10] INFO  Memory Extract stream start
-[2025-08-20 12:08:18] INFO  Memory Extract stream complete | 
-[2025-08-20 12:08:18] DEBUG Stored assistant response to memory
-[2025-08-20 12:08:18] INFO  LLM stream start provider=openai
-[2025-08-20 12:08:18] INFO  LLM stream start provider=openai
-[2025-08-20 12:08:18] INFO  Response complete | {
-  chars = 1081
-}
-[2025-08-20 12:08:18] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 12:08:18] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 15:21:22] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 15:21:22] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 15:21:23] WARN  memory_vector: embedding failed | Failed to parse embedding response
-[2025-08-20 15:21:36] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-20 15:21:36] DEBUG Enrichment start
-[2025-08-20 15:21:36] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 15:21:36] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 15:21:36] DEBUG Enrichment recall pack added | {
-  len = 8149
-}
-[2025-08-20 15:21:36] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 15:21:36] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 15:21:36] INFO  Improved Prompt stream start
-[2025-08-20 15:21:36] DEBUG Stored user message to memory
-[2025-08-20 15:21:43] INFO  Improved Prompt stream complete | 
-[2025-08-20 15:21:43] INFO  Memory Manager (Recall) stream start
-[2025-08-20 15:21:49] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-20 15:21:49] INFO  Project Manager (Plan) stream start
-[2025-08-20 15:21:53] INFO  Project Manager (Plan) stream complete | 
-[2025-08-20 15:21:53] INFO  LLM stream start provider=openai
-[2025-08-20 15:21:53] INFO  Starting agentic response
-[2025-08-20 15:21:53] DEBUG Agentic response placeholder added
-[2025-08-20 15:21:53] DEBUG Chat session send initiated
-[2025-08-20 15:21:53] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 15:22:24] DEBUG Tool feedback chunk | 
-
-🔧 Using tool: `write_file`...
-
-
-[2025-08-20 15:22:24] DEBUG Tool feedback chunk | 
-
-Tool write_file: writing /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
-
-
-[2025-08-20 15:22:24] DEBUG Tool feedback chunk | 
-
-Tool write_file: presenting diff for approval
-
-
-[2025-08-20 15:22:24] DEBUG Tool feedback chunk | ✅ Tool `write_file` finished. 
-
-
-[2025-08-20 15:22:28] INFO  Self-Reflection stream start
-[2025-08-20 15:22:36] INFO  Self-Reflection stream complete | 
-[2025-08-20 15:22:36] INFO  Reviewer stream start
-[2025-08-20 15:22:40] INFO  Reviewer stream complete | 
-[2025-08-20 15:22:40] INFO  Project Manager (Update) stream start
-[2025-08-20 15:22:44] DEBUG tool.search_files.start | {
-  file_pattern = "*.md",
-  query = "TODO"
-}
-[2025-08-20 15:22:56] WARN  tool.search_files.timeout | {
-  query = "TODO",
-  timeout_ms = 12000
-}
-[2025-08-20 15:23:03] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 15:23:03] INFO  Memory Extract stream start
-[2025-08-20 15:23:08] INFO  Memory Extract stream complete | 
-[2025-08-20 15:23:08] DEBUG Stored assistant response to memory
-[2025-08-20 15:23:08] INFO  LLM stream start provider=openai
-[2025-08-20 15:23:08] INFO  LLM stream start provider=openai
-[2025-08-20 15:23:08] INFO  Response complete | {
-  chars = 1210
-}
-[2025-08-20 15:23:09] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 15:23:09] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 16:35:32] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 16:35:32] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-20 16:35:56] INFO  Chat send | {
-  preview = "Can you help me improve this code?"
-}
-[2025-08-20 16:35:56] DEBUG Enrichment start
-[2025-08-20 16:35:56] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-20 16:35:56] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-20 16:35:56] DEBUG Enrichment recall pack added | {
+[2025-08-21 03:20:24] DEBUG Enrichment recall pack added | {
   len = 8320
 }
-[2025-08-20 16:35:56] DEBUG Including open buffers in context | {
+[2025-08-21 03:20:24] DEBUG Including open buffers in context | {
   count = 2
 }
-[2025-08-20 16:35:56] DEBUG Including memory results | {
+[2025-08-21 03:20:24] DEBUG Including memory results | {
   count = 5
 }
-[2025-08-20 16:35:56] INFO  Improved Prompt stream start
-[2025-08-20 16:35:56] DEBUG Stored user message to memory
-[2025-08-20 16:36:00] INFO  Improved Prompt stream complete | 
-[2025-08-20 16:36:00] INFO  Memory Manager (Recall) stream start
-[2025-08-20 16:36:10] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-20 16:36:10] INFO  Project Manager (Plan) stream start
-[2025-08-20 16:36:15] INFO  Project Manager (Plan) stream complete | 
-[2025-08-20 16:36:15] INFO  LLM stream start provider=openai
-[2025-08-20 16:36:15] INFO  Starting agentic response
-[2025-08-20 16:36:15] DEBUG Agentic response placeholder added
-[2025-08-20 16:36:15] DEBUG Chat session send initiated
-[2025-08-20 16:36:15] INFO  Self-Reflection stream start
-[2025-08-20 16:36:16] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
+[2025-08-21 03:20:24] INFO  Improved Prompt stream start
+[2025-08-21 03:20:24] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "Rewrite the following request into a precise, concise engineering task. Keep semantics, remove fluff. Output only the improved prompt.",
+        role = "system"
+      }, {
+        content = "Please improve this code",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739224_tools_2748",
+  url = "https://api.openai.com/v1/chat/completions"
 }
-[2025-08-20 16:36:20] INFO  Self-Reflection stream complete | 
-[2025-08-20 16:36:20] INFO  Reviewer stream start
-[2025-08-20 16:36:28] INFO  Reviewer stream complete | 
-[2025-08-20 16:36:28] INFO  Project Manager (Update) stream start
-[2025-08-20 16:36:37] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 16:36:37] INFO  Memory Extract stream start
-[2025-08-20 16:36:41] INFO  Memory Extract stream complete | 
-[2025-08-20 16:36:41] INFO  LLM stream start provider=openai
-[2025-08-20 16:36:41] INFO  LLM stream start provider=openai
-[2025-08-20 16:36:41] INFO  Response complete | {
-  chars = 0
+[2025-08-21 03:20:24] INFO  OpenAI embeddings request | {
+  body = {
+    dimensions = 512,
+    input = "Please improve this code",
+    model = "text-embedding-3-small"
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739224_embed_1605",
+  url = "https://api.openai.com/v1/embeddings"
 }
-[2025-08-20 16:36:42] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
+[2025-08-21 03:20:24] DEBUG Stored user message to memory
+[2025-08-21 03:20:24] INFO  OpenAI embeddings response | {
+  id = "1755739224_embed_1605",
+  raw_len = 11154,
+  raw_preview = '{\n  "object": "list",\n  "data": [\n    {\n      "object": "embedding",\n      "index": 0,\n      "embedding": [\n        -0.0020066113,\n        0.04799102,\n        -0.022570448,\n        0.020495728,\n        -0.0040551363,\n        0.02393264,\n        -0.010845132,\n        0.0130560715,\n        0.0028579803,\n        0.04017414,\n        0.045098983,\n        -0.026154058,\n        -0.07598927,\n        -0.0092733735,\n        0.029213747,\n        0.036129482,\n        0.027830599,\n        0.022130357,\n        0.011589098,\n        0.034222417,\n        -0.011955841,\n        -0.022738103,\n        0.060313605,\n        0.033908065,\n        -0.027201897,\n        -0.022465665,\n        -0.046524044,\n        -0.0014774528,\n        0.06475644,\n        -0.062535025,\n        0.0034369114,\n        -0.028333561,\n        -0.015162228,\n        -0.0017800162,\n        -0.038246118,\n        -0.016817814,\n        0.03296501,\n        0.06546897,\n        -0.07242662,\n        -0.024016466,\n        0.028773654,\n        -0.07481569,\n        0.0059150504,\n        0.03133038,\n        0.04966756,\n        0.023953596,\n        -0.07934236,\n        -0.03346797,\n        0.04375775,\n        0.029234704,\n        -0.046901267,\n        -0.024875695,\n        -0.02223514,\n        -0.017467473,\n        0.02294767,\n        -0.021250172,\n        -0.060690824,\n        0.011997755,\n        0.048787378,\n        0.009179068,\n        0.057631135,\n        -0.012050146,\n        -0.0014997193,\n        -0.020265203,\n        -0.03392902,\n        0.0018415768,\n        -0.026677977,\n        -0.033593714,\n        0.06517558,\n        -0.04350627,\n        0.014208695,\n        0.07137878,\n        -0.013496164,\n        -0.034893032,\n        -0.047488056,\n        -0.027662946,\n        0.032168653,\n        -0.010069732,\n        0.067983784,\n        0.07712094,\n        -0.014596395,\n        0.02523196,\n        -0.023576373,\n        -0.05109262,\n        -0.024477515,\n        -0.062996075,\n        -0.13688967,\n        0.000052883115,\n        -0.043967318,\n        -0.11073561,\n        -0.0049772346,\n        0.00988636,\n        -0.0850426,\n        0.047488056,\n        0.04719466,\n        -0.0013713591,\n        -0.051176447,\n        -0.022256097,\n        0.045015156,\n        0.014512568,\n        0.08047402,\n        -0.007015281,\n        0.02107204,\n        0.036779143,\n        -0.0017708476,\n        -0.025923533,\n        0.011599576,\n        -0.050673485,\n        -0.10084401,\n        0.031183684,\n        -0.054655273,\n        0.005993638,\n        -0.008351276,\n        0.031036986,\n        0.027097112,\n        -0.027076155,\n        0.093551055,\n        -0.046062995,\n        0.008854238,\n        0.006873823,\n        -0.04029988,\n        -0.05142793,\n        0.013747646,\n        -0.059181936,\n        0.018693445,\n        -0.06513366,\n        0.066349156,\n        -0.059726812,\n        0.016597766,\n        0.014690701,\n        0.10369413,\n        0.011589098,\n        0.051595584,\n        -0.022486622,\n        -0.08198291,\n        0.002776773,\n        -0.06488218,\n        0.041326765,\n        -0.0061560534,\n        0.034411028,\n        -0.025902577,\n        -0.0083093615,\n        -0.04141059,\n        -0.0017498909,\n        -0.020369986,\n        -0.0711273,\n        0.021271128,\n        -0.009430549,\n        -0.11249598,\n        0.016954033,\n        0.019028753,\n        0.025713965,\n        -0.025441527,\n        0.005878376,\n        0.022067485,\n        -0.063037984,\n        0.10059253,\n        0.009472463,\n        -0.055954594,\n        0.027683903,\n        -0.056080334,\n        -0.016629202,\n        -0.036003742,\n        0.025441527,\n        0.060816567,\n        -0.0040158425,\n        -0.05000287,\n        0.032147694,\n        -0.064379215,\n        -0.015434666,\n        0.05235003,\n        -0.06219971,\n        0.019846067,\n        -0.011725317,\n        0.0060512694,\n        0.011526227,\n        -0.016650159,\n        -0.0720494,\n        -0.13672201,\n        -0.0038272312,\n        0.049038857,\n        0.028522173,'
 }
-[2025-08-20 16:36:42] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
+[2025-08-21 03:20:25] INFO  OpenAI tools response | {
+  content_preview = "Provide the code that needs improvement.",
+  id = "1755739224_tools_2748"
 }
-[2025-08-20 18:39:10] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+[2025-08-21 03:20:25] INFO  Improved Prompt stream complete | 
+[2025-08-21 03:20:25] INFO  Memory Manager (Recall) stream start
+[2025-08-21 03:20:25] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a memory manager. Given the user request, propose up to 5 brief context additions from long-term memory that would help. Use bullet points only.",
+        role = "system"
+      }, {
+        content = "",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739225_tools_4376",
+  url = "https://api.openai.com/v1/chat/completions"
 }
-[2025-08-20 18:39:10] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
+[2025-08-21 03:20:26] INFO  OpenAI tools response | {
+  content_preview = "- Information about the available tools and functions for managing files and buffers.\n- A list of currently open files and buffers in the workspace.\n- Recent changes made to any of the files, if applicable.\n- Documentation on file formats and coding standards relevant to ongoing projects.\n- User preferences for file editing and memory management settings.",
+  id = "1755739225_tools_4376"
 }
-[2025-08-20 18:39:19] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
+[2025-08-21 03:20:26] INFO  Memory Manager (Recall) stream complete | 
+[2025-08-21 03:20:26] INFO  Project Manager (Plan) stream start
+[2025-08-21 03:20:26] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a Project Manager. Update or create a concise plan (TODO/DOING/DONE) for the task. Return a short markdown summary with priorities.",
+        role = "system"
+      }, {
+        content = "",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739226_tools_8981",
+  url = "https://api.openai.com/v1/chat/completions"
 }
-[2025-08-20 18:39:19] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
+[2025-08-21 03:20:28] INFO  OpenAI tools response | {
+  content_preview = "It seems that your message is empty. Could you please provide details about the task or project you would like to update or create a plan for?",
+  id = "1755739226_tools_8981"
 }
-[2025-08-20 18:39:31] INFO  Chat send | {
-  preview = "Please help me optimize this code"
+[2025-08-21 03:20:28] INFO  Project Manager (Plan) stream complete | 
+[2025-08-21 03:20:28] INFO  LLM stream start provider=openai
+[2025-08-21 03:20:28] INFO  OpenAI stream request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You maintain a concise implementation plan. Given input, output ONLY JSON with keys: goals[], current_tasks[], known_issues[]. No prose.",
+        role = "system"
+      }, {
+        content = "User message:\n\n\nContext summary:\nFile: /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js\nLanguage: javascript\n\nCode:\n}\n\n\n\nCurrent plan (summary):\nGoals:\n- Fix syntax errors in the JavaScript file.\n- Improve code readability and maintainability.\n- Implement optimized logic for better performance.\n\nActive Tasks:\n- Identify and correct the unmatched closing brace.\n- Refactor the code for improved readability.\n- Run tests to ensure functionality remains intact.\n\nKnown Issues:\n- Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace.\n- Syntax error due to unmatched closing brace.\n\nReturn JSON with updated goals, current_tasks, known_issues.",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    response_format = {
+      type = "json_object"
+    },
+    stream = true,
+    temperature = 1
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  url = "https://api.openai.com/v1/chat/completions"
 }
-[2025-08-20 18:39:31] DEBUG Enrichment start
-[2025-08-20 18:39:31] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
+[2025-08-21 03:20:28] INFO  Starting agentic response
+[2025-08-21 03:20:28] DEBUG Agentic response placeholder added
+[2025-08-21 03:20:28] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a helpful AI coding assistant embedded in Neovim. When the user asks for improvements or help, return concrete code edits or patches whenever possible. Prefer minimal, directly appliable diffs and code blocks. You can call tools when needed, but the final assistant message should include the improved code if requested.",
+        role = "system"
+      }, {
+        content = "Please improve this code\n\n## Primary Context (Tree-sitter)\n\nFile: /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js\nLanguage: javascript\n\nCode:\n// test_example.js\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  for (const [i, n] of nums.entries()) {\n    if (typeof n !== 'number' || !Number.isFinite(n)) {\n      throw new TypeError(`Argument ${i} is not a finite number: ${n}`);\n    }\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum: Object.freeze({\n    init: 0,\n    fn: (a, b) => a + b,\n    minArgs: 0,\n    errorName: 'Sum',\n  }),\n  product: Object.freeze({\n    init: 1,\n    fn: (a, b) => a * b,\n    minArgs: 0,\n    errorName: 'Product',\n  }),\n  difference: Object.freeze({\n    fn: (a, b) => a - b,\n    minArgs: 2,\n    errorName: 'Difference',\n    useFirstAsInit: true,\n  }),\n  quotient: Object.freeze({\n    fn: (a, b, idx) => {\n      if (b === 0) {\n        throw new Error(`Division by zero at position ${idx + 1}`);\n      }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  }),\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n\n## Plan Summary\nGoals:\n- Fix syntax errors in the JavaScript file.\n- Improve code readability and maintainability.\n- Implement optimized logic for better performance.\n\nActive Tasks:\n- Identify and correct the unmatched closing brace.\n- Refactor the code for improved readability.\n- Run tests to ensure functionality remains intact.\n\nKnown Issues:\n- Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace.\n- Syntax error due to unmatched closing brace.\n\n## Relevant Memory (Top)\n- Here’s a more idiomatic, concise and robust version of your calculator module. Changes include:\n\n1.  DRYed-up the reduction logic by pulling common bits into `calculate()`.  \n2.  Simplified `validateNumbers()` with `Array.prototype.every()`.  \n3.  Improved error messages and pluralization logic.  \n4.  Swapped the default export object for named exports — it plays nicer with tree-shaking.  \n5.  Streamlined history filtering.  \n6.  Added a few tiny helpers to keep things readable.  \n\n```javascript\n// calculator.js\n'use strict';\n\n/**\n * @param {any[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Operation definitions:\n *  - init: seed value for reduce\n *  - fn:  (acc, curr, idx) => newAcc\n *  - minArgs: minimum arguments required\n *  - name: display name\n *  - firstAsInit: pull off first arg as the seed\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b,      minArgs: 0, name: 'Sum' },\n  product:{ init: 1, fn: (a, b) => a * b,      minArgs: 0, name: 'Product' },\n  difference: {\n    fn:           (a, b) => a - b,\n    minArgs:      2,\n    name:         'Difference',\n    firstAsInit:  true\n  },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) throw new Error(`Division by zero at argument ${idx + 1}`);\n      return a / b;\n    },\n    minArgs:     2,\n    name:        'Quotient',\n    firstAsInit: true\n  }\n});\n\n/**\n * Core reducer.\n * @param {'sum'|'product'|'difference'|'quotient'} opName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(opName, nums) {\n  const op = OPERATIONS[opName];\n  if (!op) throw new Error(`Unsupported operation: ${opName}`);\n\n  if (nums.length < op.minArgs) {\n    const s = op.minArgs > 1 ? 's' : '';\n    throw new Error (src: code_context, relevance: 3.00)\n- Here’s a cleaned-up, more idiomatic version of your calculator—plus a few structural and style tweaks. Major changes:\n\n 1. Dropped the separate `minArgs`/`useFirstAsInit` flags in favor of an explicit `init` that can be `undefined` for “take the first element.”  \n 2. Pulled common validation/accumulation logic into small helpers.  \n 3. Removed the old `'use strict'` (ES modules are always strict).  \n 4. Made error messages and operation definitions a bit more self-documenting.  \n 5. Kept history entries fully immutable and simplified the history API.  \n\n```javascript\n// calculator.js\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/** @throws {TypeError} if any argument is not a finite number */\nfunction ensureNumbers(nums) {\n  nums.forEach((n, i) => {\n    if (typeof n !== 'number' || !Number.isFinite(n)) {\n      throw new TypeError(`Argument[${i}] is not a finite number: ${n}`);\n    }\n  });\n}\n\n/**\n * Defines how each operation reduces a list of numbers.\n * - init: starting accumulator (if undefined, reducer will use first arg)\n * - fn: (acc, cur, idx) → new acc\n * - name: friendly name for errors\n */\nconst OPERATIONS = Object.freeze({\n  sum: {\n    init: 0,\n    fn: (a, b) => a + b,\n    name: 'Sum'\n  },\n  product: {\n    init: 1,\n    fn: (a, b) => a * b,\n    name: 'Product'\n  },\n  difference: {\n    init: undefined,\n    fn: (a, b) => a - b,\n    name: 'Difference',\n  },\n  quotient: {\n    init: undefined,\n    fn: (a, b, idx) => {\n      if (b === 0) {\n        throw new Error(`Division by zero at operand index ${idx + 1}`);\n      }\n      return a / b;\n    },\n    name: 'Quotient',\n  }\n});\n\n/**\n * @param {'sum'|'product'|'difference'|'quotient'} opKey\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(opKey, nums) {\n  const op = OPERATIONS[opKey];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${opKey}`);\n  }\n\n  ensureNumbers(nums);\n\n  if (nums.length === 0 && op (src: code_context, relevance: 3.00)\n- Here’s a refactored version of your calculator module—more concise, more idiomatic, and with a few edge‐case & style tweaks. Key changes:\n\n  * Switched OPERATIONS to a Map for clearer lookup  \n  * Unified “minArgs = 0” for sum/product so `sum()` → 0, `product()` → 1  \n  * Simplified `calculate()` initial-value logic with array destructuring  \n  * Tightened up error messages (e.g. RangeError on divide by zero)  \n  * Renamed exports to single words (`sum`, `product`, …) for terseness  \n  * Tweaked `Calculator` class:  \n    – Exposed `history` as a getter  \n    – Accepts `operations` (plural) in filter for symmetry  \n    – Reuses shared free functions internally  \n\n```javascript\n// calculator.js\n'use strict';\n\n/**\n * Map of supported operations.\n * init: starting accumulator (unless useFirstAsInit)\n * fn:   (acc, curr, idx) ⇒ next accumulator\n * minArgs: minimum count\n * useFirstAsInit: pull first arg as initial value\n */\nconst OPERATIONS = new Map([\n  ['sum', {\n    init: 0,\n    fn:    (a, b) => a + b,\n    minArgs: 0,\n    name: 'Sum',\n  }],\n  ['product', {\n    init: 1,\n    fn:    (a, b) => a * b,\n    minArgs: 0,\n    name: 'Product',\n  }],\n  ['difference', {\n    fn:    (a, b) => a - b,\n    minArgs: 2,\n    name: 'Difference',\n    useFirstAsInit: true,\n  }],\n  ['quotient', {\n    fn:    (a, b, idx) => {\n      if (b === 0) throw new RangeError(`Division by zero at argument ${idx + 1}`);\n      return a / b;\n    },\n    minArgs: 2,\n    name: 'Quotient',\n    useFirstAsInit: true,\n  }],\n]);\n\n/** @throws {TypeError} */\nfunction validateNumbers(nums) {\n  nums.forEach((n, i) => {\n    if (!Number.isFinite(n)) {\n      throw new TypeError(`Argument ${i} is not a finite number: ${n}`);\n    }\n  });\n}\n\n/**\n * @param {'sum'|'product'|'difference'|'quotient'} opName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(opName, nums) {\n  const op = OPERATIONS.get(opName);\n  if (!op) throw new Error(`Unsupported operation: ${opName}`);\n  if (nums.lengt (src: code_context, relevance: 3.00)\n- I refactored **test_example.js** for clarity, robustness, and modern JS style:\n\n1. **Validation**  \n   • Switched `validateNumbers` to `Array.findIndex` for concise, 1-based error messages.  \n   • Throws `Type\n\n[Enrichment truncated]\n\n## Open Files Context:\n\n### caramba.nvim ()\n```\n\n```\n\n### test_example.js (javascript)\n```javascript\n// test_example.js\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  for (const [i, n] of nums.entries()) {\n    if (typeof n !== 'number' || !Number.isFinite(n)) {\n      throw new TypeError(`Argument ${i} is not a finite number: ${n}`);\n    }\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum: Object.freeze({\n    init: 0,\n    fn: (a, b) => a + b,\n    minArgs: 0,\n    errorName: 'Sum',\n  }),\n  product: Object.freeze({\n    init: 1,\n    fn: (a, b) => a * b,\n    minArgs: 0,\n    errorName: 'Product',\n  }),\n  difference: Object.freeze({\n    fn: (a, b) => a - b,\n    minArgs: 2,\n    errorName: 'Difference',\n    useFirstAsInit: true,\n  }),\n  quotient: Object.freeze({\n    fn: (a, b, idx) => {\n      if (b === 0) {\n        throw new Error(`Division by zero at position ${idx + 1}`);\n      }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  }),\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n\n## Relevant Memory:\n\n- It looks like you haven’t yet shared the code you want to improve. Could you please:\n\n1. Paste the relevant code snippet (or point me at the file in your repo).  \n2. Tell me what the code is supposed to do, and any pain points or goals you have (.g. performance, readability, better error handling, idiomatic style, etc.).\n\nOnce I can see the code and understand the context, I’ll give you concrete suggestions—refactorings, style improvements, potential API changes, testing ideas, and so on. (relevance: 1.50)\n\n- Please improve this code (relevance: 1.00)\n\n- Please improve this code (relevance: 1.00)\n\n- Please improve this code (relevance: 1.00)\n\n- Please improve this code (relevance: 1.00)\n\n\n## Additional Context:\n\n[Current Buffer: [Current Buffer]]\n```\nFile: \nLanguage: \n\nCode:\nPlease improve this code\n```\n",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739228_tools_5810",
+  url = "https://api.openai.com/v1/chat/completions"
 }
-[2025-08-20 18:39:31] DEBUG Enrichment memory results | {
-  count = 5
+[2025-08-21 03:20:28] DEBUG Chat session send initiated
+[2025-08-21 03:20:30] INFO  OpenAI stream response | {
+  content_preview = '{\n  "goals": [\n    "Fix syntax errors in the JavaScript file.",\n    "Improve code readability and maintainability.",\n    "Implement optimized logic for better performance."\n  ],\n  "current_tasks": [\n    "Identify and correct the unmatched closing brace.",\n    "Refactor the code for improved readability.",\n    "Run tests to ensure functionality remains intact."\n  ],\n  "known_issues": [\n    "Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace.",\n    "Syntax error due to unmatched closing brace."\n  ]\n}'
 }
-[2025-08-20 18:39:31] DEBUG Enrichment recall pack added | {
-  len = 8320
-}
-[2025-08-20 18:39:31] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-20 18:39:31] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-20 18:39:31] INFO  Improved Prompt stream start
-[2025-08-20 18:39:31] DEBUG Stored user message to memory
-[2025-08-20 18:39:37] INFO  Improved Prompt stream complete | 
-[2025-08-20 18:39:37] INFO  Memory Manager (Recall) stream start
-[2025-08-20 18:39:43] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-20 18:39:43] INFO  Project Manager (Plan) stream start
-[2025-08-20 18:39:45] INFO  Project Manager (Plan) stream complete | 
-[2025-08-20 18:39:45] INFO  LLM stream start provider=openai
-[2025-08-20 18:39:45] INFO  Starting agentic response
-[2025-08-20 18:39:45] DEBUG Agentic response placeholder added
-[2025-08-20 18:39:45] DEBUG Chat session send initiated
-[2025-08-20 18:39:45] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 18:39:45] INFO  Self-Reflection stream start
-[2025-08-20 18:39:49] INFO  Self-Reflection stream complete | 
-[2025-08-20 18:39:49] INFO  Reviewer stream start
-[2025-08-20 18:39:58] INFO  Reviewer stream complete | 
-[2025-08-20 18:39:58] INFO  Project Manager (Update) stream start
-[2025-08-20 18:40:06] INFO  Project Manager (Update) stream complete | 
-[2025-08-20 18:40:06] INFO  Memory Extract stream start
-[2025-08-20 18:40:11] INFO  Memory Extract stream complete | 
-[2025-08-20 18:40:11] INFO  LLM stream start provider=openai
-[2025-08-20 18:40:11] INFO  LLM stream start provider=openai
-[2025-08-20 18:40:11] INFO  Response complete | {
-  chars = 0
-}
-[2025-08-20 18:40:11] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 18:40:12] INFO  LLM stream job exit | {
-  code = 0,
-  content_len = 0
-}
-[2025-08-20 20:20:50] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-20 20:20:50] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-21 00:21:52] INFO  Logger initialized | {
-  level = "debug",
-  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/.caramba-debug.log"
-}
-[2025-08-21 00:21:52] INFO  Vector warmup complete | {
-  files = 25,
-  memory = 0
-}
-[2025-08-21 00:22:03] INFO  Chat send | {
-  preview = "Please improve this code"
-}
-[2025-08-21 00:22:03] DEBUG Enrichment start
-[2025-08-21 00:22:03] DEBUG Enrichment ctx | {
-  file = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
-  lang = "javascript",
-  len = 5114
-}
-[2025-08-21 00:22:03] DEBUG Enrichment memory results | {
-  count = 5
-}
-[2025-08-21 00:22:03] DEBUG Enrichment recall pack added | {
-  len = 8320
-}
-[2025-08-21 00:22:03] DEBUG Including open buffers in context | {
-  count = 2
-}
-[2025-08-21 00:22:03] DEBUG Including memory results | {
-  count = 5
-}
-[2025-08-21 00:22:03] INFO  Improved Prompt stream start
-[2025-08-21 00:22:03] DEBUG Stored user message to memory
-[2025-08-21 00:22:04] INFO  Improved Prompt stream complete | 
-[2025-08-21 00:22:04] INFO  Memory Manager (Recall) stream start
-[2025-08-21 00:22:06] INFO  Memory Manager (Recall) stream complete | 
-[2025-08-21 00:22:06] INFO  Project Manager (Plan) stream start
-[2025-08-21 00:22:10] INFO  Project Manager (Plan) stream complete | 
-[2025-08-21 00:22:10] INFO  LLM stream start provider=openai
-[2025-08-21 00:22:10] INFO  Starting agentic response
-[2025-08-21 00:22:10] DEBUG Agentic response placeholder added
-[2025-08-21 00:22:10] DEBUG Chat session send initiated
-[2025-08-21 00:22:10] INFO  Self-Reflection stream start
-[2025-08-21 00:22:11] DEBUG Merging plan delta | {
-  current_tasks = {},
-  goals = {},
-  known_issues = { "Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace." }
-}
-[2025-08-21 00:22:11] INFO  Planner pre-send updated
-[2025-08-21 00:22:14] INFO  Self-Reflection stream complete | 
-[2025-08-21 00:22:14] INFO  Reviewer stream start
-[2025-08-21 00:22:20] INFO  Reviewer stream complete | 
-[2025-08-21 00:22:20] INFO  Project Manager (Update) stream start
-[2025-08-21 00:22:23] INFO  Project Manager (Update) stream complete | 
-[2025-08-21 00:22:23] INFO  Memory Extract stream start
-[2025-08-21 00:22:26] INFO  Memory Extract stream complete | 
-[2025-08-21 00:22:26] INFO  LLM stream start provider=openai
-[2025-08-21 00:22:26] INFO  LLM stream start provider=openai
-[2025-08-21 00:22:26] INFO  Response complete | {
-  chars = 0
-}
-[2025-08-21 00:22:28] DEBUG Merging plan delta | {
+[2025-08-21 03:20:30] DEBUG Merging plan delta | {
   current_tasks = { "Identify and correct the unmatched closing brace.", "Refactor the code for improved readability.", "Run tests to ensure functionality remains intact." },
   goals = { "Fix syntax errors in the JavaScript file.", "Improve code readability and maintainability.", "Implement optimized logic for better performance." },
-  known_issues = { "Syntax error due to unmatched closing brace." }
+  known_issues = { "Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace.", "Syntax error due to unmatched closing brace." }
 }
-[2025-08-21 00:22:28] INFO  Planner post-response updated
+[2025-08-21 03:20:30] INFO  Planner pre-send updated
+[2025-08-21 03:20:54] INFO  OpenAI tools response | {
+  content_preview = "",
+  id = "1755739228_tools_5810"
+}
+[2025-08-21 03:20:54] DEBUG tool.edit_file.open | {
+  end_line = 60,
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js",
+  start_line = 1
+}
+[2025-08-21 03:20:54] INFO  tool.edit_file.success | {
+  path = "/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js"
+}
+[2025-08-21 03:20:54] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a helpful AI coding assistant embedded in Neovim. When the user asks for improvements or help, return concrete code edits or patches whenever possible. Prefer minimal, directly appliable diffs and code blocks. You can call tools when needed, but the final assistant message should include the improved code if requested.",
+        role = "system"
+      }, {
+        content = "Please improve this code\n\n## Primary Context (Tree-sitter)\n\nFile: /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js\nLanguage: javascript\n\nCode:\n// test_example.js\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  for (const [i, n] of nums.entries()) {\n    if (typeof n !== 'number' || !Number.isFinite(n)) {\n      throw new TypeError(`Argument ${i} is not a finite number: ${n}`);\n    }\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum: Object.freeze({\n    init: 0,\n    fn: (a, b) => a + b,\n    minArgs: 0,\n    errorName: 'Sum',\n  }),\n  product: Object.freeze({\n    init: 1,\n    fn: (a, b) => a * b,\n    minArgs: 0,\n    errorName: 'Product',\n  }),\n  difference: Object.freeze({\n    fn: (a, b) => a - b,\n    minArgs: 2,\n    errorName: 'Difference',\n    useFirstAsInit: true,\n  }),\n  quotient: Object.freeze({\n    fn: (a, b, idx) => {\n      if (b === 0) {\n        throw new Error(`Division by zero at position ${idx + 1}`);\n      }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  }),\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n\n## Plan Summary\nGoals:\n- Fix syntax errors in the JavaScript file.\n- Improve code readability and maintainability.\n- Implement optimized logic for better performance.\n\nActive Tasks:\n- Identify and correct the unmatched closing brace.\n- Refactor the code for improved readability.\n- Run tests to ensure functionality remains intact.\n\nKnown Issues:\n- Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace.\n- Syntax error due to unmatched closing brace.\n\n## Relevant Memory (Top)\n- Here’s a more idiomatic, concise and robust version of your calculator module. Changes include:\n\n1.  DRYed-up the reduction logic by pulling common bits into `calculate()`.  \n2.  Simplified `validateNumbers()` with `Array.prototype.every()`.  \n3.  Improved error messages and pluralization logic.  \n4.  Swapped the default export object for named exports — it plays nicer with tree-shaking.  \n5.  Streamlined history filtering.  \n6.  Added a few tiny helpers to keep things readable.  \n\n```javascript\n// calculator.js\n'use strict';\n\n/**\n * @param {any[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Operation definitions:\n *  - init: seed value for reduce\n *  - fn:  (acc, curr, idx) => newAcc\n *  - minArgs: minimum arguments required\n *  - name: display name\n *  - firstAsInit: pull off first arg as the seed\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b,      minArgs: 0, name: 'Sum' },\n  product:{ init: 1, fn: (a, b) => a * b,      minArgs: 0, name: 'Product' },\n  difference: {\n    fn:           (a, b) => a - b,\n    minArgs:      2,\n    name:         'Difference',\n    firstAsInit:  true\n  },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) throw new Error(`Division by zero at argument ${idx + 1}`);\n      return a / b;\n    },\n    minArgs:     2,\n    name:        'Quotient',\n    firstAsInit: true\n  }\n});\n\n/**\n * Core reducer.\n * @param {'sum'|'product'|'difference'|'quotient'} opName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(opName, nums) {\n  const op = OPERATIONS[opName];\n  if (!op) throw new Error(`Unsupported operation: ${opName}`);\n\n  if (nums.length < op.minArgs) {\n    const s = op.minArgs > 1 ? 's' : '';\n    throw new Error (src: code_context, relevance: 3.00)\n- Here’s a cleaned-up, more idiomatic version of your calculator—plus a few structural and style tweaks. Major changes:\n\n 1. Dropped the separate `minArgs`/`useFirstAsInit` flags in favor of an explicit `init` that can be `undefined` for “take the first element.”  \n 2. Pulled common validation/accumulation logic into small helpers.  \n 3. Removed the old `'use strict'` (ES modules are always strict).  \n 4. Made error messages and operation definitions a bit more self-documenting.  \n 5. Kept history entries fully immutable and simplified the history API.  \n\n```javascript\n// calculator.js\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/** @throws {TypeError} if any argument is not a finite number */\nfunction ensureNumbers(nums) {\n  nums.forEach((n, i) => {\n    if (typeof n !== 'number' || !Number.isFinite(n)) {\n      throw new TypeError(`Argument[${i}] is not a finite number: ${n}`);\n    }\n  });\n}\n\n/**\n * Defines how each operation reduces a list of numbers.\n * - init: starting accumulator (if undefined, reducer will use first arg)\n * - fn: (acc, cur, idx) → new acc\n * - name: friendly name for errors\n */\nconst OPERATIONS = Object.freeze({\n  sum: {\n    init: 0,\n    fn: (a, b) => a + b,\n    name: 'Sum'\n  },\n  product: {\n    init: 1,\n    fn: (a, b) => a * b,\n    name: 'Product'\n  },\n  difference: {\n    init: undefined,\n    fn: (a, b) => a - b,\n    name: 'Difference',\n  },\n  quotient: {\n    init: undefined,\n    fn: (a, b, idx) => {\n      if (b === 0) {\n        throw new Error(`Division by zero at operand index ${idx + 1}`);\n      }\n      return a / b;\n    },\n    name: 'Quotient',\n  }\n});\n\n/**\n * @param {'sum'|'product'|'difference'|'quotient'} opKey\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(opKey, nums) {\n  const op = OPERATIONS[opKey];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${opKey}`);\n  }\n\n  ensureNumbers(nums);\n\n  if (nums.length === 0 && op (src: code_context, relevance: 3.00)\n- Here’s a refactored version of your calculator module—more concise, more idiomatic, and with a few edge‐case & style tweaks. Key changes:\n\n  * Switched OPERATIONS to a Map for clearer lookup  \n  * Unified “minArgs = 0” for sum/product so `sum()` → 0, `product()` → 1  \n  * Simplified `calculate()` initial-value logic with array destructuring  \n  * Tightened up error messages (e.g. RangeError on divide by zero)  \n  * Renamed exports to single words (`sum`, `product`, …) for terseness  \n  * Tweaked `Calculator` class:  \n    – Exposed `history` as a getter  \n    – Accepts `operations` (plural) in filter for symmetry  \n    – Reuses shared free functions internally  \n\n```javascript\n// calculator.js\n'use strict';\n\n/**\n * Map of supported operations.\n * init: starting accumulator (unless useFirstAsInit)\n * fn:   (acc, curr, idx) ⇒ next accumulator\n * minArgs: minimum count\n * useFirstAsInit: pull first arg as initial value\n */\nconst OPERATIONS = new Map([\n  ['sum', {\n    init: 0,\n    fn:    (a, b) => a + b,\n    minArgs: 0,\n    name: 'Sum',\n  }],\n  ['product', {\n    init: 1,\n    fn:    (a, b) => a * b,\n    minArgs: 0,\n    name: 'Product',\n  }],\n  ['difference', {\n    fn:    (a, b) => a - b,\n    minArgs: 2,\n    name: 'Difference',\n    useFirstAsInit: true,\n  }],\n  ['quotient', {\n    fn:    (a, b, idx) => {\n      if (b === 0) throw new RangeError(`Division by zero at argument ${idx + 1}`);\n      return a / b;\n    },\n    minArgs: 2,\n    name: 'Quotient',\n    useFirstAsInit: true,\n  }],\n]);\n\n/** @throws {TypeError} */\nfunction validateNumbers(nums) {\n  nums.forEach((n, i) => {\n    if (!Number.isFinite(n)) {\n      throw new TypeError(`Argument ${i} is not a finite number: ${n}`);\n    }\n  });\n}\n\n/**\n * @param {'sum'|'product'|'difference'|'quotient'} opName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(opName, nums) {\n  const op = OPERATIONS.get(opName);\n  if (!op) throw new Error(`Unsupported operation: ${opName}`);\n  if (nums.lengt (src: code_context, relevance: 3.00)\n- I refactored **test_example.js** for clarity, robustness, and modern JS style:\n\n1. **Validation**  \n   • Switched `validateNumbers` to `Array.findIndex` for concise, 1-based error messages.  \n   • Throws `Type\n\n[Enrichment truncated]\n\n## Open Files Context:\n\n### caramba.nvim ()\n```\n\n```\n\n### test_example.js (javascript)\n```javascript\n// test_example.js\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  for (const [i, n] of nums.entries()) {\n    if (typeof n !== 'number' || !Number.isFinite(n)) {\n      throw new TypeError(`Argument ${i} is not a finite number: ${n}`);\n    }\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum: Object.freeze({\n    init: 0,\n    fn: (a, b) => a + b,\n    minArgs: 0,\n    errorName: 'Sum',\n  }),\n  product: Object.freeze({\n    init: 1,\n    fn: (a, b) => a * b,\n    minArgs: 0,\n    errorName: 'Product',\n  }),\n  difference: Object.freeze({\n    fn: (a, b) => a - b,\n    minArgs: 2,\n    errorName: 'Difference',\n    useFirstAsInit: true,\n  }),\n  quotient: Object.freeze({\n    fn: (a, b, idx) => {\n      if (b === 0) {\n        throw new Error(`Division by zero at position ${idx + 1}`);\n      }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  }),\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n\n## Relevant Memory:\n\n- It looks like you haven’t yet shared the code you want to improve. Could you please:\n\n1. Paste the relevant code snippet (or point me at the file in your repo).  \n2. Tell me what the code is supposed to do, and any pain points or goals you have (.g. performance, readability, better error handling, idiomatic style, etc.).\n\nOnce I can see the code and understand the context, I’ll give you concrete suggestions—refactorings, style improvements, potential API changes, testing ideas, and so on. (relevance: 1.50)\n\n- Please improve this code (relevance: 1.00)\n\n- Please improve this code (relevance: 1.00)\n\n- Please improve this code (relevance: 1.00)\n\n- Please improve this code (relevance: 1.00)\n\n\n## Additional Context:\n\n[Current Buffer: [Current Buffer]]\n```\nFile: \nLanguage: \n\nCode:\nPlease improve this code\n```\n",
+        role = "user"
+      }, {
+        content = "",
+        role = "assistant",
+        tool_calls = { {
+            ["function"] = {
+              arguments = "{\"file_path\":\"/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js\",\"start_line\":1,\"new_content\":\"'use strict';\\n/**\\n * Lightweight JS Calculator with history support.\\n * Provides sum, product, difference, and quotient operations.\\n */\\n\\n/**\\n * Validates all inputs are finite numbers.\\n * @param {number[]} nums\\n * @throws {TypeError} If any element is not a finite number.\\n */\\nfunction validateNumbers(nums) {\\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\\n  if (badIndex >= 0) {\\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\\n  }\\n}\\n\\n/**\\n * Definition of supported operations.\\n * - init: initial accumulator value (unless useFirstAsInit is true)\\n * - fn: reduction function (accumulator, current, index)\\n * - minArgs: minimum count of arguments\\n * - errorName: display name in errors\\n * - useFirstAsInit: take the first element as init value\\n */\\nconst OPERATIONS = Object.freeze({\\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\\n  quotient: {\\n    fn: (a, b, idx) => {\\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\\n      return a / b;\\n    },\\n    minArgs: 2,\\n    errorName: 'Quotient',\\n    useFirstAsInit: true,\\n  },\\n});\\n\\n/**\\n * Generic calculator function.\\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\\n * @param {number[]} nums\\n * @returns {number}\\n */\\nfunction calculate(operationName, nums) {\\n  const op = OPERATIONS[operationName];\\n  if (!op) {\\n    throw new Error(`Unsupported operation: ${operationName}`);\\n  }\\n  if (nums.length < op.minArgs) {\\n    const plural = op.minArgs === 1 ? '' : 's';\\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\\n  }\\n  validateNumbers(nums);\\n  let accumulator;\\n  let rest;\\n  if (op.useFirstAsInit) {\\n    [accumulator, ...rest] = nums;\\n  } else {\\n    accumulator = op.init;\\n    rest = nums;\\n  }\\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\\n}\\n\\n/**\\n * Adds numbers.\\n * @param {...number} nums\\n * @returns {number}\\n */\\nexport const calculateSum = (...nums) => calculate('sum', nums);\\n\\n/**\\n * Multiplies numbers.\\n * @param {...number} nums\\n * @returns {number}\\n */\\nexport const calculateProduct = (...nums) => calculate('product', nums);\\n\\n/**\\n * Subtracts numbers (left-associative).\\n * @param {...number} nums\\n * @returns {number}\\n */\\nexport const calculateDifference = (...nums) => calculate('difference', nums);\\n\\n/**\\n * Divides numbers (left-associative).\\n * @param {...number} nums\\n * @returns {number}\\n */\\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\\n\\n/**\\n * Represents a calculator that records operation history.\\n */\\nexport class Calculator {\\n  #history = [];\\n\\n  /**\\n   * Records an operation into history.\\n   * @param {string} opName\\n   * @param {number[]} args\\n   * @param {number} result\\n   */\\n  #record(opName, args, result) {\\n    const entry = Object.freeze({\\n      operation: opName,\\n      args: [...args],\\n      result,\\n      timestamp: new Date(),\\n    });\\n    this.#history.push(entry);\\n  }\\n\\n  /** @returns {number} */\\n  add(...nums) {\\n    const result = calculateSum(...nums);\\n    this.#record('sum', nums, result);\\n    return result;\\n  }\\n\\n  /** @returns {number} */\\n  multiply(...nums) {\\n    const result = calculateProduct(...nums);\\n    this.#record('product', nums, result);\\n    return result;\\n  }\\n\\n  /** @returns {number} */\\n  subtract(...nums) {\\n    const result = calculateDifference(...nums);\\n    this.#record('difference', nums, result);\\n    return result;\\n  }\\n\\n  /** @returns {number} */\\n  divide(...nums) {\\n    const result = calculateQuotient(...nums);\\n    this.#record('quotient', nums, result);\\n    return result;\\n  }\\n\\n  /**\\n   * Returns a shallow copy of the operation history.\\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\\n   */\\n  getHistory() {\\n    return [...this.#history];\\n  }\\n\\n  /**\\n   * Filters history by operation type and/or timestamp range.\\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\\n   * @returns {Array<object>}\\n   */\\n  filterHistory({ operation, from, to } = {}) {\\n    const ops = operation\\n      ? Array.isArray(operation)\\n        ? operation\\n        : [operation]\\n      : null;\\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\\n      (!ops || ops.includes(opName)) &&\\n      (!from || timestamp >= from) &&\\n      (!to || timestamp <= to)\\n    );\\n  }\\n\\n  /**\\n   * Clears the history and returns the previous entries.\\n   * @returns {Array<object>}\\n   */\\n  clearHistory() {\\n    const old = this.getHistory();\\n    this.#history = [];\\n    return old;\\n  }\\n}\\n\\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\",\"end_line\":60}",
+              name = "edit_file"
+            },
+            id = "call_d6d9bfMdnZodi4fBQQhBmEKf",
+            type = "function"
+          } }
+      }, {
+        content = '{"start_line":1,"buffer_id":3,"end_line":60,"success":true,"path":"/Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js"}',
+        role = "tool",
+        tool_call_id = "call_d6d9bfMdnZodi4fBQQhBmEKf"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739254_tools_489",
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:20:54] DEBUG Tool feedback chunk | 
+
+🔧 Using tool: `edit_file`...
+
+
+[2025-08-21 03:20:54] DEBUG Tool feedback chunk | 
+
+Tool edit_file: opening /Users/theapemachine/go/src/github.com/theapemachine/caramba.nvim/test_example.js
+
+
+[2025-08-21 03:20:54] DEBUG Tool feedback chunk | 
+
+Tool edit_file: applying edit lines 1-60
+
+
+[2025-08-21 03:20:54] DEBUG Tool feedback chunk | 
+
+Tool edit_file: saving buffer
+
+
+[2025-08-21 03:20:54] DEBUG Tool feedback chunk | 
+
+Tool edit_file: success
+
+
+[2025-08-21 03:20:54] DEBUG Tool feedback chunk | ✅ Tool `edit_file` finished. 
+
+
+[2025-08-21 03:21:14] INFO  OpenAI tools response | {
+  content_preview = "Here’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n  ",
+  id = "1755739254_tools_489"
+}
+[2025-08-21 03:21:14] INFO  Self-Reflection stream start
+[2025-08-21 03:21:14] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a strict code reviewer. In 5-8 bullet points, critique the assistant answer for correctness, safety, missing context, and propose 1-2 concrete improvements. Keep it concise.",
+        role = "system"
+      }, {
+        content = "User request:\nPlease improve this code\n\nAssistant answer:\nHere’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n### Key Improvements Made:\n1. **Validation Logic**: Used `Array.findIndex` to make error messaging more concise and clear.\n2. **Operational Definitions**: Streamlined the object definitions for operations, improving readability.\n3. **Error Messages**: Made error messages more informative, especially for invalid inputs and operations.\n4. **Destructuring for Initial Values**: Simplified the calculation initialization logic using destructuring for clarity.\n5. **Class Methods**: Enhanced clarity in the `Calculator` class methods for better maintainability.\n\nThese changes will enhance the overall usage and experience with the calculator module.",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739274_tools_6391",
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:21:19] INFO  OpenAI tools response | {
+  content_preview = "1. **Missing Edge Case Handling**: The code does not handle the case where the user attempts to perform a division operation with a zero denominator, even though there's a check that throws an error. It would be better to include an explicit check at the point of receiving inputs.\n\n2. **Potential Performance Issue**: Using `Array.findIndex` in `validateNumbers` can negatively affect performance for large arrays since it traverses the entire array. An alternative could be a simple for-loop to terminate early upon finding the first invalid element.\n\n3. **Function Overloading/Support**: The code assumes specific operations and does not provide flexibility for adding new operations easily without modifying existing code. A more extensible architecture could allow more dynamic operation registration.\n\n4. **Type Annotations**: The type of `operationName` in `calculate` is limited to a specific set of strings. This could limit the ability to extend the function if another operation is needed without modifying the function signature.\n\n5. **Lack of Input Safety Checks**: The `Calculator` methods do not verify the types of incoming arguments. It should confirm that the input is an array of numbers before proceeding with calculations.\n\n### Proposed Improvements:\n- **Early Check for Division by Zero**: Add an early check for division by zero within the `calculate` function specifically for the 'quotient' operation before it processes further.\n  \n- **Dynamic Operation Registration**: Create a function to register new operations and modify the `calculate` function to handle dynamic operation names. This can enhance the flexibility of the calculator and make it easier to extend. \n\nImplementing these changes will improve the robustness and flexibility of your calculator code.",
+  id = "1755739274_tools_6391"
+}
+[2025-08-21 03:21:19] INFO  Self-Reflection stream complete | 
+[2025-08-21 03:21:19] INFO  Reviewer stream start
+[2025-08-21 03:21:19] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a Reviewer of the process (not just code). Provide actionable recommendations for Prompt Engineer, Memory Manager, Project Manager, and Developer roles. Use short bullets.",
+        role = "system"
+      }, {
+        content = "User request:\nPlease improve this code\n\nAssistant answer:\nHere’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n### Key Improvements Made:\n1. **Validation Logic**: Used `Array.findIndex` to make error messaging more concise and clear.\n2. **Operational Definitions**: Streamlined the object definitions for operations, improving readability.\n3. **Error Messages**: Made error messages more informative, especially for invalid inputs and operations.\n4. **Destructuring for Initial Values**: Simplified the calculation initialization logic using destructuring for clarity.\n5. **Class Methods**: Enhanced clarity in the `Calculator` class methods for better maintainability.\n\nThese changes will enhance the overall usage and experience with the calculator module.\n\nSelf-Reflection:\n",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739279_tools_3593",
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:21:24] INFO  OpenAI tools response | {
+  content_preview = "### Recommendations for Improvement\n\n#### Prompt Engineer:\n- **Clarify Requirements**: Ensure user requests include details about specific functionality or issues to be resolved.\n- **Feedback Loop**: Incorporate user feedback on previous iterations to refine future prompts and enhance deliverables.\n- **Specify Context**: Provide context about the calculator’s intended use (e.g., graphical interface, CLI) to tailor the improvement suggestions better.\n\n#### Memory Manager:\n- **Track Changes**: Implement a system to log changes made across versions to allow rollback to previous iterations if needed.\n- **Performance Monitoring**: Continuously monitor memory usage of the code for performance optimization.\n- **Historical Data Management**: Develop a strategy for managing and querying historical calculator operations to facilitate performance enhancements and debugging.\n\n#### Project Manager:\n- **Iterative Approach**: Adopt an agile methodology with iterative reviews to incorporate user feedback throughout the development process.\n- **Collaborative Feedback**: Create channels for team members to provide input on improvements, ensuring diverse perspectives are considered.\n- **Documentation Focus**: Emphasize the importance of documentation for each module, including explanations of changes for future developers.\n\n#### Developer:\n- **Unit Testing**: Develop comprehensive unit tests for each function to ensure consistent output and catch errors early during changes.\n- **Code Modularity**: Consider breaking larger functions into smaller, more focused functions to enhance readability and testability.\n- **Performance Enhancements**: Evaluate the efficiency of computations and optimize algorithms where possible to improve speed for larger datasets.\n- **Error Handling**: Standardize error handling using a central mechanism to ensure uniformity and maintainability across the application.",
+  id = "1755739279_tools_3593"
+}
+[2025-08-21 03:21:24] INFO  Reviewer stream complete | 
+[2025-08-21 03:21:24] INFO  Project Manager (Update) stream start
+[2025-08-21 03:21:24] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You are a Project Manager. Update the TODO/DOING/DONE plan based on the execution and review. Output a concise markdown board.",
+        role = "system"
+      }, {
+        content = "User request:\nPlease improve this code\n\nAssistant answer:\nHere’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n### Key Improvements Made:\n1. **Validation Logic**: Used `Array.findIndex` to make error messaging more concise and clear.\n2. **Operational Definitions**: Streamlined the object definitions for operations, improving readability.\n3. **Error Messages**: Made error messages more informative, especially for invalid inputs and operations.\n4. **Destructuring for Initial Values**: Simplified the calculation initialization logic using destructuring for clarity.\n5. **Class Methods**: Enhanced clarity in the `Calculator` class methods for better maintainability.\n\nThese changes will enhance the overall usage and experience with the calculator module.\n\nSelf-Reflection:\n",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739284_tools_8479",
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:21:27] INFO  OpenAI tools response | {
+  content_preview = "Here's the updated TODO/DOING/DONE board reflecting the execution and review:\n\n# TODO/DOING/DONE Board\n\n## TODO\n- Review the code for potential edge cases not covered.\n- Write unit tests for all calculator methods to ensure correctness.\n- Update the documentation for clarity and completeness.\n- Consider adding support for additional operations (e.g., modulo, power).\n\n## DOING\n- Implement unit tests for `calculate`, `calculateSum`, `calculateProduct`, `calculateDifference`, `calculateQuotient`, and `Calculator` methods.\n\n## DONE\n- Improved the calculator code for readability and maintainability:\n  - Enhanced validation logic.\n  - Streamlined operational definitions.\n  - Improved error messaging.\n  - Simplified initialization logic using destructuring.\n  - Added clearer class methods.\n\n### Key Improvements Made\n1. Validation Logic Enhancement\n2. Streamlined Operation Definitions\n3. Informative Error Messaging\n4. Simplified Destructuring Logic\n5. Clarity in Class Methods\n\n### Next Steps\n1. Complete unit tests.\n2. Review documentation for necessary updates.\n3. Explore possibility of additional features.",
+  id = "1755739284_tools_8479"
+}
+[2025-08-21 03:21:27] INFO  Project Manager (Update) stream complete | 
+[2025-08-21 03:21:27] INFO  Memory Extract stream start
+[2025-08-21 03:21:27] INFO  OpenAI tools request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "Extract up to 5 short, independent memory items (facts, decisions, lessons). Output as simple bullets, no prose.",
+        role = "system"
+      }, {
+        content = "User request:\nPlease improve this code\n\nAssistant answer:\nHere’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n### Key Improvements Made:\n1. **Validation Logic**: Used `Array.findIndex` to make error messaging more concise and clear.\n2. **Operational Definitions**: Streamlined the object definitions for operations, improving readability.\n3. **Error Messages**: Made error messages more informative, especially for invalid inputs and operations.\n4. **Destructuring for Initial Values**: Simplified the calculation initialization logic using destructuring for clarity.\n5. **Class Methods**: Enhanced clarity in the `Calculator` class methods for better maintainability.\n\nThese changes will enhance the overall usage and experience with the calculator module.\n\nSelf-Reflection:\n",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    stream = true,
+    temperature = 1,
+    tools = { {
+        ["function"] = {
+          description = "Get a list of currently open buffers with their file paths and content",
+          name = "get_open_buffers",
+          parameters = {
+            additionalProperties = false,
+            properties = vim.empty_dict(),
+            required = {},
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Read the contents of a specific file",
+          name = "read_file",
+          parameters = {
+            properties = {
+              file_path = {
+                description = "The path to the file to read",
+                type = "string"
+              }
+            },
+            required = { "file_path" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Search for files or content in the codebase",
+          name = "search_files",
+          parameters = {
+            properties = {
+              file_pattern = {
+                description = "Optional file pattern to limit search",
+                type = "string"
+              },
+              query = {
+                description = "The search query",
+                type = "string"
+              }
+            },
+            required = { "query" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Write content to a file, creating or overwriting it completely",
+          name = "write_file",
+          parameters = {
+            properties = {
+              content = {
+                description = "The complete content to write to the file",
+                type = "string"
+              },
+              file_path = {
+                description = "The path to the file to write",
+                type = "string"
+              }
+            },
+            required = { "file_path", "content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      }, {
+        ["function"] = {
+          description = "Apply targeted edits to a specific range in a file",
+          name = "edit_file",
+          parameters = {
+            properties = {
+              end_line = {
+                description = "Ending line number (1-based)",
+                type = "integer"
+              },
+              file_path = {
+                description = "The path to the file to edit",
+                type = "string"
+              },
+              new_content = {
+                description = "The new content to replace the specified range",
+                type = "string"
+              },
+              start_line = {
+                description = "Starting line number (1-based)",
+                type = "integer"
+              }
+            },
+            required = { "file_path", "start_line", "end_line", "new_content" },
+            type = "object"
+          }
+        },
+        type = "function"
+      } }
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739287_tools_5239",
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:21:28] INFO  OpenAI tools response | {
+  content_preview = "- Improved validation logic using `Array.findIndex` for clearer error messages.\n- Streamlined operational definitions for improved readability and maintainability.\n- Enhanced error messages to provide more detail on invalid inputs and unsupported operations.\n- Simplified calculation initialization logic with destructuring assignment.\n- Clarified `Calculator` class methods for better maintainability and usability.",
+  id = "1755739287_tools_5239"
+}
+[2025-08-21 03:21:28] INFO  Memory Extract stream complete | 
+[2025-08-21 03:21:28] DEBUG Stored assistant response to memory
+[2025-08-21 03:21:28] INFO  OpenAI embeddings request | {
+  body = {
+    dimensions = 512,
+    input = "Here’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n ",
+    model = "text-embedding-3-small"
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  id = "1755739288_embed_3577",
+  url = "https://api.openai.com/v1/embeddings"
+}
+[2025-08-21 03:21:28] INFO  LLM stream start provider=openai
+[2025-08-21 03:21:28] INFO  OpenAI stream request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "You maintain a concise implementation plan. Given input, output ONLY JSON with keys: goals[], current_tasks[], known_issues[]. No prose.",
+        role = "system"
+      }, {
+        content = "User message:\nPlease improve this code\n\nAssistant response:\nHere’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n### Key Improvements Made:\n1. **Validation Logic**: Used `Array.findIndex` to make error messaging more concise and clear.\n2. **Operational Definitions**: Streamlined the object definitions for operations, improving readability.\n3. **Error Messages**: Made error messages more informative, especially for invalid inputs and operations.\n4. **Destructuring for Initial Values**: Simplified the calculation initialization logic using destructuring for clarity.\n5. **Class Methods**: Enhanced clarity in the `Calculator` class methods for better maintainability.\n\nThese changes will enhance the overall usage and experience with the calculator module.\n\nCurrent plan (summary):\nGoals:\n- Fix syntax errors in the JavaScript file.\n- Improve code readability and maintainability.\n- Implement optimized logic for better performance.\n\nActive Tasks:\n- Identify and correct the unmatched closing brace.\n- Refactor the code for improved readability.\n- Run tests to ensure functionality remains intact.\n\nKnown Issues:\n- Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace.\n- Syntax error due to unmatched closing brace.\n\nReturn JSON with updated goals, current_tasks, known_issues.",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    response_format = {
+      type = "json_object"
+    },
+    stream = true,
+    temperature = 1
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:21:28] INFO  LLM stream start provider=openai
+[2025-08-21 03:21:28] INFO  OpenAI stream request | {
+  body = {
+    max_completion_tokens = 4096,
+    messages = { {
+        content = "Extract up to 5 short memory items from the assistant response (facts, decisions, learned patterns, commands). Return as JSON array of strings.",
+        role = "system"
+      }, {
+        content = "Here’s the improved version of your JavaScript calculator code, enhancing readability and maintainability while resolving the identified issues:\n\n```javascript\n'use strict';\n/**\n * Lightweight JS Calculator with history support.\n * Provides sum, product, difference, and quotient operations.\n */\n\n/**\n * Validates all inputs are finite numbers.\n * @param {number[]} nums\n * @throws {TypeError} If any element is not a finite number.\n */\nfunction validateNumbers(nums) {\n  const badIndex = nums.findIndex(n => typeof n !== 'number' || !Number.isFinite(n));\n  if (badIndex >= 0) {\n    throw new TypeError(`Argument #${badIndex + 1} is not a finite number: ${nums[badIndex]}`);\n  }\n}\n\n/**\n * Definition of supported operations.\n * - init: initial accumulator value (unless useFirstAsInit is true)\n * - fn: reduction function (accumulator, current, index)\n * - minArgs: minimum count of arguments\n * - errorName: display name in errors\n * - useFirstAsInit: take the first element as init value\n */\nconst OPERATIONS = Object.freeze({\n  sum:    { init: 0, fn: (a, b) => a + b, minArgs: 0, errorName: 'Sum' },\n  product: { init: 1, fn: (a, b) => a * b, minArgs: 0, errorName: 'Product' },\n  difference: { fn: (a, b) => a - b, minArgs: 2, errorName: 'Difference', useFirstAsInit: true },\n  quotient: {\n    fn: (a, b, idx) => {\n      if (b === 0) { throw new Error(`Division by zero at position ${idx + 1}`); }\n      return a / b;\n    },\n    minArgs: 2,\n    errorName: 'Quotient',\n    useFirstAsInit: true,\n  },\n});\n\n/**\n * Generic calculator function.\n * @param {'sum'|'product'|'difference'|'quotient'} operationName\n * @param {number[]} nums\n * @returns {number}\n */\nfunction calculate(operationName, nums) {\n  const op = OPERATIONS[operationName];\n  if (!op) {\n    throw new Error(`Unsupported operation: ${operationName}`);\n  }\n  if (nums.length < op.minArgs) {\n    const plural = op.minArgs === 1 ? '' : 's';\n    throw new Error(`${op.errorName} requires at least ${op.minArgs} argument${plural}.`);\n  }\n  validateNumbers(nums);\n  let accumulator;\n  let rest;\n  if (op.useFirstAsInit) {\n    [accumulator, ...rest] = nums;\n  } else {\n    accumulator = op.init;\n    rest = nums;\n  }\n  return rest.reduce((acc, curr, idx) => op.fn(acc, curr, idx), accumulator);\n}\n\n/**\n * Adds numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateSum = (...nums) => calculate('sum', nums);\n\n/**\n * Multiplies numbers.\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateProduct = (...nums) => calculate('product', nums);\n\n/**\n * Subtracts numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateDifference = (...nums) => calculate('difference', nums);\n\n/**\n * Divides numbers (left-associative).\n * @param {...number} nums\n * @returns {number}\n */\nexport const calculateQuotient = (...nums) => calculate('quotient', nums);\n\n/**\n * Represents a calculator that records operation history.\n */\nexport class Calculator {\n  #history = [];\n\n  /**\n   * Records an operation into history.\n   * @param {string} opName\n   * @param {number[]} args\n   * @param {number} result\n   */\n  #record(opName, args, result) {\n    const entry = Object.freeze({\n      operation: opName,\n      args: [...args],\n      result,\n      timestamp: new Date(),\n    });\n    this.#history.push(entry);\n  }\n\n  /** @returns {number} */\n  add(...nums) {\n    const result = calculateSum(...nums);\n    this.#record('sum', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  multiply(...nums) {\n    const result = calculateProduct(...nums);\n    this.#record('product', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  subtract(...nums) {\n    const result = calculateDifference(...nums);\n    this.#record('difference', nums, result);\n    return result;\n  }\n\n  /** @returns {number} */\n  divide(...nums) {\n    const result = calculateQuotient(...nums);\n    this.#record('quotient', nums, result);\n    return result;\n  }\n\n  /**\n   * Returns a shallow copy of the operation history.\n   * @returns {Array<{operation:string, args:number[], result:number, timestamp:Date}>}\n   */\n  getHistory() {\n    return [...this.#history];\n  }\n\n  /**\n   * Filters history by operation type and/or timestamp range.\n   * @param {{operation?: string|string[], from?: Date, to?: Date}} [filter]\n   * @returns {Array<object>}\n   */\n  filterHistory({ operation, from, to } = {}) {\n    const ops = operation\n      ? Array.isArray(operation)\n        ? operation\n        : [operation]\n      : null;\n    return this.getHistory().filter(({ operation: opName, timestamp }) =>\n      (!ops || ops.includes(opName)) &&\n      (!from || timestamp >= from) &&\n      (!to || timestamp <= to)\n    );\n  }\n\n  /**\n   * Clears the history and returns the previous entries.\n   * @returns {Array<object>}\n   */\n  clearHistory() {\n    const old = this.getHistory();\n    this.#history = [];\n    return old;\n  }\n}\n\nexport default { calculateSum, calculateProduct, calculateDifference, calculateQuotient, Calculator };\n```\n\n### Key Improvements Made:\n1. **Validation Logic**: Used `Array.findIndex` to make error messaging more concise and clear.\n2. **Operational Definitions**: Streamlined the object definitions for operations, improving readability.\n3. **Error Messages**: Made error messages more informative, especially for invalid inputs and operations.\n4. **Destructuring for Initial Values**: Simplified the calculation initialization logic using destructuring for clarity.\n5. **Class Methods**: Enhanced clarity in the `Calculator` class methods for better maintainability.\n\nThese changes will enhance the overall usage and experience with the calculator module.",
+        role = "user"
+      } },
+    model = "gpt-4o-mini",
+    response_format = {
+      type = "json_object"
+    },
+    stream = true,
+    temperature = 1
+  },
+  headers = {
+    Authorization = "Bearer ***",
+    ["Content-Type"] = "application/json"
+  },
+  url = "https://api.openai.com/v1/chat/completions"
+}
+[2025-08-21 03:21:28] INFO  Response complete | {
+  chars = 5695
+}
+[2025-08-21 03:21:29] INFO  OpenAI embeddings response | {
+  id = "1755739288_embed_3577",
+  raw_len = 11135,
+  raw_preview = '{\n  "object": "list",\n  "data": [\n    {\n      "object": "embedding",\n      "index": 0,\n      "embedding": [\n        -0.046636023,\n        0.01305172,\n        0.021010086,\n        0.04494885,\n        0.06551327,\n        -0.0244481,\n        -0.045617353,\n        -0.00064562244,\n        0.064367265,\n        0.03724515,\n        0.09282638,\n        -0.03180163,\n        0.010632377,\n        -0.0066452352,\n        0.09550039,\n        0.11237212,\n        -0.062457256,\n        0.033584304,\n        -0.05405322,\n        -0.030512374,\n        0.029700622,\n        -0.0050376453,\n        0.05211138,\n        -0.03915516,\n        0.058541737,\n        -0.056058727,\n        -0.034889475,\n        -0.01075971,\n        0.061438583,\n        -0.049883038,\n        0.041033335,\n        -0.017699406,\n        -0.013815723,\n        0.09620073,\n        -0.03161063,\n        -0.026803777,\n        0.06287109,\n        0.045999356,\n        -0.00080379494,\n        -0.015598397,\n        -0.030671543,\n        -0.04026933,\n        0.02381143,\n        0.00579369,\n        -0.025848772,\n        0.08053866,\n        -0.020437084,\n        -0.02099417,\n        0.03670398,\n        0.03127638,\n        0.04026933,\n        -0.01792224,\n        0.03520781,\n        0.04529902,\n        0.025021102,\n        -0.029016202,\n        -0.030464625,\n        0.057491235,\n        0.024750518,\n        -0.018718077,\n        0.0332023,\n        -0.07067029,\n        -0.017333321,\n        -0.008308534,\n        -0.022872344,\n        0.06691394,\n        0.02002325,\n        -0.017619822,\n        -0.00438108,\n        0.01820874,\n        0.002492958,\n        0.017603906,\n        0.064844765,\n        -0.008977037,\n        0.003963266,\n        0.033234134,\n        0.046540525,\n        0.03145146,\n        -0.024384433,\n        0.029923456,\n        0.025212104,\n        0.0124150505,\n        0.042879675,\n        -0.036831316,\n        0.026023855,\n        -0.017253738,\n        -0.05233421,\n        -0.06147042,\n        -0.062711924,\n        -0.087478355,\n        -0.0022064568,\n        0.03641748,\n        -0.082130335,\n        0.06965162,\n        0.013839598,\n        -0.06557693,\n        -0.04393018,\n        -0.012908469,\n        0.021567171,\n        0.084167674,\n        0.10135775,\n        -0.026803777,\n        -0.019211495,\n        -0.053894054,\n        0.015853064,\n        0.078946985,\n        -0.0056663565,\n        -0.023779597,\n        -0.084740676,\n        -0.010465251,\n        -0.012470759,\n        0.029875705,\n        -0.072898634,\n        -0.02716986,\n        0.004981937,\n        0.010998461,\n        -0.056313396,\n        0.0408105,\n        -0.03670398,\n        -0.077991985,\n        -0.04135167,\n        -0.09269904,\n        0.06691394,\n        -0.009430664,\n        0.0009684336,\n        -0.05844624,\n        0.005956837,\n        0.046445023,\n        -0.033966307,\n        -0.0036588586,\n        0.02366818,\n        -0.0022004882,\n        0.06557693,\n        -0.037563488,\n        -0.061565917,\n        0.033425137,\n        -0.021567171,\n        0.054976393,\n        -0.007508718,\n        0.066977605,\n        0.03154696,\n        -0.0062592546,\n        0.009900207,\n        -0.029812038,\n        0.016282817,\n        -0.01728557,\n        -0.031244544,\n        0.03482581,\n        -0.049119033,\n        -0.048132196,\n        0.039409827,\n        0.008722369,\n        -0.019895915,\n        -0.039091494,\n        0.029127618,\n        -0.012311592,\n        0.040492166,\n        0.040301163,\n        -0.0149378525,\n        -0.025148436,\n        -0.00010277484,\n        0.010783586,\n        -0.02298376,\n        -0.050424207,\n        0.020580335,\n        0.056663565,\n        -0.044598684,\n        -0.017635738,\n        -0.068632945,\n        0.022522176,\n        0.02459135,\n        -0.07328063,\n        -0.03584448,\n        -0.03393447,\n        -0.048673365,\n        -0.036894985,\n        0.0731533,\n        -0.11727448,\n        -0.08359467,\n        0.051156376,\n        -0.041415337,\n        -0.002176613,\n        -0.004301497'
+}
+[2025-08-21 03:21:30] INFO  OpenAI stream response | {
+  content_preview = '{\n  "memoryItems": [\n    "Validation logic uses Array.findIndex for clearer error messages.",\n    "Operational definitions for calculator operations have been streamlined.",\n    "Error messages are now more informative for invalid inputs and operations.",\n    "Destructuring is used for clarity in calculation initialization.",\n    "Class methods in the Calculator class have been enhanced for better maintainability."\n  ]\n}'
+}
+[2025-08-21 03:21:30] INFO  OpenAI stream response | {
+  content_preview = '{\n  "goals": [\n    "Fix syntax errors in the JavaScript file.",\n    "Improve code readability and maintainability.",\n    "Implement optimized logic for better performance."\n  ],\n  "current_tasks": [\n    "Identify and correct the unmatched closing brace.",\n    "Refactor the code for improved readability.",\n    "Run tests to ensure functionality remains intact."\n  ],\n  "known_issues": [\n    "Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace."\n  ]\n}'
+}
+[2025-08-21 03:21:30] DEBUG Merging plan delta | {
+  current_tasks = { "Identify and correct the unmatched closing brace.", "Refactor the code for improved readability.", "Run tests to ensure functionality remains intact." },
+  goals = { "Fix syntax errors in the JavaScript file.", "Improve code readability and maintainability.", "Implement optimized logic for better performance." },
+  known_issues = { "Syntax error in the JavaScript file indicated by the presence of an unmatched closing brace." }
+}
+[2025-08-21 03:21:30] INFO  Planner post-response updated

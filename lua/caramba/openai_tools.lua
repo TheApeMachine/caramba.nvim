@@ -322,6 +322,14 @@ M.tool_functions = {
   end
 }
 
+-- Merge in agent tool modules (git/testing/etc.) without bloating this file
+do
+  local collector = require('caramba.agent_tools')
+  local extra_tools, extra_fns = collector.collect_all()
+  for _, t in ipairs(extra_tools or {}) do table.insert(M.available_tools, t) end
+  for name, fn in pairs(extra_fns or {}) do M.tool_functions[name] = fn end
+end
+
 -- Execute a tool function
 M.execute_tool = function(tool_function)
   local function_name = tool_function.name
